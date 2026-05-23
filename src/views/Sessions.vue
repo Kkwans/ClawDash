@@ -1,13 +1,15 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { getProcessStatus, getProcessLogs, clearProcessLogs } from '../api'
 
 const status = ref({})
 const logs = ref([])
 const loading = ref(true)
-const logLimit = ref(50)
+const logLimit = ref(200)
 const clearing = ref(false)
 const toast = ref('')
+const autoScroll = ref(true)
+const logContainer = ref(null)
 
 async function fetchStatus() {
   try {
@@ -20,6 +22,10 @@ async function fetchLogs() {
   try {
     const d = await getProcessLogs(0, logLimit.value)
     logs.value = d.lines || []
+    if (autoScroll.value) {
+      await nextTick()
+      scrollToBottom()
+    }
   } catch {}
   loading.value = false
 }
@@ -34,6 +40,44 @@ async function handleClearLogs() {
     showToast(`清除失败: ${e.message}`)
   }
   clearing.value = false
+}
+
+function scrollToBottom() {
+  if (logContainer.value) {
+    logContainer.value.scrollTop = logContainer.value.scrollHeight
+  }
+}
+
+function handleScroll() {
+  if (!logContainer.value) return
+  const { scrollTop, scrollHeight, clientHeight } = logContainer.value
+  autoScroll.value = scrollHeight - scrollTop - clientHeight < 50
+}
+
+function getLogLevel(text) {
+  if (!text) return 'default'
+  const upper = text.toUpperCase()
+  if (/\bERROR\b|\bFATAL\b|\bPANIC\b/.test(upper)) return 'error'
+  if (/\bWARN\b|\bWARNING\b/.test(upper)) return 'warn'
+  if (/\bINFO\b/.test(upper)) return 'info'
+  if (/\bDEBUG\b|\bTRACE\b/.test(upper)) return 'debug'
+  return 'default'
+}
+
+function highlightKeywords(text) {
+  if (!text) return text
+  return text
+    .replace(/\b(error|fatal|panic|fail|failed|exception)\b/gi, '<span class="text-red-400 font-bold">$1</span>')
+    .replace(/\b(warn|warning)\b/gi, '<span class="text-yellow-400 font-bold">$1</span>')
+    .replace(/\b(success|ok|done|started)\b/gi, '<span class="text-green-400 font-bold">$1</span>')
+}
+
+const logLevelColors = {
+  error: 'text-red-400',
+  warn: 'text-yellow-400',
+  info: 'text-blue-300',
+  debug: 'text-gray-500',
+  default: 'text-green-300'
 }
 
 function formatTime(ts) {
@@ -69,7 +113,10 @@ let timer
 onMounted(() => {
   fetchStatus()
   fetchLogs()
-  timer = setInterval(fetchStatus, 5000)
+  timer = setInterval(() => {
+    fetchStatus()
+    fetchLogs()
+  }, 5000)
 })
 onUnmounted(() => clearInterval(timer))
 </script>
@@ -137,14 +184,16 @@ onUnmounted(() => clearInterval(timer))
 
     <!-- 日志 -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
         <h3 class="text-base font-semibold text-gray-800">最近日志</h3>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <select v-model="logLimit" @change="fetchLogs"
             class="text-sm border border-gray-200 rounded-lg px-2 py-1">
-            <option :value="20">20 条</option>
             <option :value="50">50 条</option>
             <option :value="100">100 条</option>
+            <option :value="200">200 条</option>
+            <option :value="500">500 条</option>
+            <option :value="1000">1000 条</option>
           </select>
           <button @click="fetchLogs" class="text-sm text-blue-600 hover:text-blue-700">刷新</button>
           <button @click="handleClearLogs" :disabled="clearing"
@@ -154,12 +203,34 @@ onUnmounted(() => clearInterval(timer))
         </div>
       </div>
 
+      <!-- 日志级别图例 -->
+      <div class="flex items-center gap-4 mb-3 text-xs">
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-400"></span> ERROR</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-yellow-400"></span> WARN</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-400"></span> INFO</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-500"></span> DEBUG</span>
+        <label class="flex items-center gap-1 ml-auto cursor-pointer">
+          <input type="checkbox" v-model="autoScroll" class="rounded">
+          <span class="text-gray-500">自动滚动</span>
+        </label>
+      </div>
+
       <div v-if="loading" class="text-center py-8 text-gray-400">加载中...</div>
       <div v-else-if="logs.length === 0" class="text-center py-8 text-gray-400">暂无日志</div>
-      <div v-else class="bg-gray-900 rounded-lg p-4 overflow-x-auto max-h-96 overflow-y-auto">
-        <div v-for="log in logs" :key="log.seq" class="font-mono text-xs leading-relaxed">
-          <span class="text-gray-500">{{ formatTime(log.ts) }}</span>
-          <span class="ml-2" :class="log.stream === 'stderr' ? 'text-red-400' : 'text-green-300'">{{ log.text }}</span>
+      <div v-else ref="logContainer" @scroll="handleScroll"
+        class="bg-gray-900 rounded-lg p-4 overflow-x-auto max-h-96 overflow-y-auto">
+        <div v-for="log in logs" :key="log.seq" class="font-mono text-xs leading-relaxed flex">
+          <span class="text-gray-500 flex-shrink-0 w-20">{{ formatTime(log.ts) }}</span>
+          <span class="w-1.5 h-1.5 rounded-full mt-1.5 mx-2 flex-shrink-0"
+            :class="{
+              'bg-red-400': getLogLevel(log.text) === 'error',
+              'bg-yellow-400': getLogLevel(log.text) === 'warn',
+              'bg-blue-400': getLogLevel(log.text) === 'info',
+              'bg-gray-500': getLogLevel(log.text) === 'debug',
+              'bg-green-400': getLogLevel(log.text) === 'default'
+            }"></span>
+          <span :class="logLevelColors[getLogLevel(log.text)]" class="break-all"
+            v-html="highlightKeywords(log.text)"></span>
         </div>
       </div>
     </div>

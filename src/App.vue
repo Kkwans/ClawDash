@@ -1,17 +1,22 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { getToken, setToken } from './api'
 import Dashboard from './views/Dashboard.vue'
 import Models from './views/Models.vue'
 import Channels from './views/Channels.vue'
 import Sessions from './views/Sessions.vue'
 import Settings from './views/Settings.vue'
+import Skills from './views/Skills.vue'
+import Cron from './views/Cron.vue'
+import SessionList from './views/SessionList.vue'
 
 const currentTab = ref('dashboard')
 const gatewayStatus = ref('checking')
-const version = ref('')
-const uptime = ref('')
 const sidebarOpen = ref(window.innerWidth >= 768)
 const isMobile = ref(window.innerWidth < 768)
+const showTokenModal = ref(false)
+const tokenInput = ref('')
+const tokenSaved = ref(false)
 
 function handleResize() {
   isMobile.value = window.innerWidth < 768
@@ -27,22 +32,55 @@ function switchTab(id) {
   if (isMobile.value) sidebarOpen.value = false
 }
 
+// Token 弹窗相关
+function checkToken() {
+  const token = getToken()
+  if (!token) {
+    showTokenModal.value = true
+  }
+}
+
+function saveTokenFromModal() {
+  if (tokenInput.value.trim()) {
+    setToken(tokenInput.value.trim())
+    tokenSaved.value = true
+    setTimeout(() => {
+      showTokenModal.value = false
+      tokenSaved.value = false
+      // 刷新页面数据
+      window.location.reload()
+    }, 1000)
+  }
+}
+
+function skipToken() {
+  showTokenModal.value = false
+}
+
+function goToSettings() {
+  showTokenModal.value = false
+  currentTab.value = 'settings'
+}
+
 const tabs = [
   { id: 'dashboard', name: '仪表盘', icon: '📊' },
   { id: 'models', name: '模型管理', icon: '🤖' },
   { id: 'channels', name: '渠道管理', icon: '📡' },
-  { id: 'sessions', name: '会话管理', icon: '💬' },
+  { id: 'skills', name: 'Skill 管理', icon: '📦' },
+  { id: 'cron', name: '定时任务', icon: '⏰' },
+  { id: 'sessionlist', name: '会话管理', icon: '💬' },
+  { id: 'logs', name: '日志查看', icon: '📋' },
   { id: 'settings', name: '系统设置', icon: '⚙️' },
 ]
 
 const currentComponent = computed(() => {
-  const map = { dashboard: Dashboard, models: Models, channels: Channels, sessions: Sessions, settings: Settings }
+  const map = { dashboard: Dashboard, models: Models, channels: Channels, skills: Skills, cron: Cron, sessionlist: SessionList, logs: Sessions, settings: Settings }
   return map[currentTab.value] || Dashboard
 })
 
 async function checkHealth() {
   try {
-    const r = await fetch('/api/healthz')
+    const r = await fetch('/healthz')
     const d = await r.json()
     gatewayStatus.value = d.ok ? 'running' : 'error'
   } catch {
@@ -53,6 +91,7 @@ async function checkHealth() {
 let healthTimer
 onMounted(() => {
   checkHealth()
+  checkToken()
   healthTimer = setInterval(checkHealth, 30000)
   window.addEventListener('resize', handleResize)
 })
@@ -64,22 +103,68 @@ onUnmounted(() => {
 
 <template>
   <div class="flex h-screen bg-gray-50">
+    <!-- Token 配置弹窗 -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="showTokenModal" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div class="text-center">
+              <div class="w-16 h-16 mx-auto bg-blue-50 rounded-full flex items-center justify-center text-3xl mb-4">🔑</div>
+              <h3 class="text-lg font-bold text-gray-900">配置 Gateway Token</h3>
+              <p class="text-sm text-gray-500 mt-2">
+                需要输入 Gateway Token 才能访问 API 功能。Token 可以在 OpenClaw 配置中获取。
+              </p>
+            </div>
+
+            <div class="space-y-3">
+              <input v-model="tokenInput" type="password" placeholder="输入 Gateway Token"
+                class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                @keyup.enter="saveTokenFromModal">
+
+              <button @click="saveTokenFromModal" :disabled="!tokenInput.trim()"
+                class="w-full py-3 rounded-xl text-sm font-medium transition-all"
+                :class="tokenSaved
+                  ? 'bg-green-500 text-white'
+                  : tokenInput.trim()
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
+                {{ tokenSaved ? '✓ 已保存' : '保存并继续' }}
+              </button>
+            </div>
+
+            <div class="flex items-center justify-center gap-4 text-xs">
+              <button @click="skipToken" class="text-gray-400 hover:text-gray-600">暂时跳过</button>
+              <span class="text-gray-300">|</span>
+              <button @click="goToSettings" class="text-blue-500 hover:text-blue-600">前往系统设置</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- 移动端遮罩 -->
-    <div v-if="isMobile && sidebarOpen" class="fixed inset-0 bg-black/40 z-40" @click="sidebarOpen = false"></div>
+    <Transition name="fade">
+      <div v-if="isMobile && sidebarOpen" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" @click="sidebarOpen = false"></div>
+    </Transition>
 
     <!-- 侧边栏 -->
-    <aside class="bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-50 transition-transform duration-300"
+    <aside class="bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-50 transition-transform duration-300 ease-in-out"
       :class="isMobile
-        ? (sidebarOpen ? 'fixed inset-y-0 left-0 w-64' : 'fixed inset-y-0 left-0 w-64 -translate-x-full')
+        ? (sidebarOpen ? 'fixed inset-y-0 left-0 w-72 shadow-2xl' : 'fixed inset-y-0 left-0 w-72 -translate-x-full')
         : 'w-60'">
       <!-- Logo -->
       <div class="p-5 border-b border-gray-200">
-        <div class="flex items-center gap-3">
-          <span class="text-2xl">🦞</span>
-          <div>
-            <h1 class="text-lg font-bold text-gray-900">ClawDash</h1>
-            <p class="text-xs text-gray-400">OpenClaw 控制台</p>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">🦞</span>
+            <div>
+              <h1 class="text-lg font-bold text-gray-900">ClawDash</h1>
+              <p class="text-xs text-gray-400">OpenClaw 控制台</p>
+            </div>
           </div>
+          <button v-if="isMobile" @click="sidebarOpen = false" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
         </div>
       </div>
 
@@ -131,7 +216,7 @@ onUnmounted(() => {
           </h2>
         </div>
         <div class="flex items-center gap-3">
-          <span class="text-xs text-gray-400">ClawDash v0.1.0</span>
+          <span class="text-xs text-gray-400">ClawDash v0.2.0</span>
           <a href="https://github.com/Kkwans/ClawDash" target="_blank"
             class="text-gray-400 hover:text-gray-600 transition-colors">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -147,3 +232,14 @@ onUnmounted(() => {
     </main>
   </div>
 </template>
+
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

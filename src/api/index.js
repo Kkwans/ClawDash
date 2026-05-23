@@ -1,9 +1,9 @@
 /**
  * ClawDash API 工具
- * 封装 UGreen API 调用（/ugreen/api/v1/*）
+ * 封装 UGreen API 调用（/api/v1/*）
  */
 
-const API_BASE = '/ugreen/api/v1'
+const API_BASE = '/api/v1'
 
 // Gateway Token（从 localStorage 读取）
 function getToken() {
@@ -65,6 +65,13 @@ async function getProcessLogs(after = 0, limit = 100) {
  */
 async function clearProcessLogs() {
   return api('/process/logs/clear', { method: 'POST' })
+}
+
+/**
+ * 进程控制（start/stop/restart）
+ */
+async function controlProcess(action) {
+  return api(`/process/${action}`, { method: 'POST' })
 }
 
 /**
@@ -182,6 +189,7 @@ export {
   getProcessStatus,
   getProcessLogs,
   clearProcessLogs,
+  controlProcess,
   getProviders,
   getKnownProviders,
   updateProvider,
