@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getProviders, getDefaults, updateDefaults } from '../api'
+import TokenChart from '../components/TokenChart.vue'
 
 const providers = ref([])
 const defaults = ref({})
@@ -44,6 +45,9 @@ onMounted(fetchData)
         </span>
       </div>
     </div>
+
+    <!-- Token 统计图表 -->
+    <TokenChart :providers="providers" />
 
     <!-- 模型列表 -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

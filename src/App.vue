@@ -10,7 +10,22 @@ const currentTab = ref('dashboard')
 const gatewayStatus = ref('checking')
 const version = ref('')
 const uptime = ref('')
-const sidebarOpen = ref(true)
+const sidebarOpen = ref(window.innerWidth >= 768)
+const isMobile = ref(window.innerWidth < 768)
+
+function handleResize() {
+  isMobile.value = window.innerWidth < 768
+  if (!isMobile.value) sidebarOpen.value = true
+}
+
+function toggleSidebar() {
+  sidebarOpen.value = !sidebarOpen.value
+}
+
+function switchTab(id) {
+  currentTab.value = id
+  if (isMobile.value) sidebarOpen.value = false
+}
 
 const tabs = [
   { id: 'dashboard', name: '仪表盘', icon: '📊' },
@@ -39,14 +54,24 @@ let healthTimer
 onMounted(() => {
   checkHealth()
   healthTimer = setInterval(checkHealth, 30000)
+  window.addEventListener('resize', handleResize)
 })
-onUnmounted(() => clearInterval(healthTimer))
+onUnmounted(() => {
+  clearInterval(healthTimer)
+  window.removeEventListener('resize', handleResize)
+})
 </script>
 
 <template>
   <div class="flex h-screen bg-gray-50">
+    <!-- 移动端遮罩 -->
+    <div v-if="isMobile && sidebarOpen" class="fixed inset-0 bg-black/40 z-40" @click="sidebarOpen = false"></div>
+
     <!-- 侧边栏 -->
-    <aside class="w-60 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+    <aside class="bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-50 transition-transform duration-300"
+      :class="isMobile
+        ? (sidebarOpen ? 'fixed inset-y-0 left-0 w-64' : 'fixed inset-y-0 left-0 w-64 -translate-x-full')
+        : 'w-60'">
       <!-- Logo -->
       <div class="p-5 border-b border-gray-200">
         <div class="flex items-center gap-3">
@@ -63,7 +88,7 @@ onUnmounted(() => clearInterval(healthTimer))
         <button
           v-for="tab in tabs"
           :key="tab.id"
-          @click="currentTab = tab.id"
+          @click="switchTab(tab.id)"
           class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all"
           :class="currentTab === tab.id
             ? 'bg-blue-50 text-blue-600 font-semibold'
@@ -77,7 +102,7 @@ onUnmounted(() => clearInterval(healthTimer))
       <!-- 底部状态 -->
       <div class="p-4 border-t border-gray-200 space-y-3">
         <div class="flex items-center justify-between text-xs">
-          <span class="text-gray-400">Gateway</span>
+          <span class="text-gray-400">网关状态</span>
           <span class="flex items-center gap-1.5"
             :class="gatewayStatus === 'running' ? 'text-green-600' : 'text-red-500'">
             <span class="w-2 h-2 rounded-full"
@@ -94,10 +119,17 @@ onUnmounted(() => clearInterval(healthTimer))
 
     <!-- 主内容区 -->
     <main class="flex-1 overflow-y-auto">
-      <header class="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between sticky top-0 z-10">
-        <h2 class="text-base font-semibold text-gray-800">
-          {{ tabs.find(t => t.id === currentTab)?.name }}
-        </h2>
+      <header class="bg-white border-b border-gray-200 px-4 md:px-6 h-14 flex items-center justify-between sticky top-0 z-10">
+        <div class="flex items-center gap-3">
+          <button v-if="isMobile" @click="toggleSidebar" class="text-gray-600 hover:text-gray-800">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <h2 class="text-base font-semibold text-gray-800">
+            {{ tabs.find(t => t.id === currentTab)?.name }}
+          </h2>
+        </div>
         <div class="flex items-center gap-3">
           <span class="text-xs text-gray-400">ClawDash v0.1.0</span>
           <a href="https://github.com/Kkwans/ClawDash" target="_blank"
@@ -109,7 +141,7 @@ onUnmounted(() => clearInterval(healthTimer))
         </div>
       </header>
 
-      <div class="p-6">
+      <div class="p-4 md:p-6">
         <component :is="currentComponent" />
       </div>
     </main>
