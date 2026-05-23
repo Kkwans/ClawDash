@@ -8,10 +8,18 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     proxy: {
-      '/api': 'http://192.168.5.110:19001',
-      '/ws': {
-        target: 'ws://192.168.5.110:19001',
-        ws: true
+      '/healthz': 'http://192.168.5.110:19001',
+      '/ugreen': {
+        target: 'http://192.168.5.110:18799',
+        changeOrigin: true
+      },
+      '/builtin': {
+        target: 'http://192.168.5.110:19001',
+        changeOrigin: true
+      },
+      '/assets': {
+        target: 'http://192.168.5.110:19001',
+        changeOrigin: true
       }
     }
   },
