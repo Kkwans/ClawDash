@@ -1,0 +1,2347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenClaw 智能体控制台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+[v-cloak]{display:none!important}
+:root{
+  --bg:#f5f7fb;--card:#fff;--border:#e8ecf1;--text:#1e293b;--text2:#64748b;--text3:#94a3b8;
+  --primary:#2563eb;--primary-light:#eff6ff;--primary-hover:#1d4ed8;
+  --danger:#ef4444;--success:#10b981;--warning:#f59e0b;--purple:#8b5cf6;--cyan:#06b6d4;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08);
+  --sidebar-w:240px
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+background:var(--bg);color:var(--text);line-height:1.6;font-size:14px}
+
+/* Login */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
+.login-box{background:var(--card);border-radius:16px;padding:48px 40px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.login-logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:32px}
+.login-logo svg{flex-shrink:0}
+.login-logo-text{font-size:22px;font-weight:700;color:var(--text)}
+.login-subtitle{text-align:center;color:var(--text2);font-size:13px;margin-top:-20px;margin-bottom:24px}
+
+/* Layout */
+.app-layout{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{width:var(--sidebar-w);background:var(--card);border-right:1px solid var(--border);
+display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;z-index:50}
+.sidebar-logo{padding:20px 20px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.sidebar-logo svg{flex-shrink:0}
+.sidebar-logo-text .title{font-size:16px;font-weight:700;color:var(--text)}
+.sidebar-logo-text .subtitle{font-size:11px;color:var(--text3);margin-top:-2px}
+.sidebar-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:2px}
+.sidebar-nav button{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;
+border:none;background:none;border-radius:8px;font-size:14px;color:var(--text2);
+cursor:pointer;transition:all .15s;text-align:left}
+.sidebar-nav button:hover{background:var(--bg);color:var(--text)}
+.sidebar-nav button.active{background:var(--primary-light);color:var(--primary);font-weight:600}
+.sidebar-nav button.active svg{color:var(--primary)}
+.sidebar-nav button svg{color:var(--text3);flex-shrink:0;transition:color .15s}
+.sidebar-nav button:hover svg{color:var(--text2)}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
+.sidebar-status{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sidebar-status .label{font-size:12px;color:var(--text3)}
+.sidebar-status .val{font-size:13px;font-weight:600}
+.sidebar-status .val.running{color:var(--success)}
+.sidebar-status .val.stopped{color:var(--danger)}
+.sidebar-actions{display:flex;gap:6px;align-items:center}
+.sidebar-actions .btn{flex:1}
+.sidebar-action-switch-enter-active,.sidebar-action-switch-leave-active{transition:opacity .28s cubic-bezier(.22,1,.36,1),transform .32s cubic-bezier(.22,1,.36,1)}
+.sidebar-action-switch-enter-from,.sidebar-action-switch-leave-to{opacity:0;transform:translateY(7px) scale(.965)}
+
+/* Main */
+.main-area{flex:1;margin-left:var(--sidebar-w);display:flex;flex-direction:column;min-height:100vh}
+.main-header{background:var(--card);border-bottom:1px solid var(--border);padding:0 32px;
+height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.main-header h2{font-size:18px;font-weight:700}
+.header-right{display:flex;align-items:center;gap:16px}
+.header-badge{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;
+font-size:12px;font-weight:600;border:1px solid var(--border)}
+.header-badge .dot{width:8px;height:8px;border-radius:50%}
+.header-badge .dot.online{background:var(--success)}
+.header-badge .dot.offline{background:var(--danger)}
+.header-icon-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);
+background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;
+color:var(--text2);transition:.15s}
+.header-icon-btn:hover{background:var(--bg);color:var(--text)}
+.main-content{flex:1;padding:24px 32px;overflow-y:auto}
+
+/* Overview */
+.status-banner{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+padding:28px 32px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;
+border-left:4px solid var(--success)}
+.status-banner.stopped{border-left-color:var(--danger)}
+.status-banner-left{display:flex;align-items:flex-start;gap:16px}
+.status-indicator{width:12px;height:12px;border-radius:50%;background:var(--success);margin-top:6px;flex-shrink:0}
+.status-indicator.stopped{background:var(--danger)}
+.status-banner-info h3{font-size:18px;font-weight:700;margin-bottom:4px}
+.status-banner-info p{color:var(--text2);font-size:13px;line-height:1.6}
+.status-banner-right .btn{white-space:nowrap}
+
+.resource-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:20px}
+.resource-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+padding:20px;display:flex;align-items:center;gap:16px}
+.resource-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;
+justify-content:center;flex-shrink:0}
+.resource-icon.blue{background:#dbeafe;color:#2563eb}
+.resource-icon.purple{background:#ede9fe;color:#7c3aed}
+.resource-icon.green{background:#d1fae5;color:#059669}
+.resource-icon.orange{background:#ffedd5;color:#ea580c}
+.resource-info .label{font-size:12px;color:var(--text2);margin-bottom:2px}
+.resource-info .val{font-size:22px;font-weight:700;color:var(--text);line-height:1.2}
+.resource-info .unit{font-size:13px;font-weight:400;color:var(--text2)}
+
+.info-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px}
+.info-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.info-card-header h4{font-size:15px;font-weight:700}
+.info-card-header .badge{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.5px}
+.info-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;
+border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-row .info-label{font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px}
+.info-row .info-label svg{color:var(--text3)}
+.info-row .info-value{font-size:13px;font-weight:500;font-family:'SF Mono',Monaco,'Cascadia Code',monospace}
+/* Cards & Tables */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:16px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.card-header h3{font-size:16px;font-weight:700}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+th{background:var(--bg);font-weight:600;color:var(--text2);font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+/* 渠道表格：三等分 + 每列内容靠左 */
+.table-channels{
+  width:100%;
+  table-layout:fixed;
+  border-collapse:separate;
+  border-spacing:0;
+}
+
+.table-channels thead th{
+  background:var(--bg);
+  height:44px;
+  text-align:left;
+}
+
+.table-channels tbody td{
+  height:60px;
+  vertical-align:middle;
+  text-align:left;
+}
+
+.table-channels th,
+.table-channels td{
+  padding:12px 20px;
+}
+
+.table-channels tbody tr:hover{
+  background:#fafcff;
+}
+
+/* 第一列：渠道 */
+.channel-name{
+  display:flex;
+  justify-content:flex-start;
+  align-items:center;
+  min-width:0;
+  width:100%;
+}
+
+.channel-name strong{
+  font-size:13px;
+  font-weight:600;
+  color:var(--text);
+  text-align:left;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* 第二列：操作 */
+.channel-actions{
+  display:flex;
+  justify-content:flex-start;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  flex-wrap:wrap;
+}
+
+.channel-actions .btn{
+  min-width:56px;
+  justify-content:center;
+}
+.empty{text-align:center;padding:40px;color:var(--text2)}
+
+/* Buttons */
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;
+font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:6px;line-height:1.4}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-hover)}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#dc2626}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{background:var(--bg)}.btn-sm{padding:5px 10px;font-size:12px}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{background:#059669}
+.btn-lg{padding:10px 24px;font-size:14px;border-radius:10px}
+.btn[aria-disabled="true"]{opacity:.45;cursor:not-allowed;pointer-events:none}
+.refresh-btn{
+  position:relative;
+  transition:opacity .28s cubic-bezier(.22,1,.36,1),transform .32s cubic-bezier(.22,1,.36,1),background-color .28s cubic-bezier(.22,1,.36,1),border-color .28s cubic-bezier(.22,1,.36,1),color .28s cubic-bezier(.22,1,.36,1);
+}
+.refresh-btn.refresh-btn-fixed{
+  min-width:124px;
+  justify-content:center;
+}
+.refresh-btn .refresh-icon{
+  flex-shrink:0;
+  transition:color .28s cubic-bezier(.22,1,.36,1);
+}
+.refresh-btn .refresh-text{
+  display:inline-block;
+  width:4.6em;
+  text-align:left;
+}
+.refresh-btn.is-loading{
+  border-color:#bfdbfe;
+  background:#eff6ff;
+  color:var(--primary);
+}
+.refresh-btn.is-loading .refresh-icon{
+  color:var(--primary);
+}
+.refresh-btn.is-loading .refresh-icon.icon-spin{animation:spin 1s linear infinite}
+
+/* Tags */
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.tag-green{background:#d1fae5;color:#065f46}.tag-red{background:#fee2e2;color:#991b1b}
+.tag-blue{background:#dbeafe;color:#1e40af}.tag-gray{background:#f3f4f6;color:#4b5563}
+
+/* Forms */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:4px;color:var(--text2)}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;
+border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none;transition:.2s;
+background:var(--card);color:var(--text)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{
+border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.form-group textarea{min-height:80px;resize:vertical;font-family:'SF Mono',Monaco,monospace;font-size:12px}
+.form-row{display:flex;gap:12px}.form-row .form-group{flex:1}
+.form-check{display:flex;align-items:center;gap:8px;padding:8px 0}
+.form-check input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary)}
+.form-check label{font-size:13px;margin-bottom:0;cursor:pointer}
+
+/* Channel modal: larger dropdown + pop animation */
+.channel-type-select{
+  min-height:46px;
+  padding:11px 14px;
+  font-size:15px;
+  font-weight:500;
+}
+.channel-type-select-pop{
+  animation:channelSelectPop .26s cubic-bezier(.22,1,.36,1);
+}
+@keyframes channelSelectPop{
+  from{opacity:0;transform:translateY(-6px) scale(.985)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+/* Modals */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;
+align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(2px)}
+.modal{background:var(--card);border-radius:16px;width:560px;max-height:85vh;
+overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;
+justify-content:space-between;align-items:center}
+.modal-header h3{font-size:16px;font-weight:700}
+.modal-body{padding:24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;
+justify-content:flex-end;gap:8px}
+.modal-sub-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;
+align-items:center;justify-content:center;z-index:150;backdrop-filter:blur(2px)}
+.modal-sub{background:var(--card);border-radius:16px;width:480px;max-height:80vh;
+overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.close-btn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);
+padding:4px 8px;line-height:1;border-radius:6px;transition:.15s}
+.close-btn:hover{color:var(--text);background:var(--bg)}
+.close-btn:disabled{opacity:.45;cursor:not-allowed;background:transparent;color:var(--text3)}
+
+/* Model list */
+.model-list{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;padding:2px}
+.model-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;
+background:var(--bg);border-radius:8px;border:1px solid var(--border);transition:.15s}
+.model-item:hover{border-color:var(--primary);box-shadow:0 0 0 2px rgba(37,99,235,.08)}
+.model-item-info{flex:1;min-width:0}
+.model-item-id{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.model-item-meta{font-size:11px;color:var(--text2);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
+.model-item-meta span{white-space:nowrap}
+.model-item .actions{flex-shrink:0;margin-left:8px}
+
+/* Toast */
+.toast{position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:10px;color:#fff;
+font-size:13px;font-weight:500;z-index:200;animation:slideIn .3s;box-shadow:var(--shadow-md)}
+.toast.success{background:var(--success)}.toast.error{background:var(--danger)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* Utilities */
+.actions{display:flex;gap:6px}
+td.actions{display:table-cell;text-align:right}
+td.actions .btn{margin-left:6px}
+td.actions .btn:first-child{margin-left:0}
+.flex-center{display:flex;align-items:center;gap:8px}
+.text-sm{font-size:13px}
+.text-mono{font-family:'SF Mono',Monaco,monospace;font-size:12px}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.status-dot.running{background:var(--success)}.status-dot.stopped{background:var(--danger)}
+
+/* Log Viewer */
+.log-toolbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;
+background:#1e1e2e;border-bottom:1px solid #313244;color:#cdd6f4}
+.log-toolbar-left{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.log-toolbar-left svg{color:#89b4fa}
+.log-count{font-size:11px;color:#6c7086;font-weight:400;margin-left:4px}
+.log-toolbar-right{display:flex;align-items:center;gap:8px}
+.log-toolbar-right .btn{background:#313244;border-color:#45475a;color:#cdd6f4;font-size:11px}
+.log-toolbar-right .btn:hover{background:#45475a}
+.log-auto-scroll{display:flex;align-items:center;gap:4px;font-size:11px;color:#a6adc8;cursor:pointer}
+.log-auto-scroll input{width:14px;height:14px;accent-color:#89b4fa}
+.log-viewer{background:#1e1e2e;color:#cdd6f4;font-family:'SF Mono',Monaco,'Cascadia Code','Fira Code',monospace;
+font-size:12px;line-height:1.7;padding:8px 0;height:480px;overflow-y:auto;overflow-x:hidden}
+.log-viewer::-webkit-scrollbar{width:6px}
+.log-viewer::-webkit-scrollbar-track{background:#1e1e2e}
+.log-viewer::-webkit-scrollbar-thumb{background:#45475a;border-radius:3px}
+.log-viewer::-webkit-scrollbar-thumb:hover{background:#585b70}
+.log-empty{padding:40px;text-align:center;color:#6c7086;font-style:italic}
+.log-line{padding:1px 16px;display:flex;gap:12px;white-space:pre-wrap;word-break:break-all}
+.log-line:hover{background:#181825}
+.log-ts{color:#6c7086;flex-shrink:0;user-select:none}
+.log-text{flex:1;min-width:0}
+.log-stderr .log-text{color:#f38ba8}
+.log-stderr .log-ts{color:#7f4059}
+.log-system{background:#181825}
+.log-system .log-text{color:#89b4fa;font-style:italic}
+.log-system .log-ts{color:#45475a}
+
+/* Plugin Cards */
+.plugin-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+  gap:16px;
+}
+
+.plugin-card{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  padding:16px 20px;
+  min-height:78px;
+  background:var(--bg);
+  border-radius:10px;
+  border:1px solid var(--border);
+  transition:.15s;
+}
+
+.plugin-card:hover{border-color:var(--primary);box-shadow:0 0 0 2px rgba(37,99,235,.06)}
+.plugin-card-icon{width:40px;height:40px;border-radius:10px;background:var(--card);
+display:flex;align-items:center;justify-content:center;flex-shrink:0;
+border:1px solid var(--border);color:var(--text2)}
+.plugin-card-body{flex:1;min-width:0}
+.plugin-card-name{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.plugin-card-meta{font-size:12px;color:var(--text3);margin-top:2px}
+.plugin-card-action{
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Install Phases */
+.install-phase{padding:24px}
+.install-phase-installing{text-align:center;padding:40px 24px}
+.install-phase-installing .spinner-lg{width:40px;height:40px;margin:0 auto 16px;
+border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+
+.install-term{border-top:1px solid var(--border)}
+.install-term-toggle{display:flex;align-items:center;gap:8px;padding:10px 16px;
+cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);user-select:none;transition:.15s}
+.install-term-toggle:hover{background:var(--bg)}
+.install-term-toggle .term-count{color:var(--text3);font-weight:400;margin-left:auto;margin-right:4px}
+.install-term-toggle .chevron{transition:transform .2s;color:var(--text3)}
+.install-term-toggle .chevron.open{transform:rotate(180deg)}
+.install-term-body{background:#1e1e2e;max-height:260px;overflow-y:auto;padding:12px 16px;
+font-family:'SF Mono',Monaco,'Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.7;color:#cdd6f4}
+.install-term-body::-webkit-scrollbar{width:6px}
+.install-term-body::-webkit-scrollbar-track{background:#1e1e2e}
+.install-term-body::-webkit-scrollbar-thumb{background:#45475a;border-radius:3px}
+.install-term-line{white-space:pre-wrap;word-break:break-all}
+
+.qr-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.qr-header h3{font-size:18px;font-weight:700;margin:0}
+.qr-subtitle{color:var(--text2);font-size:13px;margin-bottom:4px}
+.qr-timer{font-size:12px;color:var(--text3);margin-bottom:16px}
+.qr-timer .countdown{font-variant-numeric:tabular-nums}
+.qr-content{display:flex;gap:24px;background:var(--bg);border-radius:12px;padding:20px}
+.qr-image{flex-shrink:0;display:flex;align-items:center;justify-content:center;
+width:200px;height:200px;background:var(--card);border-radius:8px;border:1px solid var(--border)}
+.qr-image img{border-radius:4px;display:block}
+.qr-instructions{flex:1;min-width:0}
+.qr-instructions h4{font-size:14px;font-weight:600;margin-bottom:12px}
+.qr-instructions ol{padding-left:20px;font-size:13px;color:var(--text2);line-height:2}
+.qr-hint{font-size:12px;color:var(--text3);margin-top:16px}
+.qr-link{font-size:13px;color:var(--primary);text-decoration:none;font-weight:500;
+margin-top:8px;display:inline-block}
+.qr-link:hover{text-decoration:underline}
+.qr-expired-overlay{position:absolute;inset:0;background:rgba(255,255,255,.85);
+display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px}
+.qr-expired-overlay span{font-size:12px;color:var(--text2);margin-top:4px}
+
+.install-phase-success{text-align:center;padding:48px 24px}
+.install-phase-success .success-icon{width:64px;height:64px;margin:0 auto 16px;
+border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center}
+.install-phase-success h3{font-size:18px;font-weight:700;margin-bottom:8px;color:var(--text)}
+.install-phase-success p{color:var(--text2);font-size:13px}
+
+.install-phase-error{text-align:center;padding:48px 24px}
+.install-phase-error .error-icon{width:64px;height:64px;margin:0 auto 16px;
+border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center}
+.install-phase-error h3{font-size:18px;font-weight:700;margin-bottom:8px;color:var(--danger)}
+.install-phase-error p{color:var(--text2);font-size:13px;word-break:break-all}
+
+.spinner-sm{display:inline-block;width:16px;height:16px;border:2px solid var(--border);
+border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+.icon-spin{animation:spin 1s linear infinite}
+
+.restart-notice{display:flex;align-items:center;gap:10px;padding:12px 14px;
+background:var(--primary-light);border:1px solid #bfdbfe;border-radius:10px;
+color:#1e40af;font-size:13px;margin-bottom:12px}
+.restart-notice strong{font-weight:700}
+.channels-block-wrap{position:relative}
+.channels-block-content{transition:filter .2s ease,opacity .2s ease}
+.channels-block-wrap.blocked .channels-block-content{
+  filter:blur(2px);
+  opacity:.65;
+  pointer-events:none;
+  user-select:none;
+}
+.channels-block-mask{
+  position:absolute;
+  inset:0;
+  border-radius:12px;
+  background:rgba(255,255,255,.25);
+  cursor:not-allowed;
+  z-index:2;
+}
+
+.app-task-mask{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.18);
+  backdrop-filter:blur(1px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:90;
+}
+
+.app-task-mask-content{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:rgba(255,255,255,.96);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 14px;
+  color:var(--text);
+  font-size:13px;
+  font-weight:600;
+  box-shadow:var(--shadow-md);
+}
+
+.app-restart-mask{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.26);
+  backdrop-filter:blur(2px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:180;
+}
+
+.app-restart-mask-content{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:rgba(255,255,255,.98);
+  border:1px solid #bfdbfe;
+  border-radius:12px;
+  padding:12px 16px;
+  color:#1e40af;
+  font-size:13px;
+  font-weight:700;
+  box-shadow:var(--shadow-md);
+}
+
+@media(max-width:1024px){
+  .resource-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main-area{margin-left:0}
+  .resource-grid{grid-template-columns:1fr}
+  .main-content{padding:16px}
+}
+.danger-toggle{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;background:transparent;user-select:none;transition:background .15s,color .15s}
+.danger-toggle:hover{background:#fafafa;color:var(--text1)}
+.danger-toggle .chevron{transition:transform .2s ease}
+.danger-toggle.open .chevron{transform:rotate(90deg)}
+.danger-toggle.open{color:var(--danger)}
+.danger-reveal{animation:dangerReveal .2s ease-out}
+@keyframes dangerReveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="app" v-cloak>
+  <!-- Login -->
+  <div v-if="!authenticated" class="login-wrap">
+    <div class="login-box">
+      <div class="login-logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <rect width="40" height="40" rx="12" fill="url(#lg)"/>
+          <defs><linearGradient id="lg" x1="0" y1="0" x2="40" y2="40"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs>
+          <path d="M14 20a6 6 0 0112 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <circle cx="14" cy="20" r="2" fill="#fff"/><circle cx="26" cy="20" r="2" fill="#fff"/><circle cx="20" cy="14" r="2" fill="#fff"/>
+        </svg>
+        <span class="login-logo-text">OpenClaw</span>
+      </div>
+      <p class="login-subtitle">智能体控制台</p>
+      <div class="form-group">
+        <label>网关令牌</label>
+        <input type="password" v-model="tokenInput" @keyup.enter="doLogin" placeholder="请输入 Gateway Token">
+      </div>
+      <button class="btn btn-primary btn-lg" style="width:100%" @click="doLogin">登录</button>
+      <p v-if="loginError" style="color:var(--danger);font-size:13px;margin-top:12px;text-align:center">{{loginError}}</p>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <template v-else>
+    <div class="app-layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-logo">
+          <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="12" fill="url(#slg)"/>
+            <defs><linearGradient id="slg" x1="0" y1="0" x2="40" y2="40"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs>
+            <path d="M14 20a6 6 0 0112 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="14" cy="20" r="2" fill="#fff"/><circle cx="26" cy="20" r="2" fill="#fff"/><circle cx="20" cy="14" r="2" fill="#fff"/>
+          </svg>
+          <div class="sidebar-logo-text">
+            <div class="title">OpenClaw</div>
+            <div class="subtitle">智能体控制台</div>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <button :class="{active:tab==='overview'}" @click="tab='overview'">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            概览
+          </button>
+          <button :class="{active:tab==='providers'}" @click="tab='providers'">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            模型配置
+          </button>
+          <button :class="{active:tab==='channels'}" @click="tab='channels'">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            消息渠道
+          </button>
+          <button :class="{active:tab==='process'}" @click="tab='process'">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            运行日志
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="sidebar-actions">
+            <transition name="sidebar-action-switch" mode="out-in">
+              <button class="btn btn-outline btn-sm" key="stop" v-if="processStatus.state==='running'" @click="processAction('stop')" :disabled="restartPending||processActionLoading">
+                <span v-if="processActionLoading&&processActionType==='stop'" class="spinner-sm" style="width:14px;height:14px;border-width:2px"></span>
+                <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+                {{processActionLoading&&processActionType==='stop'?'停止中…':'停止'}}
+              </button>
+              <button class="btn btn-success btn-sm" key="start" v-else @click="processAction('start')" :disabled="restartPending||processActionLoading">
+                <span v-if="processActionLoading&&processActionType==='start'" class="spinner-sm" style="width:14px;height:14px;border-width:2px"></span>
+                <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>
+                {{processActionLoading&&processActionType==='start'?'启动中…':'启动'}}
+              </button>
+            </transition>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Area -->
+      <div class="main-area">
+        <header class="main-header">
+          <h2>{{pageTitle}}</h2>
+          <div class="header-right">
+            <a class="btn btn-primary btn-sm" :href="'/chat?token='+encodeURIComponent(token)" target="_blank" style="text-decoration:none" :aria-disabled="restartPending?'true':'false'" :tabindex="restartPending?-1:0" @click="restartPending&&$event.preventDefault()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              打开 OpenClaw
+            </a>
+            <div class="header-badge">
+              <span class="dot" :class="processStatus.state==='running'?'online':'offline'"></span>
+              {{restartPending?'OpenClaw 重启中…':(processStatus.state==='running'?'OpenClaw 运行中':'OpenClaw 已停止')}}
+            </div>
+            <button class="header-icon-btn" @click="doLogout" title="退出登录">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="main-content">
+          <!-- Overview Tab -->
+          <div v-if="tab==='overview'">
+            <div class="status-banner" :class="{stopped:processStatus.state!=='running'}">
+              <div class="status-banner-left">
+                <div class="status-indicator" :class="{stopped:processStatus.state!=='running'}"></div>
+                <div class="status-banner-info">
+                  <h3>{{processStatus.state==='running'?'服务运行中':'服务已停止'}}</h3>
+                  <p>OpenClaw 是一个兼容 OpenAI API 的智能体网关，支持多模型接入与多渠道消息分发。</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="resource-grid">
+              <div class="resource-card">
+                <div class="resource-icon blue">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="2" x2="9" y2="4"/><line x1="15" y1="2" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="22"/><line x1="15" y1="20" x2="15" y2="22"/><line x1="20" y1="9" x2="22" y2="9"/><line x1="20" y1="15" x2="22" y2="15"/><line x1="2" y1="9" x2="4" y2="9"/><line x1="2" y1="15" x2="4" y2="15"/></svg>
+                </div>
+                <div class="resource-info">
+                  <div class="label">CPU 使用率</div>
+                  <div class="val">{{processStatus.cpuPercent?.toFixed(1)||'0.0'}}<span class="unit">%</span></div>
+                </div>
+              </div>
+              <div class="resource-card">
+                <div class="resource-icon purple">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19v-8a6 6 0 0112 0v8"/><line x1="2" y1="19" x2="22" y2="19"/></svg>
+                </div>
+                <div class="resource-info">
+                  <div class="label">内存占用</div>
+                  <div class="val">{{formatBytes(processStatus.memoryRss||0)}}</div>
+                </div>
+              </div>
+              <div class="resource-card">
+                <div class="resource-icon green">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div class="resource-info">
+                  <div class="label">运行时间</div>
+                  <div class="val">{{formatUptime(processStatus.uptimeSeconds||0)}}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-card-header">
+                <h4>容器配置</h4>
+                <span class="badge">DOCKER SPECS</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a4 4 0 00-8 0v2"/></svg>
+                  进程 PID
+                </span>
+                <span class="info-value">{{processStatus.pid||'-'}}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 16V7a2 2 0 00-2-2H6a2 2 0 00-2 2v9m16 0H4m16 0l1.28 2.55a1 1 0 01-.9 1.45H3.62a1 1 0 01-.9-1.45L4 16"/></svg>
+                  网关端口
+                </span>
+                <span class="info-value">18799</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                  虚拟内存
+                </span>
+                <span class="info-value">{{formatBytes(processStatus.memoryVms||0)}}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  进程状态
+                </span>
+                <span class="info-value">
+                  <span v-if="processStatus.state==='running'" class="tag tag-green">运行中</span>
+                  <span v-else class="tag tag-red">已停止</span>
+                </span>
+              </div>
+            </div>
+
+            <div style="margin-top:16px">
+              <div class="danger-toggle" :class="{open:showDangerZone}" @click="showDangerZone=!showDangerZone">
+                <span style="display:inline-flex;align-items:center;gap:8px">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  高级 · 危险操作
+                </span>
+                <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+              <div v-if="showDangerZone" class="info-card danger-reveal" style="margin-top:8px;border:1px solid #fecdd3;background:linear-gradient(180deg,#fff 0%,#fffbfb 100%)">
+                <div class="info-card-header">
+                  <h4>恢复出厂配置</h4>
+                  <span class="badge" style="color:var(--danger)">危险</span>
+                </div>
+                <p style="font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:14px">
+                  所有配置都将恢复为出厂初始状态（包括模型提供商、默认模型、渠道与插件等）。操作不可撤销。
+                </p>
+                <button type="button" class="btn btn-danger btn-sm" @click="showResetConfirmModal=true">恢复出厂配置…</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Providers Tab -->
+          <div v-if="tab==='providers'">
+            <div class="card">
+              <div class="card-header">
+                <h3>模型提供商</h3>
+                <button class="btn btn-primary" @click="openProviderModal()">添加提供商</button>
+              </div>
+              <table v-if="Object.keys(providers).length">
+                <colgroup><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+                <thead><tr><th>ID</th><th>Base URL</th><th>协议</th><th>模型数</th><th>操作</th></tr></thead>
+                <tbody>
+                  <tr v-for="(p,id) in providers" :key="id">
+                    <td><strong>{{id}}</strong></td>
+                    <td>{{p.baseUrl||'-'}}</td>
+                    <td><span class="tag tag-blue">{{p.api||'openai-completions'}}</span></td>
+                    <td>{{(p.models||[]).length}}</td>
+                    <td>
+                      <div class="channel-actions">
+                        <button class="btn btn-outline btn-sm" @click="openProviderModal(id,p)">编辑</button>
+                        <button class="btn btn-danger btn-sm" @click="deleteProvider(id)">删除</button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div v-else class="empty">暂无模型提供商，点击上方按钮添加</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><h3>默认模型</h3></div>
+              <div class="form-group">
+                <label>主模型 (agents.defaults.model.primary)</label>
+                <div class="flex-center">
+                  <select v-model="defaultModel" style="flex:1">
+                    <option value="">-- 请选择模型 --</option>
+                    <option v-for="m in allModelOptions" :key="m.value" :value="m.value">{{m.label}}</option>
+                  </select>
+                  <button class="btn btn-primary btn-sm" @click="saveDefaultModel">保存</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Channels Tab -->
+          <div v-if="tab==='channels'">
+            <div v-if="restartPending" class="restart-notice">
+              <span class="spinner-sm" style="width:14px;height:14px;border-width:2px"></span>
+              <span><strong>OpenClaw 正在重启</strong> · {{restartReason||'配置已更新，正在应用变更'}}，请稍候…</span>
+            </div>
+
+            <div class="channels-block-wrap" :class="{blocked:restartPending}">
+              <div class="channels-block-content">
+                <!-- Plugin Status Section -->
+                <div class="card" style="margin-bottom:16px">
+                  <div class="card-header">
+                    <h3 style="display:flex;align-items:center;gap:8px">
+                      插件状态
+                      <span class="tag tag-gray">{{plugins.length}}</span>
+                    </h3>
+                    <button class="btn btn-outline btn-sm refresh-btn refresh-btn-fixed" @click="refreshPluginsWithFeedback" :class="{'is-loading':pluginRefreshLoading}" :disabled="restartPending||pluginTaskBusy">
+                      <svg class="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{'icon-spin':pluginRefreshLoading}"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                      <span class="refresh-text">{{pluginRefreshLoading?'刷新中':'刷新状态'}}</span>
+                    </button>
+                  </div>
+                  <div class="plugin-grid">
+                    <div v-for="p in plugins" :key="p.id" class="plugin-card">
+                      <div class="plugin-card-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                      </div>
+                      <div class="plugin-card-body">
+                        <div class="plugin-card-name">
+                          {{p.name}}
+                          <span v-if="p.status==='enabled'&&p.configured" class="tag tag-green">已就绪</span>
+                          <span v-else-if="p.status==='enabled'" class="tag tag-green">已启用</span>
+                          <span v-else-if="p.status==='disabled'" class="tag tag-gray">已停用</span>
+                          <span v-else-if="p.status==='abnormal'" class="tag tag-red">异常</span>
+                          <span v-else class="tag tag-gray">未安装</span>
+                        </div>
+                        <div class="plugin-card-meta">
+                          <span v-if="p.type==='builtin'">内置插件</span>
+                          <span v-else>外置插件</span>
+                        </div>
+                      </div>
+                      <div class="plugin-card-action" style="display:flex;align-items:center;gap:6px">
+                        <template v-if="p.type==='builtin'">
+                          <span class="tag tag-blue" style="font-size:11px">内置</span>
+                          <button v-if="p.status==='enabled'" class="btn btn-outline btn-sm" @click="togglePlugin(p,'disable')" :disabled="pluginTaskBusy||restartPending">停用</button>
+                          <button v-else class="btn btn-success btn-sm" @click="togglePlugin(p,'enable')" :disabled="pluginTaskBusy||restartPending">启用</button>
+                        </template>
+                        <template v-else>
+                          <template v-if="p.status==='abnormal'">
+                            <span class="text-muted" style="font-size:12px;max-width:200px">无法通过 openclaw 获取插件列表，请确认网关已启动或重启网关后再试</span>
+                          </template>
+                          <template v-else-if="p.status==='not_installed'">
+                            <button class="btn btn-primary btn-sm" @click="startPluginInstall(p)" :disabled="pluginTaskBusy||restartPending">安装</button>
+                          </template>
+                          <template v-else>
+                            <button v-if="p.id==='wechat' && p.status!=='not_installed' && p.status!=='abnormal'"
+                              class="btn btn-primary btn-sm" @click="startWeixinChannelLogin(p)" :disabled="pluginTaskBusy||restartPending">扫码</button>
+                            <button v-if="p.status==='enabled'" class="btn btn-outline btn-sm" @click="togglePlugin(p,'disable')" :disabled="pluginTaskBusy||restartPending">停用</button>
+                            <button v-else class="btn btn-success btn-sm" @click="togglePlugin(p,'enable')" :disabled="pluginTaskBusy||restartPending">启用</button>
+                            <button class="btn btn-danger btn-sm" @click="uninstallPlugin(p)" :disabled="pluginTaskBusy||restartPending">
+                              <span v-if="uninstallingPluginId===p.id" class="spinner-sm" style="width:14px;height:14px;border-width:2px;flex-shrink:0"></span>
+                              {{uninstallingPluginId===p.id?'卸载中…':'卸载'}}
+                            </button>
+                          </template>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="card-header">
+                    <h3>渠道配置</h3>
+                    <button class="btn btn-primary" @click="openChannelModal()" :disabled="restartPending">{{restartPending?'重启中…':'添加渠道'}}</button>
+                  </div>
+                  <table v-if="Object.keys(channels).length" class="table-channels">
+                    <colgroup>
+                      <col style="width:60%">
+                      <col style="width:40%">
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th>渠道</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(ch,id) in channels" :key="id">
+                        <td>
+                          <div class="channel-name">
+                            <strong>{{channelTableDisplayName(id)}}</strong>
+                          </div>
+                        </td>
+                        <td>
+                          <div class="channel-actions">
+                            <button class="btn btn-outline btn-sm" @click="openChannelModal(id,ch)" :disabled="restartPending">编辑</button>
+                            <button class="btn btn-danger btn-sm" @click="deleteChannel(id)" :disabled="restartPending">删除</button>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div v-else class="empty">暂无渠道配置，点击上方按钮添加</div>
+                </div>
+              </div>
+              <div v-if="restartPending" class="channels-block-mask"></div>
+            </div>
+          </div>
+
+          <!-- Process Tab -->
+          <div v-if="tab==='process'">
+            <div class="card" style="padding:0;overflow:hidden">
+              <div class="log-toolbar">
+                <div class="log-toolbar-left">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                  <span>运行日志</span>
+                  <span class="log-count">{{logLines.length}} 行</span>
+                </div>
+                <div class="log-toolbar-right">
+                  <label class="log-auto-scroll">
+                    <input type="checkbox" v-model="logAutoScroll">
+                    <span>自动滚动</span>
+                  </label>
+                  <button class="btn btn-outline btn-sm" @click="clearLogs">清空</button>
+                </div>
+              </div>
+              <div class="log-viewer" id="log-container">
+                <div v-if="!logLines.length" class="log-empty">等待日志输出...</div>
+                <div v-for="line in logLines" :key="line.seq" class="log-line" :class="{'log-stderr':line.stream==='stderr','log-system':line.stream==='system'}">
+                  <span class="log-ts">{{line.ts.substring(11)}}</span>
+                  <span class="log-text">{{line.text}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="pluginBlockingBusy" class="app-task-mask" aria-live="polite" aria-busy="true">
+      <div class="app-task-mask-content">
+        <span class="spinner-sm" style="width:14px;height:14px;border-width:2px"></span>
+        <span>插件任务执行中，请稍候…</span>
+      </div>
+    </div>
+
+    <div v-if="restartPending" class="app-restart-mask" aria-live="polite" aria-busy="true">
+      <div class="app-restart-mask-content">
+        <span class="spinner-sm" style="width:14px;height:14px;border-width:2px"></span>
+        <span>OpenClaw 重启中，页面操作已暂时锁定…</span>
+      </div>
+    </div>
+
+    <!-- Provider Modal -->
+    <div
+      v-if="showProviderModal"
+      class="modal-overlay"
+      @pointerdown.self="beginOverlayClose('provider')"
+      @pointerup.self="endOverlayClose('provider',()=>showProviderModal=false)"
+      @pointercancel.self="cancelOverlayClose('provider')"
+      @pointerleave.self="cancelOverlayClose('provider')"
+    >
+      <div class="modal">
+        <div class="modal-header">
+          <h3>{{editingProviderId?'编辑':'添加'}}模型提供商</h3>
+          <button class="close-btn" @click="showProviderModal=false">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group" v-if="!editingProviderId">
+            <label>快速选择</label>
+            <select v-model="selectedKnownProvider" @change="applyKnownProvider">
+              <option value="">-- 手动配置 --</option>
+              <option v-for="kp in knownProvidersForDisplay" :key="kp.id" :value="kp.id">{{kp.name}}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>提供商 ID</label>
+            <input v-model="providerForm.id" :disabled="!!editingProviderId" placeholder="唯一标识，如 deepseek">
+          </div>
+          <div class="form-group">
+            <label>Base URL</label>
+            <input v-model="providerForm.baseUrl" placeholder="https://api.example.com/v1">
+          </div>
+          <div class="form-group">
+            <label>API 协议</label>
+            <select v-model="providerForm.api">
+              <option value="openai-completions">OpenAI Completions</option>
+              <option value="anthropic-messages">Anthropic Messages</option>
+              <option value="google-generative-ai">Google Generative AI</option>
+              <option value="ollama">Ollama</option>
+              <option value="openai-responses">OpenAI Responses</option>
+              <option value="bedrock-converse-stream">AWS Bedrock</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>API Key</label>
+            <input type="password" v-model="providerForm.apiKey" placeholder="sk-...">
+          </div>
+          <div class="form-group">
+            <label style="margin-bottom:8px">模型列表 ({{providerForm.models.length}} 个)</label>
+            <div class="model-list" v-if="providerForm.models.length">
+              <div class="model-item" v-for="(m,idx) in providerForm.models" :key="idx">
+                <div class="model-item-info">
+                  <div class="model-item-id">{{m.id}}</div>
+                  <div class="model-item-meta">
+                    <span v-if="m.name">{{m.name}}</span>
+                    <span v-if="m.contextWindow">ctx:{{m.contextWindow>=1000?(m.contextWindow/1000)+'k':m.contextWindow}}</span>
+                    <span v-if="m.maxTokens">max:{{m.maxTokens>=1000?(m.maxTokens/1000)+'k':m.maxTokens}}</span>
+                    <span v-if="m.reasoning" class="tag tag-blue" style="font-size:10px">推理</span>
+                  </div>
+                </div>
+                <div class="actions">
+                  <button class="btn btn-outline btn-sm" @click="openModelEdit(idx)">编辑</button>
+                  <button class="btn btn-danger btn-sm" @click="removeModel(idx)">删除</button>
+                </div>
+              </div>
+            </div>
+            <div v-else style="padding:16px;text-align:center;color:var(--text2);background:var(--bg);border-radius:8px;font-size:13px">暂无模型</div>
+            <button class="btn btn-outline btn-sm" style="margin-top:8px" @click="openModelEdit(-1)">+ 添加模型</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" @click="showProviderModal=false">取消</button>
+          <button class="btn btn-primary" @click="saveProvider">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Model Edit Sub-Modal -->
+    <div
+      v-if="showModelEditModal"
+      class="modal-sub-overlay"
+      @pointerdown.self="beginOverlayClose('modelEdit')"
+      @pointerup.self="endOverlayClose('modelEdit',()=>showModelEditModal=false)"
+      @pointercancel.self="cancelOverlayClose('modelEdit')"
+      @pointerleave.self="cancelOverlayClose('modelEdit')"
+    >
+      <div class="modal-sub">
+        <div class="modal-header">
+          <h3>{{editingModelIdx===-1?'添加':'编辑'}}模型</h3>
+          <button class="close-btn" @click="showModelEditModal=false">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>模型 ID</label>
+            <input v-model="modelEditForm.id" placeholder="例如: gpt-4o">
+          </div>
+          <div class="form-group">
+            <label>显示名称</label>
+            <input v-model="modelEditForm.name" placeholder="例如: GPT-4o">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>上下文窗口</label>
+              <input type="number" v-model.number="modelEditForm.contextWindow" placeholder="200000">
+            </div>
+            <div class="form-group">
+              <label>最大输出 Tokens</label>
+              <input type="number" v-model.number="modelEditForm.maxTokens" placeholder="8192">
+            </div>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" id="modelReasoning" v-model="modelEditForm.reasoning">
+            <label for="modelReasoning">推理模型</label>
+          </div>
+          <div class="form-group">
+            <label>输入类型</label>
+            <select v-model="modelEditForm.inputType">
+              <option value="text">仅文本</option>
+              <option value="text,image">文本 + 图片</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:8px">
+            <label>费用 (每百万 Token)</label>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>输入</label>
+              <input type="number" step="0.01" v-model.number="modelEditForm.costInput" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label>输出</label>
+              <input type="number" step="0.01" v-model.number="modelEditForm.costOutput" placeholder="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>缓存读取</label>
+              <input type="number" step="0.01" v-model.number="modelEditForm.costCacheRead" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label>缓存写入</label>
+              <input type="number" step="0.01" v-model.number="modelEditForm.costCacheWrite" placeholder="0">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" @click="showModelEditModal=false">取消</button>
+          <button class="btn btn-primary" @click="saveModelEdit">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Channel Modal -->
+    <div
+      v-if="showChannelModal"
+      class="modal-overlay"
+      @pointerdown.self="beginOverlayClose('channel')"
+      @pointerup.self="endOverlayClose('channel',()=>showChannelModal=false)"
+      @pointercancel.self="cancelOverlayClose('channel')"
+      @pointerleave.self="cancelOverlayClose('channel')"
+    >
+      <div class="modal">
+        <div class="modal-header">
+          <h3>{{editingChannelId?'编辑':'添加'}}渠道</h3>
+          <button class="close-btn" @click="showChannelModal=false">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group" v-if="!editingChannelId">
+            <label>渠道类型</label>
+            <template v-if="knownChannelsForAdd.length">
+              <select class="channel-type-select channel-type-select-pop" v-model="selectedKnownChannel" @change="applyKnownChannel">
+                <option value="">-- 选择渠道 --</option>
+                <option v-for="kc in knownChannelsForAdd" :key="kc.id" :value="kc.id">{{kc.name}}</option>
+              </select>
+            </template>
+            <p v-else style="margin:0;font-size:13px;color:var(--text2);line-height:1.5">暂无可用类型：请先在上方「插件状态」中启用对应插件，或先删除已添加的同类机器人。</p>
+          </div>
+          <div v-if="isWeixinScanChannel" style="background:var(--bg);border-radius:10px;padding:16px;margin-bottom:16px;font-size:13px;line-height:1.6;color:var(--text2)">
+            <p style="margin:0 0 8px;font-weight:600;color:var(--text)">微信渠道需扫码绑定</p>
+            <p style="margin:0 0 12px">点击下方按钮开始扫码登录，使用手机微信扫描弹出的二维码即可完成绑定。</p>
+            <p v-if="!wechatPluginReady" style="margin:0;color:var(--warning)">请先在上方「插件状态」中安装并启用微信插件，再点击下方按钮。</p>
+            <button v-else type="button" class="btn btn-primary btn-sm" style="margin-top:4px" @click="startWeixinChannelLoginFromChannelModal" :disabled="pluginInstallRunning">开始微信扫码登录</button>
+          </div>
+          <div class="form-group" v-if="editingChannelId||selectedKnownChannel">
+            <label>渠道 ID</label>
+            <input v-model="channelForm.id" :disabled="!!editingChannelId" placeholder="例如: telegram">
+          </div>
+          <template v-if="channelPluginFields.length">
+            <div class="form-group" v-for="f in channelPluginFields" :key="f.key">
+              <label>{{f.label}} <span style="color:var(--danger)">*</span></label>
+              <input :type="f.secret?'password':'text'" v-model="channelForm.pluginConfig[f.key]" :placeholder="f.placeholder||''" required>
+            </div>
+          </template>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" @click="showChannelModal=false">取消</button>
+          <button v-if="!(isWeixinScanChannel && !editingChannelId)" class="btn btn-primary" @click="saveChannel" :disabled="restartPending||(!editingChannelId&&!selectedKnownChannel)">{{restartPending?'重启中…':'保存'}}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Plugin Install Modal -->
+    <div v-if="showPluginInstallModal" class="modal-overlay">
+      <div class="modal" style="width:660px">
+        <div class="modal-header">
+          <h3>{{pluginModalMode==='weixin_login'?'微信扫码登录':'安装 '+installingPlugin.name}}</h3>
+          <button
+            class="close-btn"
+            @click="cancelPluginInstall"
+            :disabled="pluginInstallRunning||pluginModalMode==='weixin_login'"
+          >&times;</button>
+        </div>
+        <div class="modal-body" style="padding:0">
+
+          <!-- Phase: installing -->
+          <div v-if="installPhase==='installing'" class="install-phase install-phase-installing">
+            <div class="spinner-lg" role="status" aria-label="加载中"></div>
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px">{{pluginModalMode==='weixin_login'?'正在启动微信登录…':'正在安装 '+installingPlugin.name+' 插件…'}}</div>
+            <p v-if="pluginModalMode==='weixin_login'" style="margin:12px 0 0;font-size:12px;color:var(--text2);line-height:1.5;text-align:center;max-width:100%">
+              正在准备二维码，请稍候…
+            </p>
+            <div style="font-size:12px;color:var(--text3)">请勿关闭此窗口</div>
+          </div>
+
+          <!-- Phase: qrcode -->
+          <div v-if="installPhase==='qrcode'" class="install-phase">
+            <div class="qr-header">
+              <h3>{{installingPlugin.name}}</h3>
+              <span class="tag tag-green">等待扫码</span>
+            </div>
+            <p class="qr-subtitle">生成二维码后，用微信扫码并在手机上确认即可。</p>
+            <p class="qr-timer" v-if="qrcodeCountdown>0">
+              二维码将在 <strong class="countdown">{{formatCountdown(qrcodeCountdown)}}</strong> 后失效
+            </p>
+            <p class="qr-timer" v-if="qrcodeExpired" style="color:var(--warning)">
+              <span class="spinner-sm" style="width:14px;height:14px;border-width:2px;vertical-align:middle;margin-right:4px"></span>
+              二维码已过期，正在刷新…
+            </p>
+            <div class="qr-content">
+              <div class="qr-image" style="position:relative">
+                <img v-if="qrcodeDataUrl" :src="qrcodeDataUrl" width="180" height="180" alt="QR Code">
+                <span v-else class="spinner-sm" style="width:24px;height:24px;border-width:3px"></span>
+                <div v-if="qrcodeExpired" class="qr-expired-overlay">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3)"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  <span>刷新中…</span>
+                </div>
+              </div>
+              <div class="qr-instructions">
+                <h4>扫码步骤</h4>
+                <ol>
+                  <li>用微信扫描左侧二维码。</li>
+                  <li>在手机上确认授权。</li>
+                  <li>接入完成后，页面会自动更新状态。</li>
+                </ol>
+                <p class="qr-hint">如果二维码显示异常，也可以在新窗口中打开。</p>
+                <a v-if="qrcodeUrl" :href="qrcodeUrl" target="_blank" class="qr-link">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:2px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  在新窗口打开二维码
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Phase: success -->
+          <div v-if="installPhase==='success'" class="install-phase install-phase-success">
+            <div class="success-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h3>连接成功</h3>
+            <p v-if="pluginModalMode==='weixin_login'">微信已连接，渠道配置已由 CLI 自动写入。</p>
+            <p v-else>{{installingPlugin.name}} 已成功接入，重启服务后即可使用。</p>
+          </div>
+
+          <!-- Phase: error -->
+          <div v-if="installPhase==='error'" class="install-phase install-phase-error">
+            <div class="error-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+            <h3>{{pluginModalMode==='weixin_login'?'登录失败':'安装失败'}}</h3>
+            <p>{{installError}}</p>
+          </div>
+
+          <!-- Terminal output — 始终可见的可折叠终端面板 -->
+          <div v-if="installMessages.length||pluginModalMode==='weixin_login'" class="install-term">
+            <div class="install-term-toggle" @click="installTermExpanded=!installTermExpanded">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+              <span>终端输出</span>
+              <span class="term-count">{{installMessages.length?installMessages.length+' 行':'等待输出'}}</span>
+              <svg class="chevron" :class="{open:installTermExpanded}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div v-show="installTermExpanded" class="install-term-body" id="install-term-box">
+              <div v-if="pluginModalMode==='weixin_login' && !installMessages.length" class="install-term-line" style="color:var(--text3)">正在等待后台命令输出…</div>
+              <div v-for="m in installMessages" class="install-term-line">{{m}}</div>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <template v-if="installPhase==='success'">
+            <button class="btn btn-primary" @click="confirmInstallSuccess">确认</button>
+          </template>
+          <template v-else-if="installPhase==='error'||!pluginInstallRunning">
+            <button class="btn btn-outline" @click="cancelPluginInstall">关闭</button>
+          </template>
+          <template v-else-if="installPhase==='installing'||installPhase==='qrcode'">
+            <div class="flex-center" style="color:var(--text2)">
+              <span class="spinner-sm"></span>{{installPhase==='qrcode'?'等待扫码…':(pluginModalMode==='weixin_login'?'正在执行登录命令…':'安装中…')}}
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset config confirm -->
+    <div
+      v-if="showResetConfirmModal"
+      class="modal-overlay"
+    >
+      <div class="modal">
+        <div class="modal-header">
+          <h3>确认恢复出厂配置？</h3>
+          <button type="button" class="close-btn" @click="showResetConfirmModal=false" :disabled="resetLoading">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:14px;color:var(--text);line-height:1.7;margin-bottom:12px">
+            所有配置都将恢复为初始状态（包括模型提供商、默认模型、消息渠道、插件启用状态与安装记录等）。
+          </p>
+          <p style="font-size:13px;color:var(--danger);font-weight:600">此操作不可撤销，请确认后再继续。</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" @click="doResetConfig" :disabled="resetLoading">
+            <span v-if="resetLoading" class="spinner-sm" style="vertical-align:-2px;margin-right:4px"></span>
+            确认恢复
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div v-if="toast.show" :class="['toast',toast.type]">{{toast.msg}}</div>
+  </template>
+</div>
+
+<script src="js/vue.global.prod.js"></script>
+<script src="js/qrcode.min.js"></script>
+<script>
+const{createApp,ref,reactive,computed,onMounted,onUnmounted,watch,nextTick}=Vue;
+createApp({
+  setup(){
+    const authenticated=ref(false);
+    const tokenInput=ref('');
+    const loginError=ref('');
+    const tab=ref('overview');
+    const token=ref('');
+
+    const providers=ref({});
+    const channels=ref({});
+    const processStatus=ref({state:'stopped',pid:0,cpuPercent:0,memoryRss:0,memoryVms:0,uptimeSeconds:0});
+    const defaultModel=ref('');
+    const knownProviders=ref([]);
+    const knownChannels=ref([]);
+
+    const pageTitles={overview:'概览',providers:'模型配置',channels:'消息渠道',process:'运行日志'};
+    const pageTitle=computed(()=>pageTitles[tab.value]||'概览');
+
+    const showProviderModal=ref(false);
+    const editingProviderId=ref('');
+    const selectedKnownProvider=ref('');
+    const providerForm=reactive({id:'',baseUrl:'',api:'openai-completions',apiKey:'',models:[]});
+
+    const showModelEditModal=ref(false);
+    const editingModelIdx=ref(-1);
+    const modelEditForm=reactive({id:'',name:'',contextWindow:0,maxTokens:0,reasoning:false,inputType:'text',costInput:0,costOutput:0,costCacheRead:0,costCacheWrite:0});
+
+    const showChannelModal=ref(false);
+    const editingChannelId=ref('');
+    const selectedKnownChannel=ref('');
+    const channelForm=reactive({id:'',enabled:true,pluginConfig:{},channelRest:{}});
+    const channelPluginFields=ref([]);
+
+    const plugins=ref([]);
+    const pluginActionLoading=ref(false);
+    const uninstallingPluginId=ref('');
+    const restartPending=ref(false);
+    const restartReason=ref('');
+    const showPluginInstallModal=ref(false);
+    const installingPlugin=ref({});
+    const pluginModalMode=ref('install');
+    const pluginInstallRunning=ref(false);
+
+    const installPhase=ref('installing');
+    const installMessages=ref([]);
+    const qrcodeUrl=ref('');
+    const qrcodeDataUrl=ref('');
+    const qrcodeCountdown=ref(0);
+    const qrcodeExpired=ref(false);
+    const installError=ref('');
+    const installTermExpanded=ref(true);
+    let countdownInterval=null;
+    let sessionPollTimer=null;
+    let lastMsgCount=0;
+
+    const allModelOptions=computed(()=>{
+      const opts=[];
+      for(const[pid,p] of Object.entries(providers.value)){
+        for(const m of (p.models||[])){
+          opts.push({value:pid+'/'+m.id,label:pid+'/'+m.id+(m.name?' ('+m.name+')':'')});
+        }
+      }
+      return opts;
+    });
+
+    const wechatPluginReady=computed(()=>{
+      const p=plugins.value.find(x=>x.id==='wechat');
+      return p && p.status!=='not_installed' && p.status!=='abnormal';
+    });
+
+    const isWeixinScanChannel=computed(()=>{
+      const id=editingChannelId.value||channelForm.id||selectedKnownChannel.value;
+      if(id!=='openclaw-weixin')return false;
+      const kc=knownChannels.value.find(c=>c.id==='openclaw-weixin');
+      return kc && kc.loginMode==='weixin_scan';
+    });
+
+    // 添加渠道时：仅展示「插件状态」里已启用且尚未配置过的预设渠道。
+    const knownChannelsForAdd=computed(()=>{
+      const kcs=knownChannels.value||[];
+      const pls=plugins.value||[];
+      const existing=channels.value||{};
+      const filtered=kcs.filter(kc=>{
+        if(kc.id&&Object.prototype.hasOwnProperty.call(existing,kc.id))return false;
+        const pid=kc.pluginId||'';
+        const cid=kc.id||'';
+        return pls.some(p=>{
+          if(p.status!=='enabled')return false;
+          if(pid&&(p.pluginId===pid||p.id===pid))return true;
+          if(cid&&(p.id===cid||p.pluginId===cid))return true;
+          return false;
+        });
+      });
+
+      const pluginOrder=new Map();
+      pls.forEach((p,idx)=>{
+        pluginOrder.set(p.id,idx);
+        if(p.pluginId)pluginOrder.set(p.pluginId,idx);
+      });
+
+      function orderOfChannel(kc){
+        const pid=kc.pluginId||'';
+        const cid=kc.id||'';
+        let order=Number.MAX_SAFE_INTEGER;
+        if(pid&&pluginOrder.has(pid))order=Math.min(order,pluginOrder.get(pid));
+        if(cid&&pluginOrder.has(cid))order=Math.min(order,pluginOrder.get(cid));
+        return order;
+      }
+
+      return filtered
+        .map((kc,idx)=>({kc,idx,order:orderOfChannel(kc)}))
+        .sort((a,b)=>{
+          if(a.order!==b.order)return a.order-b.order;
+          return a.idx-b.idx;
+        })
+        .map(item=>item.kc);
+    });
+
+    // 暂时屏蔽海外模型提供商，仅影响“快速选择”下拉展示，不删除后端配置，便于后续恢复。
+    const hiddenOverseasProviderIDs=new Set(['openai','anthropic','google','openrouter']);
+    const knownProvidersForDisplay=computed(()=>{
+      return (knownProviders.value||[]).filter(kp=>!hiddenOverseasProviderIDs.has(kp.id));
+    });
+
+    // 渠道配置表格首列：优先插件名称（与 knownChannels / plugins 关联），无则回退模板名或 ID。
+    function channelTableDisplayName(channelId){
+      const pls=plugins.value||[];
+      const kcs=knownChannels.value||[];
+      let p=pls.find(x=>x.id===channelId);
+      if(p&&p.name)return p.name;
+      p=pls.find(x=>x.pluginId===channelId);
+      if(p&&p.name)return p.name;
+      const kc=kcs.find(x=>x.id===channelId);
+      if(kc){
+        p=pls.find(x=>x.pluginId===kc.pluginId||x.id===kc.pluginId);
+        if(p&&p.name)return p.name;
+      }
+      if(kc&&kc.name)return kc.name;
+      return channelId;
+    }
+
+    const logLines=ref([]);
+    const logLatestSeq=ref(0);
+    const logAutoScroll=ref(true);
+    let logPollTimer=null;
+
+    const toast=reactive({show:false,msg:'',type:'success'});
+    const pluginRefreshLoading=ref(false);
+    const pluginTaskBusy=computed(()=>{
+      return pluginActionLoading.value||pluginInstallRunning.value||!!uninstallingPluginId.value||pluginRefreshLoading.value;
+    });
+    const pluginBlockingBusy=computed(()=>{
+      return pluginActionLoading.value||pluginInstallRunning.value||!!uninstallingPluginId.value;
+    });
+    const MIN_REFRESH_LOADING_MS=360;
+    let toastTimer=null;
+    let pollTimer=null;
+    let restartPollTimer=null;
+    let restartFinishTimer=null;
+    let restartSeenNonRunning=false;
+    let restartStartedAt=0;
+
+    const showResetConfirmModal=ref(false);
+    const resetLoading=ref(false);
+    const showDangerZone=ref(true);
+    const overlayClosePointerKey=ref('');
+    const processActionLoading=ref(false);
+    const processActionType=ref('');
+
+    function beginOverlayClose(key){
+      overlayClosePointerKey.value=key;
+    }
+
+    function endOverlayClose(key,closeFn){
+      if(overlayClosePointerKey.value!==key)return;
+      overlayClosePointerKey.value='';
+      closeFn();
+    }
+
+    function cancelOverlayClose(key){
+      if(overlayClosePointerKey.value===key)overlayClosePointerKey.value='';
+    }
+
+    function showToast(msg,type='success'){
+      toast.show=true;toast.msg=msg;toast.type=type;
+      clearTimeout(toastTimer);
+      toastTimer=setTimeout(()=>{toast.show=false},3000);
+    }
+
+    function guardRestartPending(actionLabel){
+      if(!restartPending.value)return false;
+      showToast('OpenClaw 正在重启中，请稍后再'+(actionLabel||'操作'),'error');
+      return true;
+    }
+
+    function guardPluginTaskBusy(actionLabel){
+      if(!pluginTaskBusy.value)return false;
+      showToast('当前有插件任务执行中，请稍后再'+(actionLabel||'操作'),'error');
+      return true;
+    }
+
+    function normalizePluginTaskConflictError(msg){
+      const text=String(msg||'').trim();
+      if(!text)return '';
+      if(text.includes('已有插件任务在运行')){
+        return '检测到其他窗口正在执行插件任务，请稍后重试';
+      }
+      return text;
+    }
+
+    function isPluginTaskConflictError(msg){
+      return String(msg||'').includes('已有插件任务在运行');
+    }
+
+    function showPluginActionError(msg,fallback){
+      showToast(normalizePluginTaskConflictError(msg)||fallback,'error');
+    }
+
+    async function api(path,opts={}){
+      const headers={'Authorization':token.value,...(opts.headers||{})};
+      if(opts.body&&typeof opts.body==='object'){
+        headers['Content-Type']='application/json';
+        opts.body=JSON.stringify(opts.body);
+      }
+      const res=await fetch('/ugreen/api/v1'+path,{...opts,headers});
+      if(res.status===401){authenticated.value=false;throw new Error('unauthorized');}
+      return res.json();
+    }
+
+    async function doLogin(){
+      loginError.value='';
+      token.value=tokenInput.value;
+      try{
+        const r=await api('/process/status');
+        if(r.success){authenticated.value=true;localStorage.setItem('oc_token',token.value);loadAll();}
+        else{loginError.value='登录失败';token.value='';}
+      }catch(e){loginError.value='连接失败或令牌错误';token.value='';}
+    }
+
+    function doLogout(){
+      authenticated.value=false;token.value='';localStorage.removeItem('oc_token');
+    }
+
+    async function loadAll(){
+      try{
+        const[prov,ch,stat,def,kp,kc,pl]=await Promise.all([
+          api('/providers'),api('/channels'),api('/process/status'),
+          api('/config/defaults'),api('/known-providers'),api('/known-channels'),
+          api('/plugins')
+        ]);
+        if(prov.success)providers.value=prov.data||{};
+        if(ch.success)channels.value=ch.data||{};
+        if(stat.success)processStatus.value=stat.data||processStatus.value;
+        if(def.success){
+          const m=def.data?.model;
+          defaultModel.value=typeof m==='string'?m:(m?.primary||'');
+        }
+        if(kp.success)knownProviders.value=kp.data||[];
+        if(kc.success)knownChannels.value=kc.data||[];
+        if(pl.success)plugins.value=pl.data||[];
+      }catch(e){console.error('loadAll',e);}
+    }
+
+    async function loadPlugins(){
+      try{
+        // known-channels 的可选项取决于插件启用状态，每次插件状态变化（启用/停用/安装/卸载）
+        // 都需要同步刷新渠道模板，否则「添加渠道」下拉框会滞后到下一次全局加载才更新。
+        const[pl,kc]=await Promise.all([api('/plugins'),api('/known-channels')]);
+        if(pl.success)plugins.value=pl.data||[];
+        if(kc.success)knownChannels.value=kc.data||[];
+      }catch(e){console.error('loadPlugins',e);}
+    }
+
+    async function refreshPluginsWithFeedback(){
+      if(pluginRefreshLoading.value)return;
+      if(guardPluginTaskBusy('刷新插件状态'))return;
+      pluginRefreshLoading.value=true;
+      const startedAt=Date.now();
+      try{
+        await loadPlugins();
+      }finally{
+        const elapsed=Date.now()-startedAt;
+        if(elapsed<MIN_REFRESH_LOADING_MS){
+          await new Promise(resolve=>setTimeout(resolve,MIN_REFRESH_LOADING_MS-elapsed));
+        }
+        pluginRefreshLoading.value=false;
+      }
+    }
+
+    async function pollStatus(){
+      if(!authenticated.value)return;
+      try{
+        const r=await api('/process/status');
+        if(r.success){
+          processStatus.value=r.data;
+          evaluateRestartProgress();
+        }
+      }catch(e){}
+    }
+
+    function stopRestartPolling(){
+      if(restartPollTimer){clearInterval(restartPollTimer);restartPollTimer=null;}
+      if(restartFinishTimer){clearTimeout(restartFinishTimer);restartFinishTimer=null;}
+      restartSeenNonRunning=false;
+      restartStartedAt=0;
+    }
+
+    function evaluateRestartProgress(){
+      if(!restartPending.value)return;
+      if(processStatus.value.state!=='running')restartSeenNonRunning=true;
+
+      const elapsed=Date.now()-(restartStartedAt||0);
+      if(elapsed<2200)return;
+
+      if(processStatus.value.state==='running'&&(restartSeenNonRunning||elapsed>=6500)){
+        restartPending.value=false;
+        restartReason.value='';
+        stopRestartPolling();
+        showToast('OpenClaw 已完成重启，配置已生效');
+      }
+    }
+
+    function startRestartLoading(reason){
+      // 先停止上一轮重启监听，避免把本次的 startedAt 重新清零。
+      stopRestartPolling();
+      restartPending.value=true;
+      restartReason.value=reason||'正在应用配置';
+      restartStartedAt=Date.now();
+      restartSeenNonRunning=false;
+
+      pollStatus();
+      restartPollTimer=setInterval(pollStatus,800);
+      restartFinishTimer=setTimeout(()=>{
+        restartPending.value=false;
+        restartReason.value='';
+        stopRestartPolling();
+      },30000);
+    }
+
+    function openProviderModal(id,p){
+      editingProviderId.value=id||'';
+      selectedKnownProvider.value='';
+      if(p){
+        providerForm.id=id;
+        providerForm.baseUrl=p.baseUrl||'';
+        providerForm.api=p.api||'openai-completions';
+        providerForm.apiKey=p.apiKey||'';
+        providerForm.models=(p.models||[]).map(m=>({...m}));
+      }else{
+        providerForm.id='';providerForm.baseUrl='';providerForm.api='openai-completions';
+        providerForm.apiKey='';providerForm.models=[];
+      }
+      showProviderModal.value=true;
+    }
+
+    function applyKnownProvider(){
+      const kp=knownProviders.value.find(p=>p.id===selectedKnownProvider.value);
+      if(!kp)return;
+      providerForm.id=kp.id;
+      providerForm.baseUrl=kp.baseUrl;
+      providerForm.api=kp.api;
+      providerForm.models=(kp.defaultModels||[]).map(m=>({
+        id:m.id,name:m.name,contextWindow:m.contextWindow,maxTokens:m.maxTokens,
+        reasoning:m.reasoning||false,input:['text'],
+        cost:{input:0,output:0,cacheRead:0,cacheWrite:0}
+      }));
+    }
+
+    async function saveProvider(){
+      const id=String(editingProviderId.value||providerForm.id||'').trim();
+      const baseUrl=String(providerForm.baseUrl||'').trim();
+      const apiKey=String(providerForm.apiKey||'').trim();
+
+      const missingFields=[];
+      if(!id)missingFields.push('提供商 ID');
+      if(!baseUrl)missingFields.push('Base URL');
+      if(!apiKey)missingFields.push('API Key');
+      if(missingFields.length){
+        showToast('请填写：'+missingFields.join('、'),'error');
+        return;
+      }
+
+      const body={baseUrl:baseUrl,api:providerForm.api,apiKey:apiKey,models:providerForm.models};
+      try{
+        const r=await api('/providers/'+encodeURIComponent(id),{method:'PUT',body});
+        if(r.success){showToast('保存成功');showProviderModal.value=false;loadAll();}
+        else showToast(r.error||'保存失败','error');
+      }catch(e){showToast('请求失败','error');}
+    }
+
+    function openModelEdit(idx){
+      editingModelIdx.value=idx;
+      if(idx>=0){
+        const m=providerForm.models[idx];
+        modelEditForm.id=m.id||'';
+        modelEditForm.name=m.name||'';
+        modelEditForm.contextWindow=m.contextWindow||0;
+        modelEditForm.maxTokens=m.maxTokens||0;
+        modelEditForm.reasoning=!!m.reasoning;
+        const inp=m.input||['text'];
+        modelEditForm.inputType=inp.includes('image')?'text,image':'text';
+        modelEditForm.costInput=m.cost?.input||0;
+        modelEditForm.costOutput=m.cost?.output||0;
+        modelEditForm.costCacheRead=m.cost?.cacheRead||0;
+        modelEditForm.costCacheWrite=m.cost?.cacheWrite||0;
+      }else{
+        modelEditForm.id='';modelEditForm.name='';modelEditForm.contextWindow=0;
+        modelEditForm.maxTokens=0;modelEditForm.reasoning=false;modelEditForm.inputType='text';
+        modelEditForm.costInput=0;modelEditForm.costOutput=0;
+        modelEditForm.costCacheRead=0;modelEditForm.costCacheWrite=0;
+      }
+      showModelEditModal.value=true;
+    }
+
+    function saveModelEdit(){
+      const modelId=String(modelEditForm.id??'').trim();
+      const normalizedModelId=modelId.toLowerCase();
+      const modelName=String(modelEditForm.name??'').trim();
+      const contextWindowRaw=modelEditForm.contextWindow;
+      const maxTokensRaw=modelEditForm.maxTokens;
+
+      const missingFields=[];
+      if(!modelId)missingFields.push('模型 ID');
+      if(!modelName)missingFields.push('模型名称');
+      if(contextWindowRaw===null||contextWindowRaw===undefined||String(contextWindowRaw).trim()==='')missingFields.push('上下文窗口');
+      if(maxTokensRaw===null||maxTokensRaw===undefined||String(maxTokensRaw).trim()==='')missingFields.push('最大输出 Tokens');
+      if(missingFields.length){
+        showToast('请填写：'+missingFields.join('、'),'error');
+        return;
+      }
+
+      const contextWindow=Number(contextWindowRaw);
+      const maxTokens=Number(maxTokensRaw);
+      if(!Number.isFinite(contextWindow)||contextWindow<=0){showToast('上下文窗口必填，且必须大于 0','error');return;}
+      if(!Number.isFinite(maxTokens)||maxTokens<=0){showToast('最大输出 Tokens 必填，且必须大于 0','error');return;}
+
+      const hasDuplicateModelId=providerForm.models.some((m,idx)=>{
+        if(idx===editingModelIdx.value)return false;
+        return String(m?.id??'').trim().toLowerCase()===normalizedModelId;
+      });
+      if(hasDuplicateModelId){
+        showToast('模型 ID 已存在，请使用其他模型 ID','error');
+        return;
+      }
+
+      const inputArr=modelEditForm.inputType.split(',').map(s=>s.trim());
+      const model={
+        id:modelId,name:modelName,
+        contextWindow:contextWindow,
+        maxTokens:maxTokens,
+        reasoning:modelEditForm.reasoning,
+        input:inputArr,
+        cost:{input:modelEditForm.costInput||0,output:modelEditForm.costOutput||0,
+              cacheRead:modelEditForm.costCacheRead||0,cacheWrite:modelEditForm.costCacheWrite||0}
+      };
+      if(editingModelIdx.value>=0){
+        providerForm.models.splice(editingModelIdx.value,1,model);
+      }else{
+        providerForm.models.push(model);
+      }
+      showModelEditModal.value=false;
+    }
+
+    function removeModel(idx){
+      const m=providerForm.models[idx];
+      if(!confirm('确定删除模型 "'+m.id+'" ?'))return;
+      providerForm.models.splice(idx,1);
+    }
+
+    async function deleteProvider(id){
+      if(!confirm('确定删除提供商 "'+id+'" ?'))return;
+      try{
+        const r=await api('/providers/'+encodeURIComponent(id),{method:'DELETE'});
+        if(r.success){showToast('已删除');loadAll();}
+        else showToast(r.error||'删除失败','error');
+      }catch(e){showToast('请求失败','error');}
+    }
+
+    async function saveDefaultModel(){
+      if(!defaultModel.value){
+        const tip=(allModelOptions.value||[]).length
+          ?'请选择一个默认模型后再保存'
+          :'暂无可选模型，请先在上方配置模型提供商与模型';
+        showToast(tip,'error');
+        return;
+      }
+      try{
+        const r=await api('/config/defaults',{method:'PUT',body:{model:{primary:defaultModel.value}}});
+        if(r.success)showToast('默认模型已更新');
+        else showToast(r.error||'更新失败','error');
+      }catch(e){showToast('请求失败','error');}
+    }
+
+    async function doResetConfig(){
+      resetLoading.value=true;
+      try{
+        const r=await api('/config/reset',{method:'POST'});
+        if(r.success){
+          showToast('配置已恢复为出厂状态');
+          showResetConfirmModal.value=false;
+          await loadAll();
+        }else showToast(r.error||'操作失败','error');
+      }catch(e){showToast('请求失败','error');}
+      resetLoading.value=false;
+    }
+
+    function openChannelModal(id,ch){
+      if(!id){
+        const available=knownChannelsForAdd.value||[];
+        if(!available.length){
+          const existing=channels.value||{};
+          const enabledKnownChannels=(knownChannels.value||[]).filter(kc=>{
+            const pid=kc.pluginId||'';
+            const cid=kc.id||'';
+            return (plugins.value||[]).some(p=>{
+              if(p.status!=='enabled')return false;
+              if(pid&&(p.pluginId===pid||p.id===pid))return true;
+              if(cid&&(p.id===cid||p.pluginId===cid))return true;
+              return false;
+            });
+          });
+          const allConfigured=enabledKnownChannels.length>0&&enabledKnownChannels.every(kc=>kc.id&&Object.prototype.hasOwnProperty.call(existing,kc.id));
+          if(allConfigured){
+            showToast('所有可添加渠道均已配置，无需重复添加');
+            return;
+          }
+        }
+      }
+
+      editingChannelId.value=id||'';
+      if(id){
+        selectedKnownChannel.value=id;
+      }else{
+        selectedKnownChannel.value='';
+      }
+      channelForm.id=id||'';
+      channelForm.enabled=ch?ch.enabled!==false:true;
+      channelForm.pluginConfig={};
+      Object.keys(channelForm.channelRest).forEach(k=>delete channelForm.channelRest[k]);
+      channelPluginFields.value=[];
+      if(id){
+        const kc=knownChannels.value.find(c=>c.id===id);
+        if(kc)channelPluginFields.value=kc.pluginFields||[];
+        if(ch){
+          const fields=kc?.pluginFields||[];
+          const copy={...ch};
+          delete copy.enabled;
+          for(const f of fields){
+            if(Object.prototype.hasOwnProperty.call(copy,f.key)){
+              channelForm.pluginConfig[f.key]=copy[f.key];
+              delete copy[f.key];
+            }
+          }
+          for(const k of Object.keys(copy)){
+            channelForm.channelRest[k]=copy[k];
+          }
+        }
+      }
+      showChannelModal.value=true;
+    }
+
+    function applyKnownChannel(){
+      const kc=knownChannels.value.find(c=>c.id===selectedKnownChannel.value);
+      if(!kc){
+        channelForm.id='';
+        channelPluginFields.value=[];
+        channelForm.pluginConfig={};
+        Object.keys(channelForm.channelRest).forEach(k=>delete channelForm.channelRest[k]);
+        return;
+      }
+      channelForm.id=kc.id;
+      channelPluginFields.value=kc.pluginFields||[];
+      channelForm.pluginConfig={};
+      Object.keys(channelForm.channelRest).forEach(k=>delete channelForm.channelRest[k]);
+    }
+
+    function deepSortKeysForCompare(v){
+      if(v===null||typeof v!=='object')return v;
+      if(Array.isArray(v))return v.map(deepSortKeysForCompare);
+      const sorted={};
+      for(const k of Object.keys(v).sort()){
+        sorted[k]=deepSortKeysForCompare(v[k]);
+      }
+      return sorted;
+    }
+
+    function channelConfigFingerprint(cfg){
+      const {enabled,...rest}=cfg||{};
+      try{
+        return JSON.stringify(deepSortKeysForCompare(JSON.parse(JSON.stringify(rest))));
+      }catch(_){
+        return JSON.stringify(deepSortKeysForCompare(rest));
+      }
+    }
+
+    async function saveChannel(){
+      if(guardRestartPending('保存渠道'))return;
+      const id=editingChannelId.value||channelForm.id;
+      if(!id){showToast('请选择渠道类型','error');return;}
+      const missingChannelParams=[];
+      for(const f of channelPluginFields.value){
+        const v=channelForm.pluginConfig[f.key];
+        if(v===undefined||v===null){
+          missingChannelParams.push(f.label||f.key);
+          continue;
+        }
+        if(typeof v==='string'&&v.trim()===''){
+          missingChannelParams.push(f.label||f.key);
+        }
+      }
+      if(missingChannelParams.length){
+        showToast('请填写：'+missingChannelParams.join('、'),'error');
+        return;
+      }
+      if(!editingChannelId.value){
+        const kc=knownChannels.value.find(c=>c.id===id);
+        if(kc && kc.loginMode==='weixin_scan'){
+          showToast('微信渠道请先完成扫码登录，无法仅通过填表保存','error');
+          return;
+        }
+      }
+      const channelConfig={enabled:channelForm.enabled,...channelForm.channelRest,...channelForm.pluginConfig};
+      if(!editingChannelId.value&&Object.prototype.hasOwnProperty.call(channels.value,id)){
+        const existing=channels.value[id];
+        if(channelConfigFingerprint(channelConfig)===channelConfigFingerprint(existing)){
+          showToast('该渠道已存在且配置相同，无需重复添加','error');
+          return;
+        }
+      }
+      const body={channel:channelConfig};
+      try{
+        const r=await api('/channels/'+encodeURIComponent(id),{method:'PUT',body});
+        if(r.success){
+          showToast('保存成功，正在重启 OpenClaw…');
+          showChannelModal.value=false;
+          startRestartLoading('渠道配置变更');
+          loadAll();
+        }
+        else showToast(r.error||'保存失败','error');
+      }catch(e){showToast('请求失败','error');}
+    }
+
+    async function deleteChannel(id){
+      if(guardRestartPending('删除渠道'))return;
+      if(!confirm('确定删除渠道 "'+id+'" ?'))return;
+      try{
+        const r=await api('/channels/'+encodeURIComponent(id),{method:'DELETE'});
+        if(r.success){
+          showToast('已删除，正在重启 OpenClaw…');
+          startRestartLoading('渠道删除');
+          loadAll();
+        }
+        else showToast(r.error||'删除失败','error');
+      }catch(e){showToast('请求失败','error');}
+    }
+
+    async function togglePlugin(p,action){
+      if(guardPluginTaskBusy(action==='enable'?'启用插件':'停用插件'))return;
+      if(guardRestartPending('切换插件状态'))return;
+      pluginActionLoading.value=true;
+      try{
+        const r=await api('/plugins/'+encodeURIComponent(p.id)+'/'+action,{method:'POST'});
+        if(r.success){
+          showToast((action==='enable'?'已启用':'已停用')+'，正在重启 OpenClaw…');
+          startRestartLoading('插件'+(action==='enable'?'启用':'停用'));
+          await loadPlugins();
+        }else showPluginActionError(r.error,'操作失败');
+      }catch(e){showToast('请求失败','error');}
+      pluginActionLoading.value=false;
+    }
+
+    // 注意：扫码登录成功后不需要调 API 修改 openclaw.json。
+    // openclaw CLI 的 `channels login` 命令会自行写入渠道配置
+    // （输出 "Config overwrite: ..." 即为 CLI 已完成写入），
+    // 控制台只需 ReloadConfig 从磁盘重新加载即可。
+
+    function startWeixinChannelLoginFromChannelModal(){
+      showChannelModal.value=false;
+      const p=plugins.value.find(x=>x.id==='wechat');
+      if(p)startWeixinChannelLogin(p);
+    }
+
+    async function startWeixinChannelLogin(p){
+      if(guardPluginTaskBusy('执行微信扫码登录'))return;
+      if(guardRestartPending('执行微信扫码登录'))return;
+      pluginModalMode.value='weixin_login';
+      installingPlugin.value=p;
+      installPhase.value='installing';
+      installMessages.value=[];
+      installTermExpanded.value=true;
+      qrcodeUrl.value='';
+      qrcodeDataUrl.value='';
+      qrcodeCountdown.value=0;
+      qrcodeExpired.value=false;
+      installError.value='';
+      pluginInstallRunning.value=true;
+      showPluginInstallModal.value=true;
+
+      try{
+        const r=await api('/plugins/'+encodeURIComponent(p.id)+'/channel-login',{method:'POST'});
+        if(!r.success){
+          if(isPluginTaskConflictError(r.error)){
+            showToast(normalizePluginTaskConflictError(r.error),'error');
+            stopSessionPolling();
+            stopCountdown();
+            pluginInstallRunning.value=false;
+            showPluginInstallModal.value=false;
+            return;
+          }
+          installPhase.value='error';
+          installError.value=normalizePluginTaskConflictError(r.error)||'启动失败';
+          pluginInstallRunning.value=false;
+          return;
+        }
+        startSessionPolling(p.id);
+      }catch(e){
+        installPhase.value='error';
+        installError.value=e.message||'请求失败';
+        pluginInstallRunning.value=false;
+      }
+    }
+
+    async function startPluginInstall(p){
+      if(guardPluginTaskBusy('安装插件'))return;
+      if(guardRestartPending('安装插件'))return;
+      pluginModalMode.value='install';
+      installingPlugin.value=p;
+      installPhase.value='installing';
+      installMessages.value=[];
+      installTermExpanded.value=true;
+      qrcodeUrl.value='';
+      qrcodeDataUrl.value='';
+      qrcodeCountdown.value=0;
+      qrcodeExpired.value=false;
+      installError.value='';
+      pluginInstallRunning.value=true;
+      showPluginInstallModal.value=true;
+
+      try{
+        const r=await api('/plugins/'+encodeURIComponent(p.id)+'/install',{method:'POST'});
+        if(!r.success){
+          if(isPluginTaskConflictError(r.error)){
+            showToast(normalizePluginTaskConflictError(r.error),'error');
+            stopSessionPolling();
+            stopCountdown();
+            pluginInstallRunning.value=false;
+            showPluginInstallModal.value=false;
+            return;
+          }
+          installPhase.value='error';
+          installError.value=normalizePluginTaskConflictError(r.error)||'启动失败';
+          pluginInstallRunning.value=false;
+          return;
+        }
+        startSessionPolling(p.id);
+      }catch(e){
+        installPhase.value='error';
+        installError.value=e.message||'请求失败';
+        pluginInstallRunning.value=false;
+      }
+    }
+
+    function startSessionPolling(pluginId){
+      lastMsgCount=0;
+      stopSessionPolling();
+      pollSessionStatus(pluginId);
+      sessionPollTimer=setInterval(()=>pollSessionStatus(pluginId),1000);
+    }
+
+    function stopSessionPolling(){
+      if(sessionPollTimer){clearInterval(sessionPollTimer);sessionPollTimer=null;}
+    }
+
+    async function pollSessionStatus(pluginId){
+      try{
+        const r=await api('/plugins/'+encodeURIComponent(pluginId)+'/channel-login/status');
+        if(!r.success)return;
+        pollErrorCount=0;
+        const d=r.data;
+
+        if(d.messages&&d.messages.length>lastMsgCount){
+          const newMsgs=d.messages.slice(lastMsgCount);
+          for(const m of newMsgs)installMessages.value.push(m);
+          if(installMessages.value.length>200)installMessages.value=installMessages.value.slice(-200);
+          lastMsgCount=d.messages.length;
+          nextTick(()=>{const el=document.getElementById('install-term-box');if(el)el.scrollTop=el.scrollHeight;});
+        }
+
+        if(d.phase==='qrcode'&&(installPhase.value!=='qrcode'||qrcodeUrl.value!==d.qrcodeUrl)&&d.qrcodeUrl){
+          installPhase.value='qrcode';
+          qrcodeUrl.value=d.qrcodeUrl;
+          qrcodeExpired.value=false;
+          qrcodeDataUrl.value='';
+          renderQRCode(d.qrcodeUrl);
+          startCountdown(120);
+        }
+
+        if(d.phase==='expired'&&!qrcodeExpired.value){
+          qrcodeExpired.value=true;
+          stopCountdown();
+        }
+
+        if(d.phase==='success'&&installPhase.value!=='success'){
+          installPhase.value='success';
+          stopCountdown();
+        }
+
+        if(d.phase==='error'&&installPhase.value!=='error'&&installPhase.value!=='success'){
+          installPhase.value='error';
+          installError.value=d.error||'未知错误';
+        }
+
+        if(d.phase==='done'&&installPhase.value!=='success'&&installPhase.value!=='error'){
+          installPhase.value='success';
+        }
+
+        if(d.finished){
+          stopSessionPolling();
+          pluginInstallRunning.value=false;
+          stopCountdown();
+          loadPlugins();
+        }
+      }catch(e){
+        console.error('pollSessionStatus',e);
+      }
+    }
+
+    async function renderQRCode(url){
+      const apiFallback='https://api.qrserver.com/v1/create-qr-code/?size=360x360&data='+encodeURIComponent(url);
+      if(typeof QRCode==='undefined'){
+        console.warn('[QR] QRCode lib not loaded, using API fallback');
+        qrcodeDataUrl.value=apiFallback;
+        return;
+      }
+      try{
+        qrcodeDataUrl.value=await QRCode.toDataURL(url,{width:360,margin:2,color:{dark:'#000000',light:'#ffffff'}});
+      }catch(e){
+        console.error('[QR] toDataURL failed, using API fallback:',e);
+        qrcodeDataUrl.value=apiFallback;
+      }
+    }
+
+    function startCountdown(seconds){
+      stopCountdown();
+      qrcodeCountdown.value=seconds;
+      countdownInterval=setInterval(()=>{
+        qrcodeCountdown.value--;
+        if(qrcodeCountdown.value<=0)stopCountdown();
+      },1000);
+    }
+
+    function stopCountdown(){
+      if(countdownInterval){clearInterval(countdownInterval);countdownInterval=null;}
+      qrcodeCountdown.value=0;
+    }
+
+    function formatCountdown(s){
+      if(s<=0)return'0:00';
+      const m=Math.floor(s/60),sec=s%60;
+      return m+':'+String(sec).padStart(2,'0');
+    }
+
+    function confirmInstallSuccess(){
+      stopSessionPolling();
+      stopCountdown();
+      showPluginInstallModal.value=false;
+      if(pluginModalMode.value==='install'){
+        showToast('安装完成，正在重启 OpenClaw…');
+        startRestartLoading('插件安装完成');
+      }
+      loadAll();
+    }
+
+    async function cancelPluginInstall(){
+      if(installPhase.value==='success'&&pluginModalMode.value==='install'){
+        confirmInstallSuccess();
+        return;
+      }
+      stopSessionPolling();
+      stopCountdown();
+      showPluginInstallModal.value=false;
+      try{
+        await loadPlugins();
+      }catch(e){}
+    }
+
+    async function cancelPluginInstallWithKill(){
+      const p=installingPlugin.value;
+      if(p&&p.id&&pluginInstallRunning.value){
+        try{await api('/plugins/'+encodeURIComponent(p.id)+'/channel-login/cancel',{method:'POST'});}catch(e){}
+      }
+      pluginInstallRunning.value=false;
+      cancelPluginInstall();
+    }
+
+    function sendCancelBeacon(){
+      const p=installingPlugin.value;
+      if(!p||!p.id||!pluginInstallRunning.value)return;
+      const url='/ugreen/api/v1/plugins/'+encodeURIComponent(p.id)+'/channel-login/cancel';
+      const blob=new Blob(['{}'],{type:'application/json'});
+      if(navigator.sendBeacon){
+        navigator.sendBeacon(url+'?token='+encodeURIComponent(token.value),blob);
+      }else{
+        fetch(url,{method:'POST',headers:{'Authorization':token.value},keepalive:true}).catch(()=>{});
+      }
+    }
+
+    async function uninstallPlugin(p){
+      if(guardPluginTaskBusy('卸载插件'))return;
+      if(guardRestartPending('卸载插件'))return;
+      if(!confirm('确定卸载插件 "'+p.name+'" ?'))return;
+      uninstallingPluginId.value=p.id;
+      try{
+        const r=await api('/plugins/'+encodeURIComponent(p.id)+'/uninstall',{method:'POST'});
+        if(r.success){
+          showToast('已卸载，正在重启 OpenClaw…');
+          startRestartLoading('插件卸载');
+          loadAll();
+        }
+        else showPluginActionError(r.error,'卸载失败');
+      }catch(e){showToast('请求失败','error');}
+      finally{uninstallingPluginId.value='';}
+    }
+
+    async function processAction(action){
+      if(action==='restart'&&guardRestartPending('重启服务'))return;
+      if(processActionLoading.value)return;
+      processActionLoading.value=true;
+      processActionType.value=action;
+      try{
+        const r=await api('/process/'+action,{method:'POST'});
+        if(r.success){
+          const actionSuccessText={
+            start:'启动服务成功',
+            stop:'OpenClaw 已停止',
+            restart:'OpenClaw 正在重启'
+          };
+          showToast(actionSuccessText[action]||r.message||'操作成功');
+        }
+        else showToast(r.error||'操作失败','error');
+        setTimeout(pollStatus,1000);
+      }catch(e){showToast('请求失败','error');}
+      finally{
+        processActionLoading.value=false;
+        processActionType.value='';
+      }
+    }
+
+    async function fetchLogs(){
+      if(!authenticated.value)return;
+      try{
+        const r=await api('/process/logs?after='+logLatestSeq.value+'&limit=200');
+        if(r.success&&r.data){
+          if(r.data.lines&&r.data.lines.length){
+            logLines.value.push(...r.data.lines);
+            if(logLines.value.length>2000)logLines.value=logLines.value.slice(-2000);
+            if(logAutoScroll.value){
+              nextTick(()=>{
+                const el=document.getElementById('log-container');
+                if(el)el.scrollTop=el.scrollHeight;
+              });
+            }
+          }
+          if(r.data.latestSeq)logLatestSeq.value=r.data.latestSeq;
+        }
+      }catch(e){}
+    }
+
+    async function bootstrapLatestLogsAndScroll(){
+      if(!authenticated.value)return;
+      try{
+        // 先拿到最新序号，再拉取尾部日志，避免首次进入只看到最早一段日志。
+        const head=await api('/process/logs?after=0&limit=1');
+        if(!head.success||!head.data){
+          await fetchLogs();
+          nextTick(()=>{
+            const el=document.getElementById('log-container');
+            if(el)el.scrollTop=el.scrollHeight;
+          });
+          return;
+        }
+
+        const latestSeq=Number(head.data.latestSeq||0);
+        if(!Number.isFinite(latestSeq)||latestSeq<=0){
+          logLines.value=[];
+          logLatestSeq.value=0;
+          return;
+        }
+
+        const tailAfter=Math.max(0,latestSeq-200);
+        const tail=await api('/process/logs?after='+tailAfter+'&limit=200');
+        if(tail.success&&tail.data){
+          logLines.value=(tail.data.lines||[]).slice(-2000);
+          logLatestSeq.value=Number(tail.data.latestSeq||latestSeq);
+        }else{
+          await fetchLogs();
+        }
+
+        nextTick(()=>{
+          const el=document.getElementById('log-container');
+          if(el)el.scrollTop=el.scrollHeight;
+        });
+      }catch(e){}
+    }
+
+    async function clearLogs(){
+      try{
+        await api('/process/logs/clear',{method:'POST'});
+        logLines.value=[];
+        logLatestSeq.value=0;
+      }catch(e){showToast('清空失败','error');}
+    }
+
+    function startLogPoll(){
+      stopLogPoll();
+      if(logLatestSeq.value<=0)bootstrapLatestLogsAndScroll();
+      else{
+        fetchLogs();
+        nextTick(()=>{
+          const el=document.getElementById('log-container');
+          if(el)el.scrollTop=el.scrollHeight;
+        });
+      }
+      logPollTimer=setInterval(fetchLogs,1000);
+    }
+
+    function stopLogPoll(){
+      if(logPollTimer){clearInterval(logPollTimer);logPollTimer=null;}
+    }
+
+    function formatBytes(b){
+      if(b<1024)return b+'B';
+      if(b<1048576)return(b/1024).toFixed(1)+' KB';
+      if(b<1073741824)return(b/1048576).toFixed(1)+' MB';
+      return(b/1073741824).toFixed(2)+' GB';
+    }
+
+    function formatUptime(s){
+      if(!s)return'-';
+      const d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60);
+      let r='';
+      if(d)r+=d+'d ';
+      if(h||d)r+=h+'h ';
+      r+=m+'m';
+      return r;
+    }
+
+    watch(tab,(newTab)=>{
+      if(newTab==='process')startLogPoll();
+      else stopLogPoll();
+    });
+
+    function onBeforeUnload(){sendCancelBeacon();}
+
+    onMounted(()=>{
+      const saved=localStorage.getItem('oc_token');
+      if(saved){
+        token.value=saved;
+        api('/process/status').then(r=>{
+          if(r.success){authenticated.value=true;loadAll();}
+          else localStorage.removeItem('oc_token');
+        }).catch(()=>localStorage.removeItem('oc_token'));
+      }
+      pollTimer=setInterval(pollStatus,3000);
+      window.addEventListener('beforeunload',onBeforeUnload);
+    });
+
+    onUnmounted(()=>{clearInterval(pollTimer);stopLogPoll();stopSessionPolling();window.removeEventListener('beforeunload',onBeforeUnload);});
+
+    return{
+      authenticated,tokenInput,loginError,tab,token,pageTitle,
+      providers,channels,processStatus,defaultModel,allModelOptions,knownProviders,knownProvidersForDisplay,knownChannels,knownChannelsForAdd,
+      showProviderModal,editingProviderId,selectedKnownProvider,providerForm,
+      showModelEditModal,editingModelIdx,modelEditForm,
+      showChannelModal,editingChannelId,selectedKnownChannel,channelForm,channelPluginFields,
+      plugins,pluginActionLoading,uninstallingPluginId,restartPending,restartReason,
+      showPluginInstallModal,installingPlugin,pluginModalMode,pluginInstallRunning,
+      installPhase,installMessages,installTermExpanded,qrcodeUrl,qrcodeDataUrl,qrcodeCountdown,qrcodeExpired,installError,formatCountdown,
+      wechatPluginReady,isWeixinScanChannel,startWeixinChannelLogin,startWeixinChannelLoginFromChannelModal,
+      logLines,logAutoScroll,
+      pluginRefreshLoading,pluginTaskBusy,pluginBlockingBusy,
+      toast,
+      showResetConfirmModal,resetLoading,doResetConfig,showDangerZone,
+      processActionLoading,processActionType,
+      beginOverlayClose,endOverlayClose,cancelOverlayClose,
+      doLogin,doLogout,loadAll,pollStatus,refreshPluginsWithFeedback,
+      openProviderModal,applyKnownProvider,saveProvider,deleteProvider,saveDefaultModel,
+      openModelEdit,saveModelEdit,removeModel,
+      openChannelModal,applyKnownChannel,saveChannel,deleteChannel,channelTableDisplayName,
+      loadPlugins,togglePlugin,startPluginInstall,confirmInstallSuccess,cancelPluginInstall,cancelPluginInstallWithKill,uninstallPlugin,
+      processAction,clearLogs,formatBytes,formatUptime
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
