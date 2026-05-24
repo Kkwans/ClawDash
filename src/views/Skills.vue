@@ -56,11 +56,21 @@ async function searchSkills() {
 
 async function installSkill(skill) {
   try {
-    await gwRequest('skills.install', { source: 'clawhub', slug: skill.slug })
-    showToast(`${skill.displayName || skill.name} 安装成功`)
-    await fetchData()
+    const token = localStorage.getItem('clawdash_gateway_token') || ''
+    const res = await fetch('/api/skills/install', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ slug: skill.slug })
+    })
+    const data = await res.json()
+    if (data.ok) {
+      showToast(`${skill.displayName || skill.name} 安装成功`, 'success')
+      await fetchData()
+    } else {
+      showToast(`安装失败: ${data.error || '未知错误'}`, 'error')
+    }
   } catch (e) {
-    showToast(`安装失败: ${e.message}`)
+    showToast(`安装失败: ${e.message}`, 'error')
   }
 }
 
@@ -68,11 +78,21 @@ async function deleteSkill(skill) {
   const ok = await showConfirm(`确定删除 Skill "${skill.name || skill.id}"？`)
   if (!ok) return
   try {
-    await gwRequest('skills.delete', { name: skill.name || skill.id })
-    showToast(`${skill.name || skill.id} 已删除`)
-    await fetchData()
+    const token = localStorage.getItem('clawdash_gateway_token') || ''
+    const res = await fetch('/api/skills/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ name: skill.name || skill.id })
+    })
+    const data = await res.json()
+    if (data.ok) {
+      showToast(`${skill.name || skill.id} 已删除`, 'success')
+      await fetchData()
+    } else {
+      showToast(`删除失败: ${data.error || '未知错误'}`, 'error')
+    }
   } catch (e) {
-    showToast(`删除失败: ${e.message}`)
+    showToast(`删除失败: ${e.message}`, 'error')
   }
 }
 

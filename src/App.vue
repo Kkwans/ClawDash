@@ -206,7 +206,7 @@ onUnmounted(() => {
           </h2>
         </div>
         <div class="flex items-center gap-3">
-          <span class="text-xs text-gray-400">ClawDash v4.0.0</span>
+          <span class="text-xs text-gray-400">ClawDash v0.5.0</span>
           <a href="https://github.com/Kkwans/ClawDash" target="_blank"
             class="text-gray-400 hover:text-gray-600 transition-colors">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
