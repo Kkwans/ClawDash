@@ -9,6 +9,18 @@ const healthData = ref(null)
 const loading = ref(true)
 const controlling = ref(false)
 const toast = ref('')
+const confirmDialog = ref({ show: false, msg: '', onOk: null })
+const configEditor = ref('')
+const configHash = ref('')
+const configError = ref('')
+const savingConfig = ref(false)
+
+function showConfirm(msg) {
+  return new Promise(resolve => {
+    confirmDialog.value = { show: true, msg, onOk: () => { confirmDialog.value.show = false; resolve(true) } }
+  })
+}
+function cancelConfirm() { confirmDialog.value.show = false }
 
 function saveToken() {
   updateToken(tokenInput.value)
@@ -33,6 +45,8 @@ async function fetchData() {
       gwRequest('health').catch(() => null)
     ])
     configData.value = cfg?.parsed || null
+    configHash.value = cfg?.hash || ''
+    configEditor.value = cfg?.raw || JSON.stringify(cfg?.parsed || {}, null, 2)
     healthData.value = health
   } catch (e) {
     console.error('Failed to fetch settings:', e)
@@ -57,7 +71,8 @@ const pluginEntries = computed(() => {
 
 async function doGatewayAction(action) {
   const labels = { stop: '停止', start: '启动' }
-  if (!confirm(`确定要${labels[action]} Gateway 吗？`)) return
+  const ok = await showConfirm(`确定要${labels[action]} Gateway 吗？`)
+  if (!ok) return
   controlling.value = true
   try {
     await gwRequest(`gateway.${action}`)
@@ -67,6 +82,25 @@ async function doGatewayAction(action) {
     showToast(`${labels[action]}失败: ${e.message}`)
     controlling.value = false
   }
+}
+
+async function saveConfig() {
+  configError.value = ''
+  try {
+    JSON.parse(configEditor.value)
+  } catch (e) {
+    configError.value = 'JSON 格式错误: ' + e.message
+    return
+  }
+  savingConfig.value = true
+  try {
+    await gwRequest('config.set', { raw: configEditor.value, baseHash: configHash.value })
+    showToast('配置已保存')
+    await fetchData()
+  } catch (e) {
+    configError.value = '保存失败: ' + e.message
+  }
+  savingConfig.value = false
 }
 
 onMounted(() => {
@@ -83,6 +117,17 @@ onMounted(() => {
         {{ toast }}
       </div>
     </Transition>
+
+    <!-- 确认弹窗 -->
+    <div v-if="confirmDialog.show" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div class="bg-white rounded-xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+        <p class="text-sm text-gray-700 mb-5">{{ confirmDialog.msg }}</p>
+        <div class="flex gap-2 justify-end">
+          <button @click="cancelConfirm" class="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50">取消</button>
+          <button @click="confirmDialog.onOk" class="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700">确定</button>
+        </div>
+      </div>
+    </div>
 
     <!-- 页面标题 -->
     <div>
@@ -132,6 +177,21 @@ onMounted(() => {
           {{ saved ? '✓ 已保存' : '保存' }}
         </button>
       </div>
+    </div>
+
+    <!-- 配置编辑器 -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-semibold text-gray-800">📝 配置编辑器</h3>
+        <div class="flex gap-2">
+          <button @click="fetchData" class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">刷新</button>
+          <button @click="saveConfig" :disabled="savingConfig" class="px-3 py-1.5 text-xs text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">{{ savingConfig ? '保存中...' : '保存配置' }}</button>
+        </div>
+      </div>
+      <textarea v-model="configEditor" rows="12"
+        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+        placeholder="JSON 配置..."></textarea>
+      <p v-if="configError" class="text-xs text-red-500 mt-2">{{ configError }}</p>
     </div>
 
     <!-- 当前配置 -->

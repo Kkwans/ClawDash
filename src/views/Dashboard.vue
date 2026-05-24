@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { authenticated, connecting, connectionError, statusText, statusColor, connect, disconnect, gwRequest, useGatewayEvent } from '../stores/gateway.js'
+import RingChart from '../components/RingChart.vue'
+import { Doughnut } from 'vue-chartjs'
 
 const gatewayInfo = ref(null)
 const healthData = ref(null)
@@ -23,8 +25,8 @@ useGatewayEvent('auth-error', (payload) => {
   error.value = `认证失败: ${payload?.message || '请检查 Token'}`
 })
 
-async function loadAllData() {
-  loading.value = true
+async function loadAllData(silent = false) {
+  if (!silent) loading.value = true
   error.value = ''
   try {
     const [health, sess, models, channels, config] = await Promise.allSettled([
@@ -55,15 +57,26 @@ async function loadAllData() {
 }
 
 const controlling = ref(false)
+const confirmDialog = ref({ show: false, msg: '', onOk: null })
+
+function showConfirm(msg) {
+  return new Promise(resolve => {
+    confirmDialog.value = { show: true, msg, onOk: () => { confirmDialog.value.show = false; resolve(true) } }
+  })
+}
+
+function cancelConfirm() { confirmDialog.value.show = false }
+
 async function doGatewayAction(action) {
   if (controlling.value) return
-  if (!confirm(`确定要${action === 'stop' ? '停止' : '启动'} Gateway 吗？`)) return
+  const ok = await showConfirm(`确定要${action === 'stop' ? '停止' : '启动'} Gateway 吗？`)
+  if (!ok) return
   controlling.value = true
   try {
     await gwRequest(`gateway.${action}`)
     setTimeout(() => { loadAllData(); controlling.value = false }, 2000)
   } catch (e) {
-    alert('操作失败: ' + e.message)
+    error.value = '操作失败: ' + e.message
     controlling.value = false
   }
 }
@@ -82,6 +95,47 @@ function formatUptime(ms) {
 const channelCount = computed(() => Object.keys(channelsInfo.value?.channels || {}).length)
 const modelCount = computed(() => modelsInfo.value?.models?.length || 0)
 const eventLoop = computed(() => channelsInfo.value?.eventLoop || null)
+const eventLoopUtil = computed(() => Math.round((eventLoop.value?.utilization || 0) * 100))
+const sessionCount = computed(() => sessions.value.length)
+const eventLoopColor = computed(() => {
+  const u = eventLoopUtil.value
+  if (u >= 90) return '#ef4444'
+  if (u >= 70) return '#f59e0b'
+  return '#10b981'
+})
+
+// 会话分布
+const sessionKinds = computed(() => {
+  const map = {}
+  sessions.value.forEach(s => {
+    const k = s.kind || 'unknown'
+    map[k] = (map[k] || 0) + 1
+  })
+  return map
+})
+const sessionChartData = computed(() => {
+  const labels = Object.keys(sessionKinds.value)
+  const data = Object.values(sessionKinds.value)
+  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#ec4899']
+  return {
+    labels: labels.map(l => l === 'main' ? '主会话' : l === 'isolated' ? '独立会话' : l === 'subagent' ? '子Agent' : l),
+    datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderWidth: 0, cutout: '60%' }]
+  }
+})
+const sessionChartOptions = {
+  responsive: true, maintainAspectRatio: true,
+  plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, font: { size: 11 } } }, tooltip: { enabled: true } },
+  animation: { duration: 600 }
+}
+
+// 模型统计
+const providerModelCount = computed(() => {
+  return providerEntries.value.map(p => ({
+    name: p.name,
+    count: p.models.length,
+    reasoning: p.models.filter(m => m.reasoning).length
+  }))
+})
 const channelEntries = computed(() => {
   const ch = channelsInfo.value?.channels || {}
   return Object.entries(ch).map(([id, info]) => ({ id, ...info }))
@@ -115,7 +169,7 @@ let refreshTimer
 onMounted(() => {
   if (authenticated.value) loadAllData()
   refreshTimer = setInterval(() => {
-    if (authenticated.value) loadAllData()
+    if (authenticated.value) loadAllData(true)
   }, 30000)
 })
 onUnmounted(() => clearInterval(refreshTimer))
@@ -164,31 +218,40 @@ onUnmounted(() => clearInterval(refreshTimer))
       </div>
     </div>
 
+    <!-- 确认弹窗 -->
+    <div v-if="confirmDialog.show" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div class="bg-white rounded-xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+        <p class="text-sm text-gray-700 mb-5">{{ confirmDialog.msg }}</p>
+        <div class="flex gap-2 justify-end">
+          <button @click="cancelConfirm" class="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50">取消</button>
+          <button @click="confirmDialog.onOk" class="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700">确定</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 错误提示 -->
     <div v-if="error" class="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 flex items-center gap-2">
       <span>⚠️</span> {{ error }}
       <button @click="error = ''; loadAllData()" class="ml-auto underline text-red-600">重试</button>
     </div>
 
-    <!-- 概览卡片 -->
+    <!-- 系统状态环形图 -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <div class="rounded-xl border border-gray-200 bg-white p-4">
-        <p class="text-xs text-gray-400 mb-1">Gateway</p>
-        <p class="text-lg font-bold" :class="healthData?.ok ? 'text-green-600' : 'text-gray-400'">
-          {{ healthData?.ok ? '正常' : '-' }}
-        </p>
+      <div class="rounded-xl border border-gray-200 bg-white p-4 flex flex-col items-center">
+        <RingChart :value="eventLoopUtil" :max="100" label="事件循环" unit="%" :color="eventLoopColor" :size="100" />
+        <p class="text-xs mt-2" :class="eventLoop?.degraded ? 'text-amber-600' : 'text-green-600'">{{ eventLoop?.degraded ? '降级' : '正常' }}</p>
       </div>
-      <div class="rounded-xl border border-gray-200 bg-white p-4">
-        <p class="text-xs text-gray-400 mb-1">活跃会话</p>
-        <p class="text-lg font-bold text-gray-900">{{ sessions.length }}</p>
+      <div class="rounded-xl border border-gray-200 bg-white p-4 flex flex-col items-center">
+        <RingChart :value="sessionCount" :max="50" label="活跃会话" unit="" color="#3b82f6" :size="100" />
+        <p class="text-xs text-gray-400 mt-2">/ 50 上限</p>
       </div>
-      <div class="rounded-xl border border-gray-200 bg-white p-4">
-        <p class="text-xs text-gray-400 mb-1">模型</p>
-        <p class="text-lg font-bold text-gray-900">{{ modelCount }}</p>
+      <div class="rounded-xl border border-gray-200 bg-white p-4 flex flex-col items-center">
+        <RingChart :value="modelCount" :max="20" label="模型数" unit="" color="#8b5cf6" :size="100" />
+        <p class="text-xs text-gray-400 mt-2">{{ providerEntries.length }} 个提供商</p>
       </div>
-      <div class="rounded-xl border border-gray-200 bg-white p-4">
-        <p class="text-xs text-gray-400 mb-1">渠道</p>
-        <p class="text-lg font-bold text-gray-900">{{ channelCount }}</p>
+      <div class="rounded-xl border border-gray-200 bg-white p-4 flex flex-col items-center">
+        <RingChart :value="channelCount" :max="10" label="渠道" unit="" color="#f59e0b" :size="100" />
+        <p class="text-xs mt-2" :class="healthData?.ok ? 'text-green-600' : 'text-gray-400'">{{ healthData?.ok ? '运行中' : '-' }}</p>
       </div>
     </div>
 
@@ -227,6 +290,35 @@ onUnmounted(() => clearInterval(refreshTimer))
     <div v-else-if="defaultModelName" class="rounded-xl border border-gray-200 bg-white p-5">
       <h4 class="text-sm font-semibold text-gray-700 mb-3">当前模型</h4>
       <p class="text-base font-medium text-gray-900">{{ defaultModelProvider }}/{{ defaultModelName }}</p>
+    </div>
+
+    <!-- 会话分布 + 模型统计 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- 会话分布 -->
+      <div v-if="sessions.length > 0" class="rounded-xl border border-gray-200 bg-white p-5">
+        <h4 class="text-sm font-semibold text-gray-700 mb-3">会话分布</h4>
+        <div class="flex items-center justify-center">
+          <div class="w-48 h-48">
+            <Doughnut :data="sessionChartData" :options="sessionChartOptions" />
+          </div>
+        </div>
+      </div>
+      <!-- 模型统计 -->
+      <div v-if="providerModelCount.length > 0" class="rounded-xl border border-gray-200 bg-white p-5">
+        <h4 class="text-sm font-semibold text-gray-700 mb-3">模型统计</h4>
+        <div class="space-y-3">
+          <div v-for="p in providerModelCount" :key="p.name" class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-xs font-bold text-blue-600">{{ p.name[0].toUpperCase() }}</div>
+              <span class="text-sm font-medium text-gray-800">{{ p.name }}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-gray-500">{{ p.count }} 模型</span>
+              <span v-if="p.reasoning > 0" class="text-xs px-2 py-0.5 rounded bg-purple-50 text-purple-600">{{ p.reasoning }} 推理</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 会话列表 -->

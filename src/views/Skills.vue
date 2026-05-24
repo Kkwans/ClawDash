@@ -3,23 +3,36 @@ import { ref, computed, onMounted } from 'vue'
 import { gwRequest } from '../stores/gateway.js'
 
 const searchResults = ref([])
+const installedSkills = ref([])
 const pluginEntries = ref([])
 const loading = ref(true)
 const searching = ref(false)
 const searchQuery = ref('')
 const toast = ref('')
+const confirmDialog = ref({ show: false, msg: '', onOk: null })
 const activeTab = ref('installed')
+
+function showConfirm(msg) {
+  return new Promise(resolve => {
+    confirmDialog.value = { show: true, msg, onOk: () => { confirmDialog.value.show = false; resolve(true) } }
+  })
+}
+function cancelConfirm() { confirmDialog.value.show = false }
 
 async function fetchData() {
   loading.value = true
   try {
-    const cfg = await gwRequest('config.get').catch(() => null)
+    const [skills, cfg] = await Promise.all([
+      gwRequest('skills.list').catch(() => null),
+      gwRequest('config.get').catch(() => null)
+    ])
+    installedSkills.value = skills?.skills || []
     const entries = cfg?.parsed?.plugins?.entries || {}
     pluginEntries.value = Object.entries(entries).map(([id, c]) => ({
       id, config: c, enabled: c.enabled !== false
     }))
   } catch (e) {
-    console.error('Failed to fetch plugins:', e)
+    console.error('Failed to fetch skills:', e)
   }
   loading.value = false
 }
@@ -38,15 +51,23 @@ async function searchSkills() {
 
 async function installSkill(skill) {
   try {
-    await gwRequest('skills.install', {
-      name: skill.displayName,
-      slug: skill.slug,
-      source: 'clawhub',
-      installId: skill.slug
-    })
-    showToast(`${skill.displayName} 安装成功`)
+    await gwRequest('skills.install', { uploadId: skill.uploadId || skill.slug })
+    showToast(`${skill.displayName || skill.name} 安装成功`)
+    await fetchData()
   } catch (e) {
     showToast(`安装失败: ${e.message}`)
+  }
+}
+
+async function deleteSkill(skill) {
+  const ok = await showConfirm(`确定删除 Skill "${skill.name || skill.id}"？`)
+  if (!ok) return
+  try {
+    await gwRequest('skills.delete', { name: skill.name || skill.id })
+    showToast(`${skill.name || skill.id} 已删除`)
+    await fetchData()
+  } catch (e) {
+    showToast(`删除失败: ${e.message}`)
   }
 }
 
@@ -115,7 +136,18 @@ onMounted(fetchData)
       </button>
     </div>
 
-    <!-- 已安装插件 -->
+    <!-- 确认弹窗 -->
+    <div v-if="confirmDialog.show" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div class="bg-white rounded-xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+        <p class="text-sm text-gray-700 mb-5">{{ confirmDialog.msg }}</p>
+        <div class="flex gap-2 justify-end">
+          <button @click="cancelConfirm" class="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50">取消</button>
+          <button @click="confirmDialog.onOk" class="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 已安装 Skill -->
     <div v-if="activeTab === 'installed'" class="space-y-3">
       <div v-if="loading" class="flex items-center justify-center py-16">
         <div class="flex flex-col items-center gap-3">
@@ -123,36 +155,57 @@ onMounted(fetchData)
           <span class="text-sm text-gray-400">加载中...</span>
         </div>
       </div>
-      <div v-else-if="pluginEntries.length === 0" class="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-100">
+      <div v-else-if="installedSkills.length === 0 && pluginEntries.length === 0" class="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-100">
         <span class="text-4xl mb-4">🧩</span>
-        <p class="text-sm font-medium text-gray-600">暂无已安装插件</p>
+        <p class="text-sm font-medium text-gray-600">暂无已安装 Skill</p>
         <p class="text-xs text-gray-400 mt-1">切换到「搜索 ClawHub」查找并安装 Skill</p>
       </div>
-      <div v-else v-for="pl in pluginEntries" :key="pl.id"
-        class="bg-white rounded-xl border border-gray-200 p-4 transition-all hover:border-gray-300">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3 min-w-0">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-              :class="pl.enabled ? 'bg-green-50' : 'bg-gray-100'">🧩</div>
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <p class="text-sm font-semibold text-gray-900">{{ pl.id }}</p>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-                  :class="pl.enabled ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'">
-                  <span class="w-1.5 h-1.5 rounded-full" :class="pl.enabled ? 'bg-green-500' : 'bg-gray-400'"></span>
-                  {{ pl.enabled ? '已启用' : '已禁用' }}
-                </span>
+      <div v-else>
+        <!-- Skills from skills.list -->
+        <div v-for="skill in installedSkills" :key="skill.name || skill.id"
+          class="bg-white rounded-xl border border-gray-200 p-4 transition-all hover:border-gray-300">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-blue-50">⚡</div>
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-gray-900">{{ skill.displayName || skill.name }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">{{ skill.description || skill.source || '本地 Skill' }}</p>
               </div>
-              <p class="text-xs text-gray-400 mt-0.5">配置项: {{ Object.keys(pl.config).filter(k => k !== 'enabled').length }} 个</p>
+            </div>
+            <div class="flex gap-2">
+              <button @click="deleteSkill(skill)"
+                class="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 transition-all">
+                删除
+              </button>
             </div>
           </div>
-          <button @click="togglePlugin(pl)"
-            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-            :class="pl.enabled
-              ? 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-100'
-              : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-100'">
-            {{ pl.enabled ? '禁用' : '启用' }}
-          </button>
+        </div>
+        <!-- Plugins from config -->
+        <div v-for="pl in pluginEntries" :key="pl.id"
+          class="bg-white rounded-xl border border-gray-200 p-4 transition-all hover:border-gray-300">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+                :class="pl.enabled ? 'bg-green-50' : 'bg-gray-100'">🧩</div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-semibold text-gray-900">{{ pl.id }}</p>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                    :class="pl.enabled ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'">
+                    <span class="w-1.5 h-1.5 rounded-full" :class="pl.enabled ? 'bg-green-500' : 'bg-gray-400'"></span>
+                    {{ pl.enabled ? '已启用' : '已禁用' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <button @click="togglePlugin(pl)"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+              :class="pl.enabled
+                ? 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-100'
+                : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-100'">
+              {{ pl.enabled ? '禁用' : '启用' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>

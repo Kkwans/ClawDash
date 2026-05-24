@@ -6,8 +6,23 @@ const jobs = ref([])
 const loading = ref(true)
 const toast = ref('')
 const saving = ref(false)
+const confirmDialog = ref({ show: false, msg: '', onOk: null })
 const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const editingJob = ref(null)
+const editForm = ref({ name: '', scheduleKind: 'cron', scheduleExpr: '', payloadKind: 'systemEvent', payloadText: '', sessionTarget: 'main' })
+const showHistoryModal = ref(false)
+const historyJob = ref(null)
+const historyRuns = ref([])
+const historyLoading = ref(false)
 const newJob = ref({ name: '', scheduleKind: 'cron', scheduleExpr: '', payloadKind: 'systemEvent', payloadText: '', sessionTarget: 'main' })
+
+function showConfirm(msg) {
+  return new Promise(resolve => {
+    confirmDialog.value = { show: true, msg, onOk: () => { confirmDialog.value.show = false; resolve(true) } }
+  })
+}
+function cancelConfirm() { confirmDialog.value.show = false }
 
 async function fetchJobs() {
   loading.value = true
@@ -45,7 +60,8 @@ async function runJob(job) {
 }
 
 async function deleteJob(job) {
-  if (!confirm(`确定要删除任务 "${job.name || job.id}" 吗？`)) return
+  const ok = await showConfirm(`确定要删除任务 "${job.name || job.id}" 吗？`)
+  if (!ok) return
   try {
     await gwRequest('cron.remove', { jobId: job.id })
     showToast(`${job.name || job.id} 已删除`)
@@ -80,6 +96,57 @@ async function createJob() {
   saving.value = false
 }
 
+function startEdit(job) {
+  editingJob.value = job
+  const s = job.schedule || {}
+  const p = job.payload || {}
+  editForm.value = {
+    name: job.name || '',
+    scheduleKind: s.kind || 'cron',
+    scheduleExpr: s.expr || (s.everyMs ? String(s.everyMs / 60000) : ''),
+    payloadKind: p.kind || 'systemEvent',
+    payloadText: p.text || p.message || '',
+    sessionTarget: job.sessionTarget || 'main'
+  }
+  showEditModal.value = true
+}
+
+async function saveEdit() {
+  saving.value = true
+  try {
+    const schedule = editForm.value.scheduleKind === 'cron'
+      ? { kind: 'cron', expr: editForm.value.scheduleExpr }
+      : { kind: 'every', everyMs: parseInt(editForm.value.scheduleExpr) * 60000 }
+    const payload = editForm.value.payloadKind === 'systemEvent'
+      ? { kind: 'systemEvent', text: editForm.value.payloadText }
+      : { kind: 'agentTurn', message: editForm.value.payloadText }
+    await gwRequest('cron.update', {
+      jobId: editingJob.value.id,
+      patch: { name: editForm.value.name || undefined, schedule, payload, sessionTarget: editForm.value.sessionTarget }
+    })
+    showToast('任务已更新')
+    showEditModal.value = false
+    await fetchJobs()
+  } catch (e) {
+    showToast(`更新失败: ${e.message}`)
+  }
+  saving.value = false
+}
+
+async function showHistory(job) {
+  historyJob.value = job
+  showHistoryModal.value = true
+  historyLoading.value = true
+  try {
+    const res = await gwRequest('cron.runs', { jobId: job.id, limit: 20 })
+    historyRuns.value = res?.runs || []
+  } catch (e) {
+    showToast(`获取历史失败: ${e.message}`)
+    historyRuns.value = []
+  }
+  historyLoading.value = false
+}
+
 function formatSchedule(schedule) {
   if (!schedule) return '-'
   if (typeof schedule === 'string') return schedule
@@ -110,6 +177,17 @@ onMounted(fetchJobs)
         {{ toast }}
       </div>
     </Transition>
+
+    <!-- 确认弹窗 -->
+    <div v-if="confirmDialog.show" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div class="bg-white rounded-xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+        <p class="text-sm text-gray-700 mb-5">{{ confirmDialog.msg }}</p>
+        <div class="flex gap-2 justify-end">
+          <button @click="cancelConfirm" class="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50">取消</button>
+          <button @click="confirmDialog.onOk" class="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700">确定</button>
+        </div>
+      </div>
+    </div>
 
     <!-- 页面标题 -->
     <div class="flex items-center justify-between">
@@ -189,6 +267,14 @@ onMounted(fetchJobs)
             </div>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
+            <button @click="showHistory(job)"
+              class="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-500 hover:bg-gray-100 transition-all">
+              📋
+            </button>
+            <button @click="startEdit(job)"
+              class="px-2.5 py-1 rounded-lg text-xs font-medium bg-purple-50 text-purple-600 hover:bg-purple-100 transition-all">
+              ✏️
+            </button>
             <button @click="runJob(job)"
               class="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all">
               ▶ 执行
@@ -277,6 +363,85 @@ onMounted(fetchJobs)
               class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
               {{ saving ? '创建中...' : '创建' }}
             </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 编辑弹窗 -->
+    <Teleport to="body">
+      <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40" @click="showEditModal = false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col">
+          <div class="flex items-center justify-between p-5 border-b border-gray-200">
+            <h3 class="text-base font-semibold text-gray-800">编辑定时任务</h3>
+            <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+          </div>
+          <div class="flex-1 overflow-y-auto p-5 space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">任务名称</label>
+              <input v-model="editForm.name" placeholder="可选" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">调度方式</label>
+              <div class="flex gap-2">
+                <button @click="editForm.scheduleKind = 'cron'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.scheduleKind === 'cron' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">Cron 表达式</button>
+                <button @click="editForm.scheduleKind = 'every'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.scheduleKind === 'every' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">固定间隔</button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">{{ editForm.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔（分钟）' }}</label>
+              <input v-model="editForm.scheduleExpr" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">任务类型</label>
+              <div class="flex gap-2">
+                <button @click="editForm.payloadKind = 'systemEvent'; editForm.sessionTarget = 'main'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.payloadKind === 'systemEvent' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">📢 系统事件</button>
+                <button @click="editForm.payloadKind = 'agentTurn'; editForm.sessionTarget = 'isolated'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.payloadKind === 'agentTurn' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">🤖 Agent 执行</button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">{{ editForm.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息' }}</label>
+              <textarea v-model="editForm.payloadText" rows="3" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+            </div>
+          </div>
+          <div class="flex justify-end gap-3 p-5 border-t border-gray-200">
+            <button @click="showEditModal = false" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">取消</button>
+            <button @click="saveEdit" :disabled="saving" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{{ saving ? '保存中...' : '保存' }}</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 执行历史弹窗 -->
+    <Teleport to="body">
+      <div v-if="showHistoryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40" @click="showHistoryModal = false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+          <div class="flex items-center justify-between p-5 border-b border-gray-200">
+            <h3 class="text-base font-semibold text-gray-800">执行历史 — {{ historyJob?.name || historyJob?.id }}</h3>
+            <button @click="showHistoryModal = false" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+          </div>
+          <div class="flex-1 overflow-y-auto p-5">
+            <div v-if="historyLoading" class="text-center py-8">
+              <div class="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+            </div>
+            <div v-else-if="historyRuns.length === 0" class="text-center py-8">
+              <p class="text-sm text-gray-400">暂无执行记录</p>
+            </div>
+            <div v-else class="space-y-2">
+              <div v-for="run in historyRuns" :key="run.id || run.runId"
+                class="p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-medium" :class="run.status === 'completed' || run.ok ? 'text-green-600' : run.status === 'failed' || run.error ? 'text-red-600' : 'text-amber-600'">
+                    {{ run.status || (run.ok ? '成功' : '失败') }}
+                  </span>
+                  <span class="text-xs text-gray-400">{{ run.startedAt ? new Date(run.startedAt).toLocaleString('zh-CN') : run.createdAt ? new Date(run.createdAt).toLocaleString('zh-CN') : '-' }}</span>
+                </div>
+                <p v-if="run.error" class="text-xs text-red-500 mt-1">{{ run.error }}</p>
+                <p v-if="run.summary" class="text-xs text-gray-600 mt-1">{{ run.summary }}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

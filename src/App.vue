@@ -9,6 +9,7 @@ import Settings from './views/Settings.vue'
 import Skills from './views/Skills.vue'
 import Cron from './views/Cron.vue'
 import SessionList from './views/SessionList.vue'
+import Chat from './views/Chat.vue'
 
 const currentTab = ref('dashboard')
 const gatewayStatus = ref('checking')
@@ -68,12 +69,13 @@ const tabs = [
   { id: 'skills', name: 'Skill 管理', icon: '📦' },
   { id: 'cron', name: '定时任务', icon: '⏰' },
   { id: 'sessionlist', name: '会话管理', icon: '💬' },
+  { id: 'chat', name: '聊天', icon: '🗨️' },
   { id: 'logs', name: '日志查看', icon: '📋' },
   { id: 'settings', name: '系统设置', icon: '⚙️' },
 ]
 
 const currentComponent = computed(() => {
-  const map = { dashboard: Dashboard, models: Models, channels: Channels, skills: Skills, cron: Cron, sessionlist: SessionList, logs: Sessions, settings: Settings }
+  const map = { dashboard: Dashboard, models: Models, channels: Channels, skills: Skills, cron: Cron, sessionlist: SessionList, chat: Chat, logs: Sessions, settings: Settings }
   return map[currentTab.value] || Dashboard
 })
 
@@ -204,7 +206,7 @@ onUnmounted(() => {
           </h2>
         </div>
         <div class="flex items-center gap-3">
-          <span class="text-xs text-gray-400">ClawDash v3.0.0</span>
+          <span class="text-xs text-gray-400">ClawDash v4.0.0</span>
           <a href="https://github.com/Kkwans/ClawDash" target="_blank"
             class="text-gray-400 hover:text-gray-600 transition-colors">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

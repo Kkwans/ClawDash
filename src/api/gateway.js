@@ -280,7 +280,9 @@ class GatewayClient {
         clearTimeout(entry.timer)
         this._pending.delete(msg.id)
         if (msg.ok) {
-          entry.resolve(msg.payload)
+          // config.get 的 payload 可能在不同位置
+          const payload = msg.payload || msg.result || msg.data || msg
+          entry.resolve(payload)
         } else {
           entry.reject(new Error(msg.error?.message || msg.error || '请求失败'))
         }

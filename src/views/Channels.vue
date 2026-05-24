@@ -7,6 +7,16 @@ const configData = ref(null)
 const loading = ref(true)
 const toast = ref('')
 const activeTab = ref('channels')
+const confirmDialog = ref({ show: false, msg: '', onOk: null })
+const showInstallModal = ref(false)
+const installForm = ref({ pluginId: '' })
+
+function showConfirm(msg) {
+  return new Promise(resolve => {
+    confirmDialog.value = { show: true, msg, onOk: () => { confirmDialog.value.show = false; resolve(true) } }
+  })
+}
+function cancelConfirm() { confirmDialog.value.show = false }
 
 const tabs = [
   { key: 'channels', label: '渠道状态', icon: '📡' },
@@ -66,6 +76,47 @@ async function togglePlugin(plugin) {
   }
 }
 
+async function uninstallPlugin(plugin) {
+  const ok = await showConfirm(`确定卸载插件 ${plugin.id}？`)
+  if (!ok) return
+  try {
+    const cfgRes = await gwRequest('config.get')
+    const raw = cfgRes?.raw
+    const hash = cfgRes?.hash
+    if (!raw || !hash) throw new Error('无法获取配置')
+    const cfg = JSON.parse(raw)
+    if (cfg.plugins?.entries?.[plugin.id]) {
+      delete cfg.plugins.entries[plugin.id]
+    }
+    await gwRequest('config.set', { raw: JSON.stringify(cfg), baseHash: hash })
+    showToast(`${plugin.id} 已卸载`)
+    await fetchData()
+  } catch (e) {
+    showToast('卸载失败: ' + e.message)
+  }
+}
+
+async function installPlugin() {
+  if (!installForm.value.pluginId) { showToast('请输入插件 ID', 'error'); return }
+  try {
+    const cfgRes = await gwRequest('config.get')
+    const raw = cfgRes?.raw
+    const hash = cfgRes?.hash
+    if (!raw || !hash) throw new Error('无法获取配置')
+    const cfg = JSON.parse(raw)
+    if (!cfg.plugins) cfg.plugins = {}
+    if (!cfg.plugins.entries) cfg.plugins.entries = {}
+    cfg.plugins.entries[installForm.value.pluginId] = { enabled: true }
+    await gwRequest('config.set', { raw: JSON.stringify(cfg), baseHash: hash })
+    showToast(`${installForm.value.pluginId} 已安装`)
+    showInstallModal.value = false
+    installForm.value.pluginId = ''
+    await fetchData()
+  } catch (e) {
+    showToast('安装失败: ' + e.message)
+  }
+}
+
 const channelIcons = {
   feishu: '🐦', qqbot: '🐧', telegram: '✈️', discord: '🎮',
   wechat: '💚', slack: '💼', whatsapp: '📱', matrix: '🔗'
@@ -89,9 +140,10 @@ onMounted(fetchData)
         <h2 class="text-lg font-bold text-gray-900">渠道管理</h2>
         <p class="text-sm text-gray-500 mt-0.5">查看渠道状态和管理插件</p>
       </div>
-      <button @click="fetchData" class="px-3 py-1.5 text-xs text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
-        刷新
-      </button>
+      <div class="flex gap-2">
+        <button @click="fetchData" class="px-3 py-1.5 text-xs text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">刷新</button>
+        <button @click="showInstallModal = true" class="px-3 py-1.5 text-xs text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors">+ 安装插件</button>
+      </div>
     </div>
 
     <!-- EventLoop 状态 -->
@@ -111,6 +163,32 @@ onMounted(fetchData)
           <span v-if="eventLoop.utilization">利用率 {{ (eventLoop.utilization * 100).toFixed(0) }}%</span>
           <span v-if="eventLoop.delayP99Ms">P99 {{ eventLoop.delayP99Ms.toFixed(0) }}ms</span>
           <span v-if="eventLoop.intervalMs">间隔 {{ eventLoop.intervalMs }}ms</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 确认弹窗 -->
+    <div v-if="confirmDialog.show" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div class="bg-white rounded-xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+        <p class="text-sm text-gray-700 mb-5">{{ confirmDialog.msg }}</p>
+        <div class="flex gap-2 justify-end">
+          <button @click="cancelConfirm" class="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50">取消</button>
+          <button @click="confirmDialog.onOk" class="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 安装插件弹窗 -->
+    <div v-if="showInstallModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
+        <h3 class="text-lg font-bold mb-4">安装插件</h3>
+        <div>
+          <label class="text-xs text-gray-500">插件 ID</label>
+          <input v-model="installForm.pluginId" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="feishu-plugin">
+        </div>
+        <div class="flex gap-2 mt-4 justify-end">
+          <button @click="showInstallModal = false" class="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50">取消</button>
+          <button @click="installPlugin" class="px-4 py-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700">安装</button>
         </div>
       </div>
     </div>
@@ -186,13 +264,19 @@ onMounted(fetchData)
               </p>
             </div>
           </div>
-          <button @click="togglePlugin(pl)"
-            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-            :class="pl.enabled
-              ? 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-100'
-              : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-100'">
-            {{ pl.enabled ? '禁用' : '启用' }}
-          </button>
+          <div class="flex gap-2">
+            <button @click="togglePlugin(pl)"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+              :class="pl.enabled
+                ? 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-100'
+                : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-100'">
+              {{ pl.enabled ? '禁用' : '启用' }}
+            </button>
+            <button @click="uninstallPlugin(pl)"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 transition-all">
+              卸载
+            </button>
+          </div>
         </div>
       </div>
     </div>
