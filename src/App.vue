@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { getToken, setToken } from './api'
+import { connected, authenticated, connecting, connectionError, statusText, statusColor, connect, disconnect, token, updateToken } from './stores/gateway.js'
 import Dashboard from './views/Dashboard.vue'
 import Models from './views/Models.vue'
 import Channels from './views/Channels.vue'
@@ -34,21 +34,20 @@ function switchTab(id) {
 
 // Token 弹窗相关
 function checkToken() {
-  const token = getToken()
-  if (!token) {
+  if (!token.value) {
     showTokenModal.value = true
   }
 }
 
 function saveTokenFromModal() {
   if (tokenInput.value.trim()) {
-    setToken(tokenInput.value.trim())
+    updateToken(tokenInput.value.trim())
     tokenSaved.value = true
     setTimeout(() => {
       showTokenModal.value = false
       tokenSaved.value = false
-      // 刷新页面数据
-      window.location.reload()
+      // 重新连接
+      connect()
     }, 1000)
   }
 }
@@ -78,25 +77,14 @@ const currentComponent = computed(() => {
   return map[currentTab.value] || Dashboard
 })
 
-async function checkHealth() {
-  try {
-    const r = await fetch('/healthz')
-    const d = await r.json()
-    gatewayStatus.value = d.ok ? 'running' : 'error'
-  } catch {
-    gatewayStatus.value = 'error'
-  }
-}
-
 let healthTimer
 onMounted(() => {
-  checkHealth()
   checkToken()
-  healthTimer = setInterval(checkHealth, 30000)
+  connect()
   window.addEventListener('resize', handleResize)
 })
 onUnmounted(() => {
-  clearInterval(healthTimer)
+  disconnect()
   window.removeEventListener('resize', handleResize)
 })
 </script>
@@ -189,10 +177,10 @@ onUnmounted(() => {
         <div class="flex items-center justify-between text-xs">
           <span class="text-gray-400">网关状态</span>
           <span class="flex items-center gap-1.5"
-            :class="gatewayStatus === 'running' ? 'text-green-600' : 'text-red-500'">
+            :class="authenticated ? 'text-green-600' : connecting ? 'text-yellow-600' : 'text-red-500'">
             <span class="w-2 h-2 rounded-full"
-              :class="gatewayStatus === 'running' ? 'bg-green-500' : 'bg-red-500'"></span>
-            {{ gatewayStatus === 'running' ? '运行中' : gatewayStatus === 'error' ? '异常' : '检测中' }}
+              :class="authenticated ? 'bg-green-500' : connecting ? 'bg-yellow-500' : 'bg-red-500'"></span>
+            {{ statusText }}
           </span>
         </div>
         <a href="/builtin/" target="_blank"
@@ -216,7 +204,7 @@ onUnmounted(() => {
           </h2>
         </div>
         <div class="flex items-center gap-3">
-          <span class="text-xs text-gray-400">ClawDash v0.2.0</span>
+          <span class="text-xs text-gray-400">ClawDash v3.0.0</span>
           <a href="https://github.com/Kkwans/ClawDash" target="_blank"
             class="text-gray-400 hover:text-gray-600 transition-colors">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

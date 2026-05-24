@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { gwRequest, authenticated } from '../stores/gateway.js'
 
 const sessions = ref([])
 const loading = ref(true)
@@ -10,15 +11,8 @@ const refreshing = ref(false)
 async function fetchSessions() {
   loading.value = true
   try {
-    const token = localStorage.getItem('clawdash_token') || ''
-    // 通过 Gateway HTTP API 获取会话列表
-    const res = await fetch('/api/v1/sessions', {
-      headers: { 'Authorization': token }
-    })
-    const data = await res.json()
-    if (data.success) {
-      sessions.value = Array.isArray(data.data) ? data.data : []
-    }
+    const res = await gwRequest('sessions.list', { limit: 100 })
+    sessions.value = res?.sessions || []
   } catch (e) {
     console.error('Failed to fetch sessions:', e)
   }
@@ -54,9 +48,9 @@ function formatDuration(ms) {
   return `${seconds}秒`
 }
 
-const activeSessions = computed(() => sessions.value.filter(s => s.state === 'active' || s.state === 'running'))
-const idleSessions = computed(() => sessions.value.filter(s => s.state === 'idle'))
-const otherSessions = computed(() => sessions.value.filter(s => s.state !== 'active' && s.state !== 'running' && s.state !== 'idle'))
+const activeSessions = computed(() => sessions.value.filter(s => s.status === 'active' || s.status === 'running' || s.status === 'streaming'))
+const idleSessions = computed(() => sessions.value.filter(s => s.status === 'done' || s.status === 'idle'))
+const otherSessions = computed(() => sessions.value.filter(s => !['active', 'running', 'streaming', 'done', 'idle'].includes(s.status)))
 
 let timer
 onMounted(() => {
@@ -124,41 +118,42 @@ onUnmounted(() => clearInterval(timer))
 
     <!-- 会话列表 -->
     <div v-else class="space-y-2">
-      <div v-for="session in sessions" :key="session.id || session.key"
+      <div v-for="session in sessions" :key="session.key || session.id"
         class="bg-white rounded-xl border border-gray-200 p-4 transition-all hover:border-gray-300 hover:shadow-sm"
-        :class="{ 'ring-1 ring-blue-200': selectedSession === session.id }"
-        @click="selectedSession = selectedSession === session.id ? null : session.id">
+        :class="{ 'ring-1 ring-blue-200': selectedSession === session.key }"
+        @click="selectedSession = selectedSession === session.key ? null : session.key">
         <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <p class="text-sm font-semibold text-gray-900">{{ session.label || session.id || session.key || '未知会话' }}</p>
+              <p class="text-sm font-semibold text-gray-900">{{ session.key || session.id || '未知会话' }}</p>
               <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
                 :class="{
-                  'bg-green-50 text-green-700': session.state === 'active' || session.state === 'running',
-                  'bg-amber-50 text-amber-700': session.state === 'idle',
-                  'bg-gray-100 text-gray-500': !['active', 'running', 'idle'].includes(session.state)
+                  'bg-green-50 text-green-700': session.status === 'active' || session.status === 'running' || session.status === 'streaming',
+                  'bg-blue-50 text-blue-700': session.status === 'done',
+                  'bg-gray-100 text-gray-500': !['active', 'running', 'streaming', 'done'].includes(session.status)
                 }">
                 <span class="w-1.5 h-1.5 rounded-full"
                   :class="{
-                    'bg-green-500': session.state === 'active' || session.state === 'running',
-                    'bg-amber-500': session.state === 'idle',
-                    'bg-gray-400': !['active', 'running', 'idle'].includes(session.state)
+                    'bg-green-500': session.status === 'active' || session.status === 'running' || session.status === 'streaming',
+                    'bg-blue-500': session.status === 'done',
+                    'bg-gray-400': !['active', 'running', 'streaming', 'done'].includes(session.status)
                   }"></span>
-                {{ session.state === 'active' ? '活跃' : session.state === 'running' ? '运行中' : session.state === 'idle' ? '空闲' : session.state || '未知' }}
+                {{ session.status === 'active' ? '活跃' : session.status === 'running' ? '运行中' : session.status === 'streaming' ? '输出中' : session.status === 'done' ? '完成' : session.status || '未知' }}
               </span>
               <span v-if="session.kind" class="text-xs text-gray-400 px-1.5 py-0.5 bg-gray-100 rounded">
                 {{ session.kind }}
               </span>
+              <span v-if="session.chatType" class="text-xs text-gray-400 px-1.5 py-0.5 bg-gray-100 rounded">
+                {{ session.chatType }}
+              </span>
             </div>
             <div class="flex items-center gap-4 mt-1.5 text-xs text-gray-500">
               <span v-if="session.model">🤖 {{ session.model }}</span>
-              <span v-if="session.lastActivityAt">🕐 {{ formatTime(session.lastActivityAt) }}</span>
-              <span v-if="session.messageCount">💬 {{ session.messageCount }} 条消息</span>
-              <span v-if="session.tokenUsage">🔤 {{ session.tokenUsage.toLocaleString() }} tokens</span>
+              <span v-if="session.totalTokens">🔤 {{ session.totalTokens.toLocaleString() }} tokens</span>
             </div>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
-            <button @click.stop="selectedSession = session.id"
+            <button @click.stop="selectedSession = session.key"
               class="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all">
               详情
             </button>
@@ -166,23 +161,23 @@ onUnmounted(() => clearInterval(timer))
         </div>
 
         <!-- 展开详情 -->
-        <div v-if="selectedSession === session.id" class="mt-3 pt-3 border-t border-gray-100">
+        <div v-if="selectedSession === session.key" class="mt-3 pt-3 border-t border-gray-100">
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div v-if="session.id">
-              <p class="text-xs text-gray-400">会话 ID</p>
-              <p class="text-sm font-mono text-gray-700 truncate">{{ session.id }}</p>
-            </div>
             <div v-if="session.key">
               <p class="text-xs text-gray-400">会话 Key</p>
               <p class="text-sm font-mono text-gray-700 truncate">{{ session.key }}</p>
             </div>
-            <div v-if="session.createdAt">
-              <p class="text-xs text-gray-400">创建时间</p>
-              <p class="text-sm text-gray-700">{{ formatTime(session.createdAt) }}</p>
+            <div v-if="session.model">
+              <p class="text-xs text-gray-400">模型</p>
+              <p class="text-sm text-gray-700">{{ session.model }}</p>
             </div>
-            <div v-if="session.duration">
-              <p class="text-xs text-gray-400">持续时间</p>
-              <p class="text-sm text-gray-700">{{ formatDuration(session.duration) }}</p>
+            <div v-if="session.chatType">
+              <p class="text-xs text-gray-400">类型</p>
+              <p class="text-sm text-gray-700">{{ session.chatType }}</p>
+            </div>
+            <div v-if="session.totalTokens">
+              <p class="text-xs text-gray-400">Token 用量</p>
+              <p class="text-sm text-gray-700">{{ session.totalTokens.toLocaleString() }}</p>
             </div>
           </div>
         </div>

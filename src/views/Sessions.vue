@@ -1,45 +1,49 @@
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import { getProcessStatus, getProcessLogs, clearProcessLogs } from '../api'
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { gwRequest, useGatewayEvent, authenticated } from '../stores/gateway.js'
 
-const status = ref({})
-const logs = ref([])
+const healthData = ref(null)
 const loading = ref(true)
-const logLimit = ref(200)
-const clearing = ref(false)
 const toast = ref('')
+const eventLog = ref([])
+const maxEvents = 500
 const autoScroll = ref(true)
 const logContainer = ref(null)
+const filterText = ref('')
 
-async function fetchStatus() {
-  try {
-    status.value = await getProcessStatus()
-  } catch {}
-}
+// 监听所有 Gateway 事件
+const stopListener = useGatewayEvent('*', (payload, eventName) => {
+  eventLog.value.push({
+    id: Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    event: eventName,
+    payload,
+    time: Date.now()
+  })
+  if (eventLog.value.length > maxEvents) {
+    eventLog.value.splice(0, eventLog.value.length - maxEvents)
+  }
+  if (autoScroll.value) {
+    nextTick(() => scrollToBottom())
+  }
+})
 
-async function fetchLogs() {
-  loading.value = true
+async function fetchHealth() {
   try {
-    const d = await getProcessLogs(0, logLimit.value)
-    logs.value = d.lines || []
-    if (autoScroll.value) {
-      await nextTick()
-      scrollToBottom()
-    }
-  } catch {}
+    healthData.value = await gwRequest('health')
+  } catch (e) {
+    console.error('Failed to fetch health:', e)
+  }
   loading.value = false
 }
 
-async function handleClearLogs() {
-  clearing.value = true
-  try {
-    await clearProcessLogs()
-    logs.value = []
-    showToast('日志已清除')
-  } catch (e) {
-    showToast(`清除失败: ${e.message}`)
-  }
-  clearing.value = false
+function showToast(msg) {
+  toast.value = msg
+  setTimeout(() => toast.value = '', 3000)
+}
+
+function clearLog() {
+  eventLog.value = []
+  showToast('日志已清空')
 }
 
 function scrollToBottom() {
@@ -54,71 +58,59 @@ function handleScroll() {
   autoScroll.value = scrollHeight - scrollTop - clientHeight < 50
 }
 
-function getLogLevel(text) {
-  if (!text) return 'default'
-  const upper = text.toUpperCase()
-  if (/\bERROR\b|\bFATAL\b|\bPANIC\b/.test(upper)) return 'error'
-  if (/\bWARN\b|\bWARNING\b/.test(upper)) return 'warn'
-  if (/\bINFO\b/.test(upper)) return 'info'
-  if (/\bDEBUG\b|\bTRACE\b/.test(upper)) return 'debug'
-  return 'default'
-}
-
-function highlightKeywords(text) {
-  if (!text) return text
-  return text
-    .replace(/\b(error|fatal|panic|fail|failed|exception)\b/gi, '<span class="text-red-400 font-bold">$1</span>')
-    .replace(/\b(warn|warning)\b/gi, '<span class="text-yellow-400 font-bold">$1</span>')
-    .replace(/\b(success|ok|done|started)\b/gi, '<span class="text-green-400 font-bold">$1</span>')
-}
-
-const logLevelColors = {
-  error: 'text-red-400',
-  warn: 'text-yellow-400',
-  info: 'text-blue-300',
-  debug: 'text-gray-500',
-  default: 'text-green-300'
-}
-
 function formatTime(ts) {
   if (!ts) return ''
-  const d = new Date(ts)
-  return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  return new Date(ts).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 1 })
 }
 
-function formatBytes(bytes) {
-  if (!bytes) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+const eventColors = {
+  'connected': 'text-green-400',
+  'connect.challenge': 'text-blue-400',
+  'auth-error': 'text-red-400',
+  'session.started': 'text-emerald-400',
+  'session.ended': 'text-gray-400',
+  'tool.start': 'text-yellow-400',
+  'tool.end': 'text-yellow-300',
+  'message': 'text-cyan-400',
+  'error': 'text-red-400',
 }
 
-function formatUptime(seconds) {
-  if (!seconds) return '-'
-  const d = Math.floor(seconds / 86400)
-  const h = Math.floor((seconds % 86400) / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  if (d > 0) return `${d}天 ${h}小时 ${m}分钟`
-  if (h > 0) return `${h}小时 ${m}分钟`
-  return `${m}分钟`
+function getEventColor(event) {
+  return eventColors[event] || 'text-gray-300'
 }
 
-function showToast(msg) {
-  toast.value = msg
-  setTimeout(() => toast.value = '', 3000)
+function formatPayload(payload) {
+  if (!payload) return ''
+  const str = JSON.stringify(payload, null, 0)
+  return str.length > 200 ? str.slice(0, 200) + '...' : str
 }
+
+const filteredLog = computed(() => {
+  if (!filterText.value.trim()) return eventLog.value
+  const q = filterText.value.toLowerCase()
+  return eventLog.value.filter(e =>
+    e.event.toLowerCase().includes(q) ||
+    JSON.stringify(e.payload).toLowerCase().includes(q)
+  )
+})
+
+const uniqueEvents = computed(() => {
+  const counts = {}
+  eventLog.value.forEach(e => {
+    counts[e.event] = (counts[e.event] || 0) + 1
+  })
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])
+})
 
 let timer
 onMounted(() => {
-  fetchStatus()
-  fetchLogs()
-  timer = setInterval(() => {
-    fetchStatus()
-    fetchLogs()
-  }, 5000)
+  fetchHealth()
+  timer = setInterval(fetchHealth, 30000)
 })
-onUnmounted(() => clearInterval(timer))
+onUnmounted(() => {
+  clearInterval(timer)
+  stopListener.stop()
+})
 </script>
 
 <template>
@@ -130,107 +122,94 @@ onUnmounted(() => clearInterval(timer))
       </div>
     </Transition>
 
-    <!-- 进程状态 -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-base font-semibold text-gray-800">进程状态</h3>
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium"
-          :class="status.state === 'running' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'">
-          <span class="w-1.5 h-1.5 rounded-full" :class="status.state === 'running' ? 'bg-green-500' : 'bg-red-500'"></span>
-          {{ status.state === 'running' ? '运行中' : status.state || '未知' }}
+    <!-- 页面标题 -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900">日志查看</h2>
+        <p class="text-sm text-gray-500 mt-0.5">实时 Gateway 事件流</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-gray-400">{{ eventLog.length }} 条事件</span>
+        <button @click="clearLog" class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+          清空
+        </button>
+      </div>
+    </div>
+
+    <!-- Gateway 健康状态 -->
+    <div v-if="healthData" class="bg-white rounded-xl border border-gray-200 p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-sm font-semibold text-gray-700">Gateway 状态</span>
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+          :class="healthData.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'">
+          {{ healthData.ok ? '正常' : '异常' }}
         </span>
       </div>
-
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        <div class="text-center p-3 bg-gray-50 rounded-lg">
-          <p class="text-xs text-gray-400 mb-1">PID</p>
-          <p class="text-lg font-bold text-gray-800">{{ status.pid || '-' }}</p>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div>
+          <p class="text-gray-400">会话数</p>
+          <p class="font-medium text-gray-700">{{ healthData.sessions?.length || 0 }}</p>
         </div>
-        <div class="text-center p-3 bg-gray-50 rounded-lg">
-          <p class="text-xs text-gray-400 mb-1">CPU 使用率</p>
-          <p class="text-lg font-bold" :class="(status.cpuPercent || 0) > 80 ? 'text-red-600' : 'text-gray-800'">
-            {{ (status.cpuPercent || 0).toFixed(1) }}%
+        <div>
+          <p class="text-gray-400">事件循环</p>
+          <p class="font-medium" :class="healthData.eventLoop?.degraded ? 'text-amber-600' : 'text-green-600'">
+            {{ healthData.eventLoop?.degraded ? '降级' : '正常' }}
           </p>
         </div>
-        <div class="text-center p-3 bg-gray-50 rounded-lg">
-          <p class="text-xs text-gray-400 mb-1">内存占用</p>
-          <p class="text-lg font-bold text-gray-800">{{ formatBytes(status.memoryRss) }}</p>
+        <div>
+          <p class="text-gray-400">渠道数</p>
+          <p class="font-medium text-gray-700">{{ healthData.channelOrder?.length || 0 }}</p>
         </div>
-        <div class="text-center p-3 bg-gray-50 rounded-lg">
-          <p class="text-xs text-gray-400 mb-1">运行时长</p>
-          <p class="text-lg font-bold text-gray-800">{{ formatUptime(status.uptimeSeconds) }}</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="text-center p-3 bg-gray-50 rounded-lg">
-          <p class="text-xs text-gray-400 mb-1">重启次数</p>
-          <p class="text-lg font-bold text-gray-800">{{ status.restartCount || 0 }}</p>
-        </div>
-        <div class="text-center p-3 bg-gray-50 rounded-lg">
-          <p class="text-xs text-gray-400 mb-1">虚拟内存</p>
-          <p class="text-lg font-bold text-gray-800">{{ formatBytes(status.memoryVms) }}</p>
-        </div>
-        <div class="text-center p-3 bg-gray-50 rounded-lg">
-          <p class="text-xs text-gray-400 mb-1">系统 CPU</p>
-          <p class="text-lg font-bold text-gray-800">{{ (status.cpu || 0).toFixed(2) }}s</p>
-        </div>
-        <div class="text-center p-3 bg-gray-50 rounded-lg">
-          <p class="text-xs text-gray-400 mb-1">日志条数</p>
-          <p class="text-lg font-bold text-gray-800">{{ logs.length }}</p>
+        <div>
+          <p class="text-gray-400">心跳间隔</p>
+          <p class="font-medium text-gray-700">{{ healthData.heartbeatSeconds || '-' }}s</p>
         </div>
       </div>
     </div>
 
-    <!-- 日志 -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
-        <h3 class="text-base font-semibold text-gray-800">最近日志</h3>
-        <div class="flex items-center gap-2 flex-wrap">
-          <select v-model="logLimit" @change="fetchLogs"
-            class="text-sm border border-gray-200 rounded-lg px-2 py-1">
-            <option :value="50">50 条</option>
-            <option :value="100">100 条</option>
-            <option :value="200">200 条</option>
-            <option :value="500">500 条</option>
-            <option :value="1000">1000 条</option>
-          </select>
-          <button @click="fetchLogs" class="text-sm text-blue-600 hover:text-blue-700">刷新</button>
-          <button @click="handleClearLogs" :disabled="clearing"
-            class="text-sm text-red-600 hover:text-red-700 disabled:opacity-50">
-            {{ clearing ? '清除中...' : '清除日志' }}
-          </button>
-        </div>
+    <!-- 事件统计 -->
+    <div v-if="uniqueEvents.length > 0" class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 mb-2">事件类型统计</p>
+      <div class="flex flex-wrap gap-1.5">
+        <span v-for="[event, count] in uniqueEvents" :key="event"
+          class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs bg-gray-50 border border-gray-100 cursor-pointer hover:bg-gray-100"
+          @click="filterText = event">
+          <span :class="getEventColor(event)">●</span>
+          <span class="text-gray-700">{{ event }}</span>
+          <span class="text-gray-400">{{ count }}</span>
+        </span>
       </div>
+    </div>
 
-      <!-- 日志级别图例 -->
-      <div class="flex items-center gap-4 mb-3 text-xs">
-        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-400"></span> ERROR</span>
-        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-yellow-400"></span> WARN</span>
-        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-400"></span> INFO</span>
-        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-500"></span> DEBUG</span>
-        <label class="flex items-center gap-1 ml-auto cursor-pointer">
+    <!-- 日志查看器 -->
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <!-- 工具栏 -->
+      <div class="flex items-center gap-3 p-3 border-b border-gray-100">
+        <div class="relative flex-1">
+          <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input v-model="filterText" placeholder="过滤事件..."
+            class="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500">
+        </div>
+        <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
           <input type="checkbox" v-model="autoScroll" class="rounded">
-          <span class="text-gray-500">自动滚动</span>
+          自动滚动
         </label>
       </div>
 
-      <div v-if="loading" class="text-center py-8 text-gray-400">加载中...</div>
-      <div v-else-if="logs.length === 0" class="text-center py-8 text-gray-400">暂无日志</div>
+      <!-- 日志内容 -->
+      <div v-if="filteredLog.length === 0" class="text-center py-12 text-gray-400 text-sm">
+        {{ filterText ? '无匹配事件' : '等待事件...' }}
+      </div>
       <div v-else ref="logContainer" @scroll="handleScroll"
-        class="bg-gray-900 rounded-lg p-4 overflow-x-auto max-h-96 overflow-y-auto">
-        <div v-for="log in logs" :key="log.seq" class="font-mono text-xs leading-relaxed flex">
-          <span class="text-gray-500 flex-shrink-0 w-20">{{ formatTime(log.ts) }}</span>
-          <span class="w-1.5 h-1.5 rounded-full mt-1.5 mx-2 flex-shrink-0"
-            :class="{
-              'bg-red-400': getLogLevel(log.text) === 'error',
-              'bg-yellow-400': getLogLevel(log.text) === 'warn',
-              'bg-blue-400': getLogLevel(log.text) === 'info',
-              'bg-gray-500': getLogLevel(log.text) === 'debug',
-              'bg-green-400': getLogLevel(log.text) === 'default'
-            }"></span>
-          <span :class="logLevelColors[getLogLevel(log.text)]" class="break-all"
-            v-html="highlightKeywords(log.text)"></span>
+        class="bg-gray-900 p-3 overflow-x-auto max-h-[500px] overflow-y-auto">
+        <div v-for="e in filteredLog" :key="e.id"
+          class="font-mono text-xs leading-relaxed flex items-start gap-2 py-0.5 hover:bg-gray-800/50 px-1 rounded">
+          <span class="text-gray-500 flex-shrink-0 w-20">{{ formatTime(e.time) }}</span>
+          <span class="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" :class="getEventColor(e.event).replace('text-', 'bg-')"></span>
+          <span class="flex-shrink-0 w-32 truncate" :class="getEventColor(e.event)">{{ e.event }}</span>
+          <span class="text-gray-400 break-all">{{ formatPayload(e.payload) }}</span>
         </div>
       </div>
     </div>

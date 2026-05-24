@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { getProviders, getDefaults, updateDefaults } from '../api'
+import { gwRequest, authenticated, useGatewayEvent } from '../stores/gateway.js'
 
 const providers = ref([])
 const defaults = ref({})
@@ -65,47 +65,86 @@ function collapseAll() {
 async function fetchData() {
   loading.value = true
   try {
-    const [p, d] = await Promise.all([getProviders(), getDefaults()])
-    providers.value = Object.entries(p).map(([id, prov]) => ({ id, ...prov }))
-    defaults.value = d
-    defaultModel.value = d.model?.primary || ''
-    fallbackModel.value = d.model?.fallback || ''
-    thinkingLevel.value = d.thinking || 'off'
+    const [config, modelsList] = await Promise.all([
+      gwRequest('config.get'),
+      gwRequest('models.list')
+    ])
+    const cfg = config?.parsed || {}
+    const provs = cfg.models?.providers || {}
+    providers.value = Object.entries(provs).map(([id, prov]) => ({ id, ...prov }))
+    const agentDefaults = cfg.agents?.defaults || {}
+    defaults.value = agentDefaults
+    defaultModel.value = agentDefaults.model?.primary || ''
+    fallbackModel.value = (agentDefaults.model?.fallbacks || [])[0] || ''
+    thinkingLevel.value = agentDefaults.thinking || 'off'
     // 默认展开第一个
     if (providers.value.length > 0 && expandedProviders.value.size === 0) {
       expandedProviders.value.add(providers.value[0].id)
     }
-  } catch {}
+  } catch (e) {
+    console.error('[Models] fetchData error:', e)
+  }
   loading.value = false
+}
+
+/**
+ * config.set 需要: raw (完整 JSON 字符串) + baseHash (乐观锁)
+ * 流程: config.get → 修改 → config.set
+ */
+async function configUpdate(modifier) {
+  const cfgRes = await gwRequest('config.get')
+  const raw = cfgRes?.raw
+  const hash = cfgRes?.hash
+  if (!raw || !hash) throw new Error('无法获取当前配置')
+  const cfg = JSON.parse(raw)
+  modifier(cfg)
+  await gwRequest('config.set', { raw: JSON.stringify(cfg), baseHash: hash })
 }
 
 async function setDefaultModel(modelId) {
   saving.value = true
   try {
-    await updateDefaults({ model: { primary: modelId } })
+    await configUpdate((cfg) => {
+      if (!cfg.agents) cfg.agents = {}
+      if (!cfg.agents.defaults) cfg.agents.defaults = {}
+      if (!cfg.agents.defaults.model) cfg.agents.defaults.model = {}
+      cfg.agents.defaults.model.primary = modelId
+    })
     defaultModel.value = modelId
-    defaults.value.model = { ...defaults.value.model, primary: modelId }
-  } catch {}
+  } catch (e) {
+    alert('设置失败: ' + e.message)
+  }
   saving.value = false
 }
 
 async function setFallbackModel(modelId) {
   saving.value = true
   try {
-    await updateDefaults({ model: { fallback: modelId } })
+    await configUpdate((cfg) => {
+      if (!cfg.agents) cfg.agents = {}
+      if (!cfg.agents.defaults) cfg.agents.defaults = {}
+      if (!cfg.agents.defaults.model) cfg.agents.defaults.model = {}
+      cfg.agents.defaults.model.fallbacks = [modelId]
+    })
     fallbackModel.value = modelId
-    defaults.value.model = { ...defaults.value.model, fallback: modelId }
-  } catch {}
+  } catch (e) {
+    alert('设置失败: ' + e.message)
+  }
   saving.value = false
 }
 
 async function setThinkingLevel(level) {
   saving.value = true
   try {
-    await updateDefaults({ thinking: level })
+    await configUpdate((cfg) => {
+      if (!cfg.agents) cfg.agents = {}
+      if (!cfg.agents.defaults) cfg.agents.defaults = {}
+      cfg.agents.defaults.thinking = level
+    })
     thinkingLevel.value = level
-    defaults.value.thinking = level
-  } catch {}
+  } catch (e) {
+    alert('设置失败: ' + e.message)
+  }
   saving.value = false
 }
 
@@ -281,10 +320,10 @@ onMounted(fetchData)
                   <div class="flex items-center gap-2 flex-wrap">
                     <p class="text-sm font-medium text-gray-900">{{ m.name || m.id }}</p>
                     <!-- 能力标签 -->
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                    <span v-if="m.input?.includes('text')" class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
                       文本
                     </span>
-                    <span v-if="m.vision" class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                    <span v-if="m.input?.includes('image')" class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
                       图片
                     </span>
                     <span v-if="m.reasoning" class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
