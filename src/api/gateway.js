@@ -167,7 +167,7 @@ class GatewayClient {
         reject(new Error(`请求超时: ${method}`))
       }, timeout)
 
-      this._pending.set(id, { resolve, reject, timer })
+      this._pending.set(id, { resolve, reject, timer, method })
 
       try {
         this.ws.send(JSON.stringify(msg))
@@ -282,6 +282,7 @@ class GatewayClient {
         if (msg.ok) {
           // config.get 的 payload 可能在不同位置
           const payload = msg.payload || msg.result || msg.data || msg
+          console.log('[GW] response ok:', msg.id, 'method:', entry.method, 'payload keys:', Object.keys(payload || {}))
           entry.resolve(payload)
         } else {
           entry.reject(new Error(msg.error?.message || msg.error || '请求失败'))

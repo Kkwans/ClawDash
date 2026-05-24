@@ -1,12 +1,34 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { gwRequest, useGatewayEvent, authenticated } from '../stores/gateway.js'
+import Toast from '../components/Toast.vue'
 
 const healthData = ref(null)
 const loading = ref(true)
-const toast = ref('')
+const toastRef = ref(null)
 const eventLog = ref([])
 const maxEvents = 500
+const LOG_STORAGE_KEY = 'clawdash_event_log'
+
+// 从 localStorage 加载日志
+function loadLogFromStorage() {
+  try {
+    const saved = localStorage.getItem(LOG_STORAGE_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (Array.isArray(parsed)) {
+        eventLog.value = parsed.slice(-maxEvents)
+      }
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// 保存日志到 localStorage
+function saveLogToStorage() {
+  try {
+    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(eventLog.value.slice(-maxEvents)))
+  } catch (e) { /* ignore */ }
+}
 const autoScroll = ref(true)
 const logContainer = ref(null)
 const filterText = ref('')
@@ -22,6 +44,7 @@ const stopListener = useGatewayEvent('*', (payload, eventName) => {
   if (eventLog.value.length > maxEvents) {
     eventLog.value.splice(0, eventLog.value.length - maxEvents)
   }
+  saveLogToStorage()
   if (autoScroll.value) {
     nextTick(() => scrollToBottom())
   }
@@ -37,12 +60,12 @@ async function fetchHealth() {
 }
 
 function showToast(msg) {
-  toast.value = msg
-  setTimeout(() => toast.value = '', 3000)
+  toastRef.value?.show(msg)
 }
 
 function clearLog() {
   eventLog.value = []
+  saveLogToStorage()
   showToast('日志已清空')
 }
 
@@ -104,6 +127,7 @@ const uniqueEvents = computed(() => {
 
 let timer
 onMounted(() => {
+  loadLogFromStorage()
   fetchHealth()
   timer = setInterval(fetchHealth, 30000)
 })
@@ -115,12 +139,8 @@ onUnmounted(() => {
 
 <template>
   <div class="space-y-6">
-    <!-- Toast -->
-    <Transition name="fade">
-      <div v-if="toast" class="fixed top-4 right-4 z-50 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
-        {{ toast }}
-      </div>
-    </Transition>
+    <!-- 共享组件 -->
+    <Toast ref="toastRef" />
 
     <!-- 页面标题 -->
     <div class="flex items-center justify-between">

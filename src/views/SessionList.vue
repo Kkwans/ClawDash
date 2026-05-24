@@ -1,26 +1,29 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { gwRequest, authenticated } from '../stores/gateway.js'
+import Toast from '../components/Toast.vue'
+import ConfirmDialog from '../components/ConfirmDialog.vue'
 
 const sessions = ref([])
 const loading = ref(true)
-const toast = ref('')
+const toastRef = ref(null)
+const confirmRef = ref(null)
 const selectedSession = ref(null)
 const refreshing = ref(false)
-const confirmDialog = ref({ show: false, msg: '', onOk: null })
 
-function showConfirm(msg) {
-  return new Promise(resolve => {
-    confirmDialog.value = { show: true, msg, onOk: () => { confirmDialog.value.show = false; resolve(true) } }
-  })
+function showToast(msg) {
+  toastRef.value?.show(msg)
 }
-function cancelConfirm() { confirmDialog.value.show = false }
+
+async function showConfirm(msg) {
+  return confirmRef.value?.confirm(msg) || false
+}
 
 async function resetSession(session) {
   const ok = await showConfirm(`确定重置会话 ${session.key || session.id}？`)
   if (!ok) return
   try {
-    await gwRequest('sessions.reset', { sessionKey: session.key || session.id })
+    await gwRequest('sessions.reset', { key: session.key || session.id })
     showToast(`会话 ${session.key || session.id} 已重置`)
     await fetchSessions()
   } catch (e) {
@@ -45,10 +48,6 @@ async function refreshSessions() {
   refreshing.value = false
 }
 
-function showToast(msg) {
-  toast.value = msg
-  setTimeout(() => toast.value = '', 3000)
-}
 
 function formatTime(ts) {
   if (!ts) return '-'
@@ -82,23 +81,9 @@ onUnmounted(() => clearInterval(timer))
 
 <template>
   <div class="space-y-6">
-    <!-- Toast -->
-    <Transition name="fade">
-      <div v-if="toast" class="fixed top-4 right-4 z-50 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
-        {{ toast }}
-      </div>
-    </Transition>
-
-    <!-- 确认弹窗 -->
-    <div v-if="confirmDialog.show" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div class="bg-white rounded-xl p-6 w-full max-w-sm mx-4 shadow-2xl">
-        <p class="text-sm text-gray-700 mb-5">{{ confirmDialog.msg }}</p>
-        <div class="flex gap-2 justify-end">
-          <button @click="cancelConfirm" class="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50">取消</button>
-          <button @click="confirmDialog.onOk" class="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700">确定</button>
-        </div>
-      </div>
-    </div>
+    <!-- 共享组件 -->
+    <Toast ref="toastRef" />
+    <ConfirmDialog ref="confirmRef" />
 
     <!-- 页面标题 -->
     <div class="flex items-center justify-between">

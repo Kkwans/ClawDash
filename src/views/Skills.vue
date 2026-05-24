@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { gwRequest } from '../stores/gateway.js'
+import { getRawConfig, getConfigHash, updateGatewayConfig } from "../api/config-utils.js"
+import Toast from '../components/Toast.vue'
+import ConfirmDialog from '../components/ConfirmDialog.vue'
 
 const searchResults = ref([])
 const installedSkills = ref([])
@@ -8,25 +11,27 @@ const pluginEntries = ref([])
 const loading = ref(true)
 const searching = ref(false)
 const searchQuery = ref('')
-const toast = ref('')
-const confirmDialog = ref({ show: false, msg: '', onOk: null })
+const toastRef = ref(null)
+const confirmRef = ref(null)
 const activeTab = ref('installed')
 
-function showConfirm(msg) {
-  return new Promise(resolve => {
-    confirmDialog.value = { show: true, msg, onOk: () => { confirmDialog.value.show = false; resolve(true) } }
-  })
+function showToast(msg) {
+  toastRef.value?.show(msg)
 }
-function cancelConfirm() { confirmDialog.value.show = false }
+
+async function showConfirm(msg) {
+  return confirmRef.value?.confirm(msg) || false
+}
 
 async function fetchData() {
   loading.value = true
   try {
-    const [skills, cfg] = await Promise.all([
-      gwRequest('skills.list').catch(() => null),
+    // skills.list 不存在，从静态文件获取内置 Skill
+    const [skillsRes, cfg] = await Promise.all([
+      fetch(`/skills.json`).then(r => r.json()).catch(() => []),
       gwRequest('config.get').catch(() => null)
     ])
-    installedSkills.value = skills?.skills || []
+    installedSkills.value = Array.isArray(skillsRes) ? skillsRes : []
     const entries = cfg?.parsed?.plugins?.entries || {}
     pluginEntries.value = Object.entries(entries).map(([id, c]) => ({
       id, config: c, enabled: c.enabled !== false
@@ -51,7 +56,7 @@ async function searchSkills() {
 
 async function installSkill(skill) {
   try {
-    await gwRequest('skills.install', { uploadId: skill.uploadId || skill.slug })
+    await gwRequest('skills.install', { source: 'clawhub', slug: skill.slug })
     showToast(`${skill.displayName || skill.name} 安装成功`)
     await fetchData()
   } catch (e) {
@@ -74,7 +79,7 @@ async function deleteSkill(skill) {
 async function togglePlugin(plugin) {
   try {
     const cfgRes = await gwRequest('config.get')
-    const raw = cfgRes?.raw
+    const raw = getRawConfig(cfgRes)
     const hash = cfgRes?.hash
     if (!raw || !hash) throw new Error('无法获取配置')
     const cfg = JSON.parse(raw)
@@ -89,10 +94,6 @@ async function togglePlugin(plugin) {
   }
 }
 
-function showToast(msg) {
-  toast.value = msg
-  setTimeout(() => toast.value = '', 3000)
-}
 
 function formatDate(ts) {
   if (!ts) return ''
@@ -104,12 +105,9 @@ onMounted(fetchData)
 
 <template>
   <div class="space-y-6">
-    <!-- Toast -->
-    <Transition name="fade">
-      <div v-if="toast" class="fixed top-4 right-4 z-50 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
-        {{ toast }}
-      </div>
-    </Transition>
+    <!-- 共享组件 -->
+    <Toast ref="toastRef" />
+    <ConfirmDialog ref="confirmRef" />
 
     <!-- 页面标题 -->
     <div class="flex items-center justify-between">
@@ -134,17 +132,6 @@ onMounted(fetchData)
         :class="activeTab === 'search' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
         🔍 搜索 ClawHub
       </button>
-    </div>
-
-    <!-- 确认弹窗 -->
-    <div v-if="confirmDialog.show" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div class="bg-white rounded-xl p-6 w-full max-w-sm mx-4 shadow-2xl">
-        <p class="text-sm text-gray-700 mb-5">{{ confirmDialog.msg }}</p>
-        <div class="flex gap-2 justify-end">
-          <button @click="cancelConfirm" class="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50">取消</button>
-          <button @click="confirmDialog.onOk" class="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700">确定</button>
-        </div>
-      </div>
     </div>
 
     <!-- 已安装 Skill -->

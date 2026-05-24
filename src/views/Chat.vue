@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { gwRequest, authenticated, useGatewayEvent } from '../stores/gateway.js'
+import Toast from '../components/Toast.vue'
 
 const sessions = ref([])
 const selectedSession = ref(null)
@@ -8,12 +9,11 @@ const messages = ref([])
 const inputText = ref('')
 const loading = ref(false)
 const sending = ref(false)
-const toast = ref('')
+const toastRef = ref(null)
 const messagesContainer = ref(null)
 
 function showToast(msg) {
-  toast.value = msg
-  setTimeout(() => toast.value = '', 3000)
+  toastRef.value?.show(msg)
 }
 
 async function fetchSessions() {
@@ -30,7 +30,7 @@ async function selectSession(session) {
   messages.value = []
   loading.value = true
   try {
-    const res = await gwRequest('sessions.history', {
+    const res = await gwRequest('chat.history', {
       sessionKey: session.key || session.id,
       limit: 100
     })
@@ -64,7 +64,7 @@ async function sendMessage() {
     // 等一下让 Agent 处理，然后刷新消息
     setTimeout(async () => {
       try {
-        const res = await gwRequest('sessions.history', {
+        const res = await gwRequest('chat.history', {
           sessionKey: selectedSession.value.key || selectedSession.value.id,
           limit: 100
         })
@@ -112,7 +112,7 @@ useGatewayEvent('message', () => {
     // 延迟刷新消息
     setTimeout(async () => {
       try {
-        const res = await gwRequest('sessions.history', {
+        const res = await gwRequest('chat.history', {
           sessionKey: selectedSession.value.key || selectedSession.value.id,
           limit: 100
         })
@@ -130,12 +130,8 @@ watch(authenticated, (val) => {
 
 <template>
   <div class="flex h-[calc(100vh-8rem)] gap-4">
-    <!-- Toast -->
-    <Transition name="fade">
-      <div v-if="toast" class="fixed top-4 right-4 z-50 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
-        {{ toast }}
-      </div>
-    </Transition>
+    <!-- 共享组件 -->
+    <Toast ref="toastRef" />
 
     <!-- 会话列表 -->
     <div class="w-64 flex-shrink-0 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden">
