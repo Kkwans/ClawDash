@@ -1,15 +1,17 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { connected, authenticated, connecting, connectionError, statusText, statusColor, connect, disconnect, token, updateToken } from './stores/gateway.js'
-import Dashboard from './views/Dashboard.vue'
-import Models from './views/Models.vue'
-import Channels from './views/Channels.vue'
-import Sessions from './views/Sessions.vue'
-import Settings from './views/Settings.vue'
-import Skills from './views/Skills.vue'
-import Cron from './views/Cron.vue'
-import SessionList from './views/SessionList.vue'
-import Chat from './views/Chat.vue'
+
+// 懒加载页面组件 - 代码分割
+const Dashboard = defineAsyncComponent(() => import('./views/Dashboard.vue'))
+const Models = defineAsyncComponent(() => import('./views/Models.vue'))
+const Channels = defineAsyncComponent(() => import('./views/Channels.vue'))
+const Sessions = defineAsyncComponent(() => import('./views/Sessions.vue'))
+const Settings = defineAsyncComponent(() => import('./views/Settings.vue'))
+const Skills = defineAsyncComponent(() => import('./views/Skills.vue'))
+const Cron = defineAsyncComponent(() => import('./views/Cron.vue'))
+const SessionList = defineAsyncComponent(() => import('./views/SessionList.vue'))
+const Chat = defineAsyncComponent(() => import('./views/Chat.vue'))
 
 const currentTab = ref('dashboard')
 const gatewayStatus = ref('checking')
