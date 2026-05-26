@@ -1,4 +1,5 @@
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import hljs from './hljs.js'
 import { createLogger } from './logger.js'
 
@@ -25,15 +26,34 @@ marked.setOptions({
   }
 })
 
+const PURIFY_CONFIG = {
+  ALLOWED_TAGS: [
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'p', 'br', 'hr',
+    'strong', 'em', 'del', 'code', 'pre',
+    'ul', 'ol', 'li',
+    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    'blockquote', 'a', 'img',
+    'span', 'div', 'input'
+  ],
+  ALLOWED_ATTR: [
+    'href', 'src', 'alt', 'title', 'class',
+    'target', 'rel', 'type', 'checked', 'disabled',
+    'colspan', 'rowspan', 'align'
+  ],
+  ALLOW_DATA_ATTR: false
+}
+
 /**
- * 将 Markdown 文本渲染为 HTML
+ * 将 Markdown 文本渲染为安全的 HTML
  * @param {string} text - Markdown 文本
- * @returns {string} HTML 字符串
+ * @returns {string} 消毒后的安全 HTML 字符串
  */
 export function renderMarkdown(text) {
   if (!text) return ''
   try {
-    return marked(text)
+    const rawHtml = marked(text)
+    return DOMPurify.sanitize(rawHtml, PURIFY_CONFIG)
   } catch (e) {
     log.warn('Markdown render failed, returning raw text:', e)
     return text

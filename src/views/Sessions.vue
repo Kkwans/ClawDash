@@ -3,6 +3,9 @@ import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { gwRequest, useGatewayEvent, authenticated } from '../stores/gateway.js'
 import AppToast from '../components/AppToast.vue'
 
+import { createLogger } from '../utils/logger.js'
+
+const log = createLogger('Sessions')
 const healthData = ref(null)
 const loading = ref(true)
 const toastRef = ref(null)
@@ -107,7 +110,8 @@ function formatPayload(payload) {
   try {
     const str = JSON.stringify(payload, null, 2)
     return str.length > 500 ? str.slice(0, 500) + '...' : str
-  } catch {
+  } catch (e) {
+    log.error('Format payload failed:', e)
     return String(payload)
   }
 }
@@ -138,7 +142,8 @@ function highlightJson(payload, query) {
       html = html.replace(regex, '<mark class="bg-yellow-300/40 text-yellow-200 rounded px-0.5">$1</mark>')
     }
     return html
-  } catch {
+  } catch (e) {
+    log.error('Highlight JSON failed:', e)
     return String(payload)
   }
 }

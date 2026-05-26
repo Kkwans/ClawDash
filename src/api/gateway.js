@@ -245,8 +245,8 @@ class GatewayClient {
     let msg
     try {
       msg = JSON.parse(raw)
-    } catch {
-      log.warn('无法解析消息:', raw)
+    } catch (e) {
+      log.warn('无法解析消息:', raw, e)
       return
     }
 
