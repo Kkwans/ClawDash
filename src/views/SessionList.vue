@@ -189,15 +189,15 @@ onUnmounted(() => clearInterval(timer))
       <p class="text-xs text-gray-400 mt-1">当有用户与 Agent 交互时，会话将显示在这里</p>
     </div>
 
-    <!-- 全选 -->
-    <div v-if="filteredSessions.length > 0" class="flex items-center gap-2">
-      <input type="checkbox" :checked="allSelected" @change="toggleSelectAll"
-        class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-      <span class="text-xs text-gray-500">全选 ({{ filteredSessions.length }})</span>
-    </div>
+    <!-- 全选 + 会话列表 -->
+    <template v-if="filteredSessions.length > 0">
+      <div class="flex items-center gap-2">
+        <input type="checkbox" :checked="allSelected" @change="toggleSelectAll"
+          class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+        <span class="text-xs text-gray-500">全选 ({{ filteredSessions.length }})</span>
+      </div>
 
-    <!-- 会话列表 -->
-    <div v-else class="space-y-2">
+      <div class="space-y-2">
       <div v-for="session in filteredSessions" :key="session.key || session.id"
         class="bg-white rounded-xl border border-gray-200 p-4 transition-all hover:border-gray-300 hover:shadow-sm"
         :class="{ 'ring-1 ring-blue-200': selectedSession === session.key }"
@@ -269,5 +269,6 @@ onUnmounted(() => clearInterval(timer))
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
