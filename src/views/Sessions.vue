@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { gwRequest, useGatewayEvent, authenticated } from '../stores/gateway.js'
-import Toast from '../components/Toast.vue'
+import AppToast from '../components/AppToast.vue'
 
 const healthData = ref(null)
 const loading = ref(true)
@@ -175,7 +175,7 @@ onUnmounted(() => {
 <template>
   <div class="space-y-6">
     <!-- 共享组件 -->
-    <Toast ref="toastRef" />
+    <AppToast ref="toastRef" />
 
     <!-- 页面标题 -->
     <div class="flex items-center justify-between">

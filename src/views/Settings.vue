@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { gwRequest, token, updateToken, authenticated, connect } from '../stores/gateway.js'
-import Toast from '../components/Toast.vue'
-import ConfirmDialog from '../components/ConfirmDialog.vue'
+import AppToast from '../components/AppToast.vue'
+import AppConfirm from '../components/AppConfirm.vue'
 import AppEditor from '../components/AppEditor.vue'
 
 const tokenInput = ref('')
@@ -111,8 +111,8 @@ onMounted(() => {
 <template>
   <div class="space-y-6">
     <!-- 共享组件 -->
-    <Toast ref="toastRef" />
-    <ConfirmDialog ref="confirmRef" />
+    <AppToast ref="toastRef" />
+    <AppConfirm ref="confirmRef" />
 
     <!-- 页面标题 -->
     <div>
@@ -224,7 +224,7 @@ onMounted(() => {
     <div class="bg-white rounded-xl border border-gray-200 p-6">
       <h3 class="text-base font-semibold text-gray-800 mb-4">ℹ️ 关于</h3>
       <div class="space-y-2 text-sm text-gray-500">
-        <p>ClawDash v3.0.0 — OpenClaw WebSocket 控制台</p>
+        <p>ClawDash v0.6.0 — OpenClaw WebSocket 控制台</p>
         <p>基于 Vue 3 + Tailwind CSS 构建，通过 WebSocket 直连 Gateway</p>
         <div class="flex items-center gap-3 mt-3">
           <a href="/builtin/" target="_blank"

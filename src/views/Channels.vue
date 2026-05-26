@@ -2,8 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { gwRequest } from '../stores/gateway.js'
 import { getRawConfig, getConfigHash } from "../api/config-utils.js"
-import Toast from '../components/Toast.vue'
-import ConfirmDialog from '../components/ConfirmDialog.vue'
+import AppToast from '../components/AppToast.vue'
+import AppConfirm from '../components/AppConfirm.vue'
 
 const channelsData = ref(null)
 const configData = ref(null)
@@ -225,8 +225,8 @@ onMounted(fetchData)
 
 <template>
   <div class="space-y-5">
-    <Toast ref="toastRef" />
-    <ConfirmDialog ref="confirmRef" />
+    <AppToast ref="toastRef" />
+    <AppConfirm ref="confirmRef" />
 
     <!-- 添加渠道弹窗 -->
     <Teleport to="body">

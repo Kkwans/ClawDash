@@ -2,7 +2,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { gwRequest, authenticated, connecting } from '../stores/gateway.js'
 import { getRawConfig, getConfigHash, getParsedConfig, updateGatewayConfig } from '../api/config-utils.js'
-import Toast from '../components/Toast.vue'
+import AppToast from '../components/AppToast.vue'
 
 const providers = ref([])
 const loading = ref(true)
@@ -152,7 +152,7 @@ function toggleProvider(id) {
 <template>
   <div class="space-y-6">
     <!-- 共享组件 -->
-    <Toast ref="toastRef" />
+    <AppToast ref="toastRef" />
 
     <div v-if="showDeleteConfirm" class="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
       <div class="bg-white rounded-xl p-6 w-full max-w-sm mx-4">

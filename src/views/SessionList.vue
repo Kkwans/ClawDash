@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { gwRequest, authenticated } from '../stores/gateway.js'
-import Toast from '../components/Toast.vue'
-import ConfirmDialog from '../components/ConfirmDialog.vue'
+import AppToast from '../components/AppToast.vue'
+import AppConfirm from '../components/AppConfirm.vue'
 
 const sessions = ref([])
 const loading = ref(true)
@@ -124,8 +124,8 @@ onUnmounted(() => clearInterval(timer))
 <template>
   <div class="space-y-6">
     <!-- 共享组件 -->
-    <Toast ref="toastRef" />
-    <ConfirmDialog ref="confirmRef" />
+    <AppToast ref="toastRef" />
+    <AppConfirm ref="confirmRef" />
 
     <!-- 页面标题 -->
     <div class="flex items-center justify-between">

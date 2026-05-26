@@ -1,17 +1,40 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
+import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, h } from 'vue'
 import { connected, authenticated, connecting, connectionError, statusText, statusColor, connect, disconnect, token, updateToken } from './stores/gateway.js'
 
+// 异步组件 loading/error 配置
+const loadingComponent = {
+  render() {
+    return h('div', { class: 'flex items-center justify-center py-16' }, [
+      h('div', { class: 'text-center' }, [
+        h('div', { class: 'w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3' }),
+        h('p', { class: 'text-sm text-gray-400' }, '加载中...')
+      ])
+    ])
+  }
+}
+const errorComponent = {
+  render() {
+    return h('div', { class: 'flex items-center justify-center py-16' }, [
+      h('div', { class: 'text-center' }, [
+        h('p', { class: 'text-4xl mb-3' }, '⚠️'),
+        h('p', { class: 'text-sm text-gray-500' }, '页面加载失败，请刷新重试')
+      ])
+    ])
+  }
+}
+
 // 懒加载页面组件 - 代码分割
-const Dashboard = defineAsyncComponent(() => import('./views/Dashboard.vue'))
-const Models = defineAsyncComponent(() => import('./views/Models.vue'))
-const Channels = defineAsyncComponent(() => import('./views/Channels.vue'))
-const Sessions = defineAsyncComponent(() => import('./views/Sessions.vue'))
-const Settings = defineAsyncComponent(() => import('./views/Settings.vue'))
-const Skills = defineAsyncComponent(() => import('./views/Skills.vue'))
-const Cron = defineAsyncComponent(() => import('./views/Cron.vue'))
-const SessionList = defineAsyncComponent(() => import('./views/SessionList.vue'))
-const Chat = defineAsyncComponent(() => import('./views/Chat.vue'))
+const asyncOptions = { loadingComponent, errorComponent, delay: 200, timeout: 10000 }
+const Dashboard = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Dashboard.vue') })
+const Models = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Models.vue') })
+const Channels = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Channels.vue') })
+const Sessions = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Sessions.vue') })
+const Settings = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Settings.vue') })
+const Skills = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Skills.vue') })
+const Cron = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Cron.vue') })
+const SessionList = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/SessionList.vue') })
+const Chat = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Chat.vue') })
 
 const currentTab = ref('dashboard')
 const gatewayStatus = ref('checking')
@@ -208,7 +231,7 @@ onUnmounted(() => {
           </h2>
         </div>
         <div class="flex items-center gap-3">
-          <span class="text-xs text-gray-400">ClawDash v0.5.0</span>
+          <span class="text-xs text-gray-400">ClawDash v0.6.0</span>
           <a href="https://github.com/Kkwans/ClawDash" target="_blank"
             class="text-gray-400 hover:text-gray-600 transition-colors">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

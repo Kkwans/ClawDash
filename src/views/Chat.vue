@@ -2,8 +2,8 @@
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { gwRequest, authenticated, useGatewayEvent } from '../stores/gateway.js'
 import { renderMarkdown } from '../utils/markdown.js'
-import Toast from '../components/Toast.vue'
-import 'highlight.js/styles/github.css'
+import AppToast from '../components/AppToast.vue'
+// highlight.js CSS 在组件挂载时动态加载
 
 const sessions = ref([])
 const selectedSession = ref(null)
@@ -132,12 +132,17 @@ useGatewayEvent('message', () => {
 watch(authenticated, (val) => {
   if (val) fetchSessions()
 }, { immediate: true })
+
+// 动态加载 highlight.js CSS
+onMounted(() => {
+  import('highlight.js/styles/github.css')
+})
 </script>
 
 <template>
   <div class="flex h-[calc(100vh-8rem)] gap-4">
     <!-- 共享组件 -->
-    <Toast ref="toastRef" />
+    <AppToast ref="toastRef" />
 
     <!-- 会话列表 -->
     <div class="w-64 flex-shrink-0 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden">

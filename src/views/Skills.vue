@@ -2,8 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { gwRequest } from '../stores/gateway.js'
 import { getRawConfig, getConfigHash, updateGatewayConfig } from "../api/config-utils.js"
-import Toast from '../components/Toast.vue'
-import ConfirmDialog from '../components/ConfirmDialog.vue'
+import AppToast from '../components/AppToast.vue'
+import AppConfirm from '../components/AppConfirm.vue'
 
 const searchResults = ref([])
 const installedSkills = ref([])
@@ -160,8 +160,8 @@ onMounted(fetchData)
 <template>
   <div class="space-y-6">
     <!-- 共享组件 -->
-    <Toast ref="toastRef" />
-    <ConfirmDialog ref="confirmRef" />
+    <AppToast ref="toastRef" />
+    <AppConfirm ref="confirmRef" />
 
     <!-- 页面标题 -->
     <div class="flex items-center justify-between">
