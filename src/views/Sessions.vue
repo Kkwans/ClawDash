@@ -116,11 +116,17 @@ function formatPayload(payload) {
   }
 }
 
+function escapeHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
 function highlightText(text, query) {
-  if (!query || !text) return text
-  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  if (!query || !text) return escapeHtml(text || '')
+  const safeText = escapeHtml(text)
+  const safeQuery = escapeHtml(query)
+  const escaped = safeQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const regex = new RegExp(`(${escaped})`, 'gi')
-  return text.replace(regex, '<mark class="bg-yellow-300/40 text-yellow-200 rounded px-0.5">$1</mark>')
+  return safeText.replace(regex, '<mark class="bg-yellow-300/40 text-yellow-200 rounded px-0.5">$1</mark>')
 }
 
 function highlightJson(payload, query) {
