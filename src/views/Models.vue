@@ -175,14 +175,14 @@ function toggleProvider(id) {
             </div>
             <div class="px-5 py-4 space-y-4">
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1.5">提供商 ID <span class="text-red-500">*</span></label>
-                <input v-model="newProvider.id" autocomplete="off"
+                <label for="new-provider-id" class="block text-xs font-medium text-gray-600 mb-1.5">提供商 ID <span class="text-red-500">*</span></label>
+                <input id="new-provider-id" v-model="newProvider.id" autocomplete="off"
                   class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="openai">
               </div>
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1.5">API 类型</label>
-                <select v-model="newProvider.api"
+                <label for="new-provider-api" class="block text-xs font-medium text-gray-600 mb-1.5">API 类型</label>
+                <select id="new-provider-api" v-model="newProvider.api"
                   class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
                   <option value="openai-completions">OpenAI Compatible</option>
                   <option value="anthropic">Anthropic</option>
@@ -190,14 +190,14 @@ function toggleProvider(id) {
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1.5">Base URL</label>
-                <input v-model="newProvider.baseUrl" autocomplete="off"
+                <label for="new-provider-url" class="block text-xs font-medium text-gray-600 mb-1.5">Base URL</label>
+                <input id="new-provider-url" v-model="newProvider.baseUrl" autocomplete="off"
                   class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="https://api.openai.com/v1">
               </div>
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1.5">API Key</label>
-                <input v-model="newProvider.apiKey" type="password" autocomplete="new-password"
+                <label for="new-provider-key" class="block text-xs font-medium text-gray-600 mb-1.5">API Key</label>
+                <input id="new-provider-key" v-model="newProvider.apiKey" type="password" autocomplete="new-password"
                   class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="sk-...">
               </div>

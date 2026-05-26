@@ -155,6 +155,7 @@ onMounted(() => {
       <p class="text-sm text-gray-500 mb-4">输入 Gateway Token 以访问 API 功能。Token 保存在本地浏览器中。</p>
       <div class="flex items-center gap-3">
         <input v-model="tokenInput" type="password" autocomplete="new-password" placeholder="输入 Gateway Token"
+          aria-label="Gateway Token"
           class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
         <button @click="saveToken"
           class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all"

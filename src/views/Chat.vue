@@ -221,6 +221,7 @@ onMounted(() => {
           <div class="flex gap-2">
             <input v-model="inputText" @keyup.enter="sendMessage"
               placeholder="输入消息..."
+              aria-label="输入消息"
               :disabled="sending"
               autocomplete="off"
               class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
