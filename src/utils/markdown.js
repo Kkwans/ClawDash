@@ -1,5 +1,8 @@
 import { marked } from 'marked'
-import hljs from 'highlight.js'
+import hljs from './hljs.js'
+import { createLogger } from './logger.js'
+
+const log = createLogger('Markdown')
 
 // 配置 marked 使用 highlight.js
 marked.setOptions({
@@ -9,11 +12,15 @@ marked.setOptions({
     if (lang && hljs.getLanguage(lang)) {
       try {
         return hljs.highlight(code, { language: lang }).value
-      } catch {}
+      } catch (e) {
+        log.debug('Syntax highlight failed for lang:', lang, e)
+      }
     }
     try {
       return hljs.highlightAuto(code).value
-    } catch {}
+    } catch (e) {
+      log.debug('Auto highlight failed:', e)
+    }
     return code
   }
 })
@@ -27,7 +34,8 @@ export function renderMarkdown(text) {
   if (!text) return ''
   try {
     return marked(text)
-  } catch {
+  } catch (e) {
+    log.warn('Markdown render failed, returning raw text:', e)
     return text
   }
 }

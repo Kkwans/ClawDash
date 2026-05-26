@@ -48,7 +48,7 @@ async function fetchData() {
     configEditor.value = cfg?.raw || JSON.stringify(cfg?.parsed || {}, null, 2)
     healthData.value = health
   } catch (e) {
-    console.error('Failed to fetch settings:', e)
+    // Error handled by useErrorHandler (T3)
   }
   loading.value = false
 }

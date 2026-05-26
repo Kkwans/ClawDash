@@ -5,6 +5,9 @@
 
 import { ref, computed, onUnmounted, shallowRef, getCurrentInstance } from 'vue'
 import gateway, { getToken, setToken } from '../api/gateway.js'
+import { createLogger } from '../utils/logger.js'
+
+const log = createLogger('Store')
 
 // --- 连接状态 ---
 export const connected = gateway.connected
@@ -128,12 +131,12 @@ export function useGatewayEvent(eventName, handler) {
 gateway.on('connected', (payload) => {
   gatewayInfo.value = payload
   syncEventLog()
-  console.log('[Store] Gateway 已连接:', payload)
+  log.info('Gateway 已连接:', payload)
 })
 
 gateway.on('auth-error', (payload) => {
   syncEventLog()
-  console.error('[Store] 认证失败:', payload)
+  log.error('认证失败:', payload)
 })
 
 // 所有事件变化时同步事件日志（通配符）

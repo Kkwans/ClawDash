@@ -3,6 +3,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { gwRequest, authenticated } from '../stores/gateway.js'
 import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'
+import AppEmpty from '../components/AppEmpty.vue'
+import AppLoading from '../components/AppLoading.vue'
 
 const sessions = ref([])
 const loading = ref(true)
@@ -39,7 +41,7 @@ async function fetchSessions() {
     const res = await gwRequest('sessions.list', { limit: 100 })
     sessions.value = res?.sessions || []
   } catch (e) {
-    console.error('Failed to fetch sessions:', e)
+    // Error handled by useErrorHandler (T3)
   }
   loading.value = false
 }
@@ -175,19 +177,14 @@ onUnmounted(() => clearInterval(timer))
     </div>
 
     <!-- 加载状态 -->
-    <div v-if="loading" class="flex items-center justify-center py-16">
-      <div class="flex flex-col items-center gap-3">
-        <div class="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-        <span class="text-sm text-gray-400">加载中...</span>
-      </div>
-    </div>
+    <AppLoading v-if="loading" text="加载会话中..." />
 
     <!-- 空状态 -->
-    <div v-else-if="filteredSessions.length === 0" class="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-100">
-      <span class="text-4xl mb-4">💬</span>
-      <p class="text-sm font-medium text-gray-600">暂无活跃会话</p>
-      <p class="text-xs text-gray-400 mt-1">当有用户与 Agent 交互时，会话将显示在这里</p>
-    </div>
+    <AppEmpty v-else-if="filteredSessions.length === 0"
+      icon="💬"
+      title="暂无活跃会话"
+      description="当有用户与 Agent 交互时，会话将显示在这里"
+    />
 
     <!-- 全选 + 会话列表 -->
     <template v-if="filteredSessions.length > 0">

@@ -10,6 +10,9 @@
  */
 
 import { ref } from 'vue'
+import { createLogger } from '../utils/logger.js'
+
+const log = createLogger('GW')
 
 // --- Token 管理 ---
 const TOKEN_KEY = 'clawdash_gateway_token'
@@ -90,7 +93,7 @@ class GatewayClient {
     }
 
     this.ws.onopen = () => {
-      console.log('[GW] WebSocket 已连接，等待 challenge...')
+      log.info('WebSocket 已连接，等待 challenge...')
       this.connected.value = true
       this.connecting.value = false
       this.reconnecting.value = false
@@ -103,12 +106,12 @@ class GatewayClient {
     }
 
     this.ws.onerror = (evt) => {
-      console.error('[GW] WebSocket 错误:', evt)
+      log.error('WebSocket 错误:', evt)
       this.error.value = 'WebSocket 连接错误'
     }
 
     this.ws.onclose = (evt) => {
-      console.log('[GW] WebSocket 断开:', evt.code, evt.reason)
+      log.info('WebSocket 断开:', evt.code, evt.reason)
       this.connected.value = false
       this.authenticated.value = false
       this.connecting.value = false
@@ -243,13 +246,13 @@ class GatewayClient {
     try {
       msg = JSON.parse(raw)
     } catch {
-      console.warn('[GW] 无法解析消息:', raw)
+      log.warn('无法解析消息:', raw)
       return
     }
 
     // 1. 握手: connect.challenge
     if (msg.type === 'event' && msg.event === 'connect.challenge') {
-      console.log('[GW] 收到 challenge，发送认证...')
+      log.info('收到 challenge，发送认证...')
       this._connectNonce = msg.payload?.nonce || null
       this._sendConnect()
       return
@@ -261,12 +264,12 @@ class GatewayClient {
       if (msg.id === this._connectReqId) {
         this._connectReqId = null
         if (msg.ok) {
-          console.log('[GW] 认证成功！')
+          log.info('认证成功！')
           this.authenticated.value = true
           this.hello.value = msg.payload
           this._emit('connected', msg.payload)
         } else {
-          console.error('[GW] 认证失败:', msg.error)
+          log.error('认证失败:', msg.error)
           this.error.value = `认证失败: ${msg.error?.message || '未知错误'}`
           this.authenticated.value = false
           this._emit('auth-error', msg.error)
@@ -282,7 +285,7 @@ class GatewayClient {
         if (msg.ok) {
           // config.get 的 payload 可能在不同位置
           const payload = msg.payload || msg.result || msg.data || msg
-          console.log('[GW] response ok:', msg.id, 'method:', entry.method, 'payload keys:', Object.keys(payload || {}))
+          log.debug('response ok:', msg.id, 'method:', entry.method, 'payload keys:', Object.keys(payload || {}))
           entry.resolve(payload)
         } else {
           entry.reject(new Error(msg.error?.message || msg.error || '请求失败'))
@@ -373,7 +376,7 @@ class GatewayClient {
         try {
           cb(payload, event)
         } catch (e) {
-          console.error(`[GW] 事件回调错误 (${event}):`, e)
+          log.error(`事件回调错误 (${event}):`, e)
         }
       }
     }
@@ -385,7 +388,7 @@ class GatewayClient {
         try {
           cb(payload, event)
         } catch (e) {
-          console.error(`[GW] 通配符回调错误 (${event}):`, e)
+          log.error(`通配符回调错误 (${event}):`, e)
         }
       }
     }
@@ -423,7 +426,7 @@ class GatewayClient {
     clearTimeout(this._reconnectTimer)
     const delay = this._reconnectDelay
     this.reconnectAttempts.value++
-    console.log(`[GW] 第 ${this.reconnectAttempts.value} 次重连，${delay}ms 后尝试...`)
+    log.info(`第 ${this.reconnectAttempts.value} 次重连，${delay}ms 后尝试...`)
     this._reconnectTimer = setTimeout(() => {
       this._connectSent = false
       this.connect()

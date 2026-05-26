@@ -54,7 +54,7 @@ async function fetchHealth() {
   try {
     healthData.value = await gwRequest('health')
   } catch (e) {
-    console.error('Failed to fetch health:', e)
+    // Error handled by useErrorHandler (T3)
   }
   loading.value = false
 }

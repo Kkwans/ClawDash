@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import { gwRequest } from '../stores/gateway.js'
 import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'
+import AppEmpty from '../components/AppEmpty.vue'
+import AppLoading from '../components/AppLoading.vue'
 
 const jobs = ref([])
 const loading = ref(true)
@@ -33,7 +35,7 @@ async function fetchJobs() {
     const res = await gwRequest('cron.list', { limit: 100 })
     jobs.value = res?.jobs || []
   } catch (e) {
-    console.error('Failed to fetch cron jobs:', e)
+    // Error handled by useErrorHandler (T3)
   }
   loading.value = false
 }
@@ -217,19 +219,14 @@ onMounted(fetchJobs)
     </div>
 
     <!-- 加载状态 -->
-    <div v-if="loading" class="flex items-center justify-center py-16">
-      <div class="flex flex-col items-center gap-3">
-        <div class="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-        <span class="text-sm text-gray-400">加载中...</span>
-      </div>
-    </div>
+    <AppLoading v-if="loading" text="加载任务中..." />
 
     <!-- 空状态 -->
-    <div v-else-if="jobs.length === 0" class="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-100">
-      <span class="text-4xl mb-4">⏰</span>
-      <p class="text-sm font-medium text-gray-600">暂无定时任务</p>
-      <p class="text-xs text-gray-400 mt-1">点击「新建」创建第一个定时任务</p>
-    </div>
+    <AppEmpty v-else-if="jobs.length === 0"
+      icon="⏰"
+      title="暂无定时任务"
+      description="点击「新建」创建第一个定时任务"
+    />
 
     <!-- 任务列表 -->
     <div v-else class="space-y-2">

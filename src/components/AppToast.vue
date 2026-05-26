@@ -36,10 +36,12 @@ defineExpose({ show, close })
     <div v-if="message"
       class="toast-root"
       :class="[`toast-${type}`]"
+      role="alert"
+      aria-live="polite"
     >
-      <span class="toast-icon">{{ icons[type] }}</span>
+      <span class="toast-icon" aria-hidden="true">{{ icons[type] }}</span>
       <span class="toast-message">{{ message }}</span>
-      <button class="toast-close" @click="close">✕</button>
+      <button class="toast-close" @click="close" aria-label="关闭提示">✕</button>
     </div>
   </Transition>
 </template>

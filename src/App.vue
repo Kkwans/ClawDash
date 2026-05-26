@@ -1,6 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, h } from 'vue'
 import { connected, authenticated, connecting, connectionError, statusText, statusColor, connect, disconnect, token, updateToken } from './stores/gateway.js'
+import AppErrorBoundary from './components/AppErrorBoundary.vue'
+import { createLogger } from './utils/logger.js'
+
+const log = createLogger('App')
 
 // 异步组件 loading/error 配置
 const loadingComponent = {
@@ -105,14 +109,29 @@ const currentComponent = computed(() => {
 })
 
 let healthTimer
+let _onError, _onUnhandled
+
 onMounted(() => {
   checkToken()
   connect()
   window.addEventListener('resize', handleResize)
+
+  // 全局 JS 错误兜底
+  _onError = (msg, src, line, col, err) => {
+    log.error('[GlobalError]', msg, `at ${src}:${line}:${col}`, err)
+  }
+  window.onerror = _onError
+
+  _onUnhandled = (e) => {
+    log.error('[UnhandledRejection]', e.reason || e)
+  }
+  window.addEventListener('unhandledrejection', _onUnhandled)
 })
 onUnmounted(() => {
   disconnect()
   window.removeEventListener('resize', handleResize)
+  window.onerror = null
+  window.removeEventListener('unhandledrejection', _onUnhandled)
 })
 </script>
 
@@ -166,7 +185,8 @@ onUnmounted(() => {
     <aside class="bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-50 transition-transform duration-300 ease-in-out"
       :class="isMobile
         ? (sidebarOpen ? 'fixed inset-y-0 left-0 w-72 shadow-2xl' : 'fixed inset-y-0 left-0 w-72 -translate-x-full')
-        : 'w-60'">
+        : 'w-60'"
+      role="complementary" aria-label="侧边栏导航">
       <!-- Logo -->
       <div class="p-5 border-b border-gray-200">
         <div class="flex items-center justify-between">
@@ -184,7 +204,7 @@ onUnmounted(() => {
       </div>
 
       <!-- 导航 -->
-      <nav class="flex-1 p-3 space-y-1">
+      <nav class="flex-1 p-3 space-y-1" role="navigation" aria-label="主导航">
         <button
           v-for="tab in tabs"
           :key="tab.id"
@@ -242,7 +262,9 @@ onUnmounted(() => {
       </header>
 
       <div class="p-4 md:p-6">
-        <component :is="currentComponent" />
+        <AppErrorBoundary>
+          <component :is="currentComponent" />
+        </AppErrorBoundary>
       </div>
     </main>
   </div>

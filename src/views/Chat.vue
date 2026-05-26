@@ -23,7 +23,7 @@ async function fetchSessions() {
     const res = await gwRequest('sessions.list', { limit: 50 })
     sessions.value = res?.sessions || []
   } catch (e) {
-    console.error('Failed to fetch sessions:', e)
+    // Error handled by useErrorHandler (T3)
   }
 }
 

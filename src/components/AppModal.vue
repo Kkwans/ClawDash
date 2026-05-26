@@ -1,4 +1,6 @@
 <script setup>
+import { watch, nextTick, ref } from 'vue'
+
 const props = defineProps({
   title: { type: String, default: '' },
   visible: { type: Boolean, default: false },
@@ -9,6 +11,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'close'])
 
+const modalRef = ref(null)
+
 function close() {
   emit('update:visible', false)
   emit('close')
@@ -17,16 +21,34 @@ function close() {
 function onMaskClick() {
   if (props.maskClosable) close()
 }
+
+function onKeydown(e) {
+  if (e.key === 'Escape' && props.closable) {
+    close()
+  }
+}
+
+// 焦点管理：打开时聚焦弹窗，关闭时恢复
+watch(() => props.visible, async (val) => {
+  if (val) {
+    await nextTick()
+    modalRef.value?.focus()
+    document.addEventListener('keydown', onKeydown)
+  } else {
+    document.removeEventListener('keydown', onKeydown)
+  }
+})
 </script>
 
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="visible" class="modal-mask" @click="onMaskClick">
-        <div class="modal-content" :style="{ maxWidth: width }" @click.stop>
+      <div v-if="visible" class="modal-mask" @click="onMaskClick" @keydown="onKeydown">
+        <div ref="modalRef" class="modal-content" :style="{ maxWidth: width }" @click.stop
+          role="dialog" aria-modal="true" :aria-label="title || '弹窗'" tabindex="-1">
           <div v-if="title || closable" class="modal-header">
             <h3 v-if="title" class="modal-title">{{ title }}</h3>
-            <button v-if="closable" class="modal-close" @click="close">
+            <button v-if="closable" class="modal-close" @click="close" aria-label="关闭弹窗">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
               </svg>

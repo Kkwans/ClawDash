@@ -29,7 +29,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/highlight.js')) return 'highlight'
+          if (id.includes('node_modules/highlight.js/lib')) return 'highlight'
+          if (id.includes('node_modules/highlight.js/styles')) return 'highlight-css'
           if (id.includes('node_modules/codemirror') || id.includes('node_modules/@codemirror')) return 'codemirror'
           if (id.includes('node_modules/marked')) return 'markdown'
           if (id.includes('node_modules/vue')) return 'vendor'

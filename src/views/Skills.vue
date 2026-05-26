@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import { gwRequest } from '../stores/gateway.js'
 import { getRawConfig, getConfigHash, updateGatewayConfig } from "../api/config-utils.js"
 import AppToast from '../components/AppToast.vue'
+import AppEmpty from '../components/AppEmpty.vue'
+import AppLoading from '../components/AppLoading.vue'
 import AppConfirm from '../components/AppConfirm.vue'
 
 const searchResults = ref([])
@@ -38,7 +40,7 @@ async function fetchData() {
       id, config: c, enabled: c.enabled !== false
     }))
   } catch (e) {
-    console.error('Failed to fetch skills:', e)
+    // Error handled by useErrorHandler (T3)
   }
   loading.value = false
 }
@@ -190,17 +192,12 @@ onMounted(fetchData)
 
     <!-- 已安装 Skill -->
     <div v-if="activeTab === 'installed'" class="space-y-3">
-      <div v-if="loading" class="flex items-center justify-center py-16">
-        <div class="flex flex-col items-center gap-3">
-          <div class="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-          <span class="text-sm text-gray-400">加载中...</span>
-        </div>
-      </div>
-      <div v-else-if="installedSkills.length === 0 && pluginEntries.length === 0" class="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-100">
-        <span class="text-4xl mb-4">🧩</span>
-        <p class="text-sm font-medium text-gray-600">暂无已安装 Skill</p>
-        <p class="text-xs text-gray-400 mt-1">切换到「搜索 ClawHub」查找并安装 Skill</p>
-      </div>
+      <AppLoading v-if="loading" text="加载 Skill 中..." />
+      <AppEmpty v-else-if="installedSkills.length === 0 && pluginEntries.length === 0"
+        icon="🧩"
+        title="暂无已安装 Skill"
+        description="切换到「搜索 ClawHub」查找并安装 Skill"
+      />
       <div v-else>
         <!-- Skills from skills.list -->
         <div v-for="skill in installedSkills" :key="skill.name || skill.id"
