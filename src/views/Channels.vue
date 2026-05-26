@@ -258,6 +258,7 @@ onMounted(fetchData)
                     <input v-model="addForm.config[f.key]"
                       :type="f.type === 'password' && !showPwd['add_'+f.key] ? 'password' : 'text'"
                       :placeholder="f.placeholder"
+                      :autocomplete="f.type === 'password' ? 'new-password' : 'off'"
                       class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all pr-9">
                     <button v-if="f.type === 'password'"
                       @click="togglePwd('add_'+f.key)"
@@ -308,6 +309,7 @@ onMounted(fetchData)
                 <label class="block text-xs font-medium text-gray-500 mb-2">手动输入插件 ID</label>
                 <div class="flex gap-2">
                   <input v-model="installForm.pluginId"
+                    autocomplete="off"
                     class="flex-1 px-3 py-2 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all"
                     placeholder="@scope/plugin-name">
                   <button @click="installPlugin"
@@ -350,6 +352,7 @@ onMounted(fetchData)
                   <div class="relative">
                     <input v-model="showDetail.config[key]"
                       :type="(key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')) && !showPwd['d_'+key] ? 'password' : 'text'"
+                      :autocomplete="(key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')) ? 'new-password' : 'off'"
                       class="w-full px-3 py-2 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all pr-9">
                     <button v-if="key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')"
                       @click="togglePwd('d_'+key)"

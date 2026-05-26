@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { gwRequest, token, updateToken, authenticated, connect } from '../stores/gateway.js'
 import Toast from '../components/Toast.vue'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
+import AppEditor from '../components/AppEditor.vue'
 
 const tokenInput = ref('')
 const saved = ref(false)
@@ -153,7 +154,7 @@ onMounted(() => {
       <h3 class="text-base font-semibold text-gray-800 mb-2">🔑 Gateway Token</h3>
       <p class="text-sm text-gray-500 mb-4">输入 Gateway Token 以访问 API 功能。Token 保存在本地浏览器中。</p>
       <div class="flex items-center gap-3">
-        <input v-model="tokenInput" type="password" placeholder="输入 Gateway Token"
+        <input v-model="tokenInput" type="password" autocomplete="new-password" placeholder="输入 Gateway Token"
           class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
         <button @click="saveToken"
           class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
@@ -172,9 +173,8 @@ onMounted(() => {
           <button @click="saveConfig" :disabled="savingConfig" class="px-3 py-1.5 text-xs text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">{{ savingConfig ? '保存中...' : '保存配置' }}</button>
         </div>
       </div>
-      <textarea v-model="configEditor" rows="12"
-        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
-        placeholder="JSON 配置..."></textarea>
+      <AppEditor v-model="configEditor" language="json" placeholder="JSON 配置..."
+        min-height="300px" max-height="600px" />
       <p v-if="configError" class="text-xs text-red-500 mt-2">{{ configError }}</p>
     </div>
 

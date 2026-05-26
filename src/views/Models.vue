@@ -165,33 +165,54 @@ function toggleProvider(id) {
       </div>
     </div>
 
-    <div v-if="showAddModal" class="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
-      <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-        <h3 class="text-lg font-bold mb-4">添加模型提供商</h3>
-        <div class="space-y-3">
-          <div>
-            <label class="text-xs text-gray-500">提供商 ID</label>
-            <input v-model="newProvider.id" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="openai">
-          </div>
-          <div>
-            <label class="text-xs text-gray-500">API 类型</label>
-            <input v-model="newProvider.api" class="w-full border rounded-lg px-3 py-2 text-sm">
-          </div>
-          <div>
-            <label class="text-xs text-gray-500">Base URL</label>
-            <input v-model="newProvider.baseUrl" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="https://api.openai.com/v1">
-          </div>
-          <div>
-            <label class="text-xs text-gray-500">API Key</label>
-            <input v-model="newProvider.apiKey" type="password" class="w-full border rounded-lg px-3 py-2 text-sm">
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showAddModal" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showAddModal = false">
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-slide-up">
+            <div class="px-5 py-4 border-b border-gray-100">
+              <h3 class="text-base font-semibold text-gray-900">添加模型提供商</h3>
+              <p class="text-xs text-gray-400 mt-0.5">配置新的 AI 模型提供商</p>
+            </div>
+            <div class="px-5 py-4 space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">提供商 ID <span class="text-red-500">*</span></label>
+                <input v-model="newProvider.id" autocomplete="off"
+                  class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="openai">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">API 类型</label>
+                <select v-model="newProvider.api"
+                  class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                  <option value="openai-completions">OpenAI Compatible</option>
+                  <option value="anthropic">Anthropic</option>
+                  <option value="google">Google AI</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">Base URL</label>
+                <input v-model="newProvider.baseUrl" autocomplete="off"
+                  class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="https://api.openai.com/v1">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">API Key</label>
+                <input v-model="newProvider.apiKey" type="password" autocomplete="new-password"
+                  class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="sk-...">
+              </div>
+            </div>
+            <div class="flex gap-2 px-5 py-4 border-t border-gray-100 bg-gray-50">
+              <button @click="showAddModal = false" class="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-white transition-all">取消</button>
+              <button @click="addProvider" :disabled="saving"
+                class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-all">
+                {{ saving ? '添加中...' : '添加提供商' }}
+              </button>
+            </div>
           </div>
         </div>
-        <div class="flex gap-2 mt-4">
-          <button @click="addProvider" :disabled="saving" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">添加</button>
-          <button @click="showAddModal = false" class="flex-1 px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-50">取消</button>
-        </div>
-      </div>
-    </div>
+      </Transition>
+    </Teleport>
 
     <div v-if="!authenticated && !connecting" class="text-center py-12">
       <p class="text-4xl mb-3">🔌</p>

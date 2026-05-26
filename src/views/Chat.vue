@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { gwRequest, authenticated, useGatewayEvent } from '../stores/gateway.js'
+import { renderMarkdown } from '../utils/markdown.js'
 import Toast from '../components/Toast.vue'
+import 'highlight.js/styles/github.css'
 
 const sessions = ref([])
 const selectedSession = ref(null)
@@ -98,12 +100,16 @@ function getRoleLabel(role) {
 
 function getRoleClass(role) {
   const map = {
-    user: 'bg-blue-50 border-blue-200',
-    assistant: 'bg-green-50 border-green-200',
-    system: 'bg-gray-50 border-gray-200',
-    tool: 'bg-amber-50 border-amber-200'
+    user: 'msg-user',
+    assistant: 'msg-assistant',
+    system: 'msg-system',
+    tool: 'msg-tool'
   }
-  return map[role] || 'bg-gray-50 border-gray-200'
+  return map[role] || 'msg-system'
+}
+
+function getRoleAlign(role) {
+  return role === 'user' ? 'msg-right' : 'msg-left'
 }
 
 // 监听新消息事件
@@ -184,7 +190,7 @@ watch(authenticated, (val) => {
         </div>
 
         <!-- 消息列表 -->
-        <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-3">
+        <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col">
           <div v-if="loading" class="text-center py-8">
             <div class="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
           </div>
@@ -192,13 +198,14 @@ watch(authenticated, (val) => {
             暂无消息
           </div>
           <div v-for="(msg, i) in messages" :key="i"
-            class="rounded-xl border p-3 max-w-[80%]"
-            :class="[getRoleClass(msg.role), msg.role === 'user' ? 'ml-auto' : '']">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-xs font-medium text-gray-600">{{ getRoleLabel(msg.role) }}</span>
-              <span class="text-xs text-gray-400">{{ formatTime(msg.timestamp) }}</span>
+            class="msg-bubble"
+            :class="[getRoleClass(msg.role), getRoleAlign(msg.role)]">
+            <div class="msg-header">
+              <span class="msg-role">{{ getRoleLabel(msg.role) }}</span>
+              <span class="msg-time">{{ formatTime(msg.timestamp) }}</span>
             </div>
-            <p class="text-sm text-gray-700 whitespace-pre-wrap break-words">{{ msg.content || msg.text || '' }}</p>
+            <div v-if="msg.role === 'user'" class="msg-text">{{ msg.content || msg.text || '' }}</div>
+            <div v-else class="msg-markdown" v-html="renderMarkdown(msg.content || msg.text || '')"></div>
           </div>
         </div>
 
@@ -208,6 +215,7 @@ watch(authenticated, (val) => {
             <input v-model="inputText" @keyup.enter="sendMessage"
               placeholder="输入消息..."
               :disabled="sending"
+              autocomplete="off"
               class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
             <button @click="sendMessage" :disabled="!inputText.trim() || sending"
               class="px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-all">
@@ -219,3 +227,44 @@ watch(authenticated, (val) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Message bubbles */
+.msg-bubble {
+  max-width: 80%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+.msg-left { align-self: flex-start; }
+.msg-right { align-self: flex-end; }
+.msg-user {
+  background: var(--brand-lighter);
+  border-color: oklch(0.88 0.04 260);
+}
+.msg-assistant { background: var(--bg-panel); border-color: var(--border); }
+.msg-system { background: var(--bg-subtle); border-color: var(--border); }
+.msg-tool { background: var(--warning-light); border-color: oklch(0.9 0.04 75); }
+.msg-header { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-1-5); }
+.msg-role { font-size: var(--text-xs); font-weight: var(--font-medium); color: var(--text-secondary); }
+.msg-time { font-size: 11px; color: var(--text-tertiary); }
+.msg-text { font-size: var(--text-sm); color: var(--text-primary); white-space: pre-wrap; word-break: break-word; line-height: var(--leading-relaxed); }
+
+/* Markdown content */
+.msg-markdown { font-size: var(--text-sm); color: var(--text-primary); line-height: var(--leading-relaxed); }
+.msg-markdown :deep(p) { margin: 0 0 var(--space-2); }
+.msg-markdown :deep(p:last-child) { margin-bottom: 0; }
+.msg-markdown :deep(code) { font-family: var(--font-mono); font-size: 0.85em; background: var(--bg-muted); padding: 1px 4px; border-radius: var(--radius-sm); }
+.msg-markdown :deep(pre) { margin: var(--space-2) 0; padding: var(--space-3); background: oklch(0.15 0.005 240); border-radius: var(--radius-md); overflow-x: auto; }
+.msg-markdown :deep(pre code) { color: oklch(0.9 0 0); background: transparent; padding: 0; font-size: var(--text-xs); line-height: 1.6; }
+.msg-markdown :deep(ul), .msg-markdown :deep(ol) { margin: var(--space-2) 0; padding-left: var(--space-5); }
+.msg-markdown :deep(li) { margin: var(--space-1) 0; }
+.msg-markdown :deep(blockquote) { margin: var(--space-2) 0; padding: var(--space-2) var(--space-3); border-left: 3px solid var(--brand); background: var(--bg-subtle); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: var(--text-secondary); }
+.msg-markdown :deep(table) { border-collapse: collapse; margin: var(--space-2) 0; width: 100%; }
+.msg-markdown :deep(th), .msg-markdown :deep(td) { border: 1px solid var(--border); padding: var(--space-1-5) var(--space-2); text-align: left; font-size: var(--text-xs); }
+.msg-markdown :deep(th) { background: var(--bg-subtle); font-weight: var(--font-semibold); }
+.msg-markdown :deep(a) { color: var(--text-link); text-decoration: underline; }
+.msg-markdown :deep(h1), .msg-markdown :deep(h2), .msg-markdown :deep(h3) { margin: var(--space-3) 0 var(--space-2); font-weight: var(--font-semibold); }
+.msg-markdown :deep(hr) { border: none; border-top: 1px solid var(--border); margin: var(--space-3) 0; }
+</style>

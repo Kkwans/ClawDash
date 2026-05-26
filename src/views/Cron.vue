@@ -291,7 +291,7 @@ onMounted(fetchJobs)
           <div class="flex-1 overflow-y-auto p-5 space-y-4">
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">任务名称</label>
-              <input v-model="newJob.name" placeholder="可选，留空自动生成"
+              <input v-model="newJob.name" placeholder="可选，留空自动生成" autocomplete="off"
                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div>
@@ -315,6 +315,7 @@ onMounted(fetchJobs)
               </label>
               <input v-model="newJob.scheduleExpr"
                 :placeholder="newJob.scheduleKind === 'cron' ? '0 */6 * * *' : '60'"
+                autocomplete="off"
                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div>
@@ -338,6 +339,7 @@ onMounted(fetchJobs)
               </label>
               <textarea v-model="newJob.payloadText" rows="3"
                 :placeholder="newJob.payloadKind === 'systemEvent' ? '注入到主会话的文本...' : '发送给 Agent 的消息...'"
+                autocomplete="off"
                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
             </div>
           </div>
@@ -364,7 +366,7 @@ onMounted(fetchJobs)
           <div class="flex-1 overflow-y-auto p-5 space-y-4">
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">任务名称</label>
-              <input v-model="editForm.name" placeholder="可选" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <input v-model="editForm.name" placeholder="可选" autocomplete="off" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">调度方式</label>
@@ -375,7 +377,7 @@ onMounted(fetchJobs)
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">{{ editForm.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔（分钟）' }}</label>
-              <input v-model="editForm.scheduleExpr" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <input v-model="editForm.scheduleExpr" autocomplete="off" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">任务类型</label>
@@ -386,7 +388,7 @@ onMounted(fetchJobs)
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">{{ editForm.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息' }}</label>
-              <textarea v-model="editForm.payloadText" rows="3" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+              <textarea v-model="editForm.payloadText" rows="3" autocomplete="off" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
             </div>
           </div>
           <div class="flex justify-end gap-3 p-5 border-t border-gray-200">

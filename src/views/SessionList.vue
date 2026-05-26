@@ -10,6 +10,8 @@ const toastRef = ref(null)
 const confirmRef = ref(null)
 const selectedSession = ref(null)
 const refreshing = ref(false)
+const searchQuery = ref('')
+const selectedKeys = ref(new Set())
 
 function showToast(msg) {
   toastRef.value?.show(msg)
@@ -67,9 +69,49 @@ function formatDuration(ms) {
   return `${seconds}秒`
 }
 
+const filteredSessions = computed(() => {
+  if (!searchQuery.value.trim()) return sessions.value
+  const q = searchQuery.value.toLowerCase()
+  return sessions.value.filter(s =>
+    (s.key || '').toLowerCase().includes(q) ||
+    (s.model || '').toLowerCase().includes(q) ||
+    (s.kind || '').toLowerCase().includes(q) ||
+    (s.chatType || '').toLowerCase().includes(q)
+  )
+})
 const activeSessions = computed(() => sessions.value.filter(s => s.status === 'active' || s.status === 'running' || s.status === 'streaming'))
 const idleSessions = computed(() => sessions.value.filter(s => s.status === 'done' || s.status === 'idle'))
 const otherSessions = computed(() => sessions.value.filter(s => !['active', 'running', 'streaming', 'done', 'idle'].includes(s.status)))
+const allSelected = computed(() => filteredSessions.value.length > 0 && filteredSessions.value.every(s => selectedKeys.value.has(s.key || s.id)))
+
+function toggleSelect(key) {
+  const newSet = new Set(selectedKeys.value)
+  if (newSet.has(key)) newSet.delete(key)
+  else newSet.add(key)
+  selectedKeys.value = newSet
+}
+function toggleSelectAll() {
+  if (allSelected.value) {
+    selectedKeys.value = new Set()
+  } else {
+    selectedKeys.value = new Set(filteredSessions.value.map(s => s.key || s.id))
+  }
+}
+async function batchReset() {
+  if (selectedKeys.value.size === 0) return
+  const ok = await showConfirm(`确定批量重置 ${selectedKeys.value.size} 个会话？`)
+  if (!ok) return
+  let success = 0
+  for (const key of selectedKeys.value) {
+    try {
+      await gwRequest('sessions.reset', { key })
+      success++
+    } catch (e) { /* skip */ }
+  }
+  selectedKeys.value = new Set()
+  showToast(`已重置 ${success} 个会话`)
+  await fetchSessions()
+}
 
 let timer
 onMounted(() => {
@@ -117,6 +159,21 @@ onUnmounted(() => clearInterval(timer))
       </div>
     </div>
 
+    <!-- 搜索栏 + 批量操作 -->
+    <div class="flex items-center gap-3">
+      <div class="relative flex-1 max-w-sm">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input v-model="searchQuery" placeholder="搜索会话（Key、模型、类型...）" autocomplete="off"
+          class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <button v-if="selectedKeys.size > 0" @click="batchReset"
+        class="px-3 py-2 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-all">
+        批量重置 ({{ selectedKeys.size }})
+      </button>
+    </div>
+
     <!-- 加载状态 -->
     <div v-if="loading" class="flex items-center justify-center py-16">
       <div class="flex flex-col items-center gap-3">
@@ -126,19 +183,28 @@ onUnmounted(() => clearInterval(timer))
     </div>
 
     <!-- 空状态 -->
-    <div v-else-if="sessions.length === 0" class="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-100">
+    <div v-else-if="filteredSessions.length === 0" class="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-100">
       <span class="text-4xl mb-4">💬</span>
       <p class="text-sm font-medium text-gray-600">暂无活跃会话</p>
       <p class="text-xs text-gray-400 mt-1">当有用户与 Agent 交互时，会话将显示在这里</p>
     </div>
 
+    <!-- 全选 -->
+    <div v-if="filteredSessions.length > 0" class="flex items-center gap-2">
+      <input type="checkbox" :checked="allSelected" @change="toggleSelectAll"
+        class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+      <span class="text-xs text-gray-500">全选 ({{ filteredSessions.length }})</span>
+    </div>
+
     <!-- 会话列表 -->
     <div v-else class="space-y-2">
-      <div v-for="session in sessions" :key="session.key || session.id"
+      <div v-for="session in filteredSessions" :key="session.key || session.id"
         class="bg-white rounded-xl border border-gray-200 p-4 transition-all hover:border-gray-300 hover:shadow-sm"
         :class="{ 'ring-1 ring-blue-200': selectedSession === session.key }"
         @click="selectedSession = selectedSession === session.key ? null : session.key">
         <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0">
+          <input type="checkbox" :checked="selectedKeys.has(session.key || session.id)" @click.stop="toggleSelect(session.key || session.id)"
+            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <p class="text-sm font-semibold text-gray-900">{{ session.key || session.id || '未知会话' }}</p>

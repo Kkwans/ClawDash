@@ -104,8 +104,43 @@ function getEventColor(event) {
 
 function formatPayload(payload) {
   if (!payload) return ''
-  const str = JSON.stringify(payload, null, 0)
-  return str.length > 200 ? str.slice(0, 200) + '...' : str
+  try {
+    const str = JSON.stringify(payload, null, 2)
+    return str.length > 500 ? str.slice(0, 500) + '...' : str
+  } catch {
+    return String(payload)
+  }
+}
+
+function highlightText(text, query) {
+  if (!query || !text) return text
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${escaped})`, 'gi')
+  return text.replace(regex, '<mark class="bg-yellow-300/40 text-yellow-200 rounded px-0.5">$1</mark>')
+}
+
+function highlightJson(payload, query) {
+  if (!payload) return ''
+  try {
+    const str = JSON.stringify(payload, null, 2)
+    const truncated = str.length > 500 ? str.slice(0, 500) + '...' : str
+    // Syntax highlight
+    let html = truncated
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"([^"\\]*(\\.[^"\\]*)*)"(?=\s*:)/g, '<span class="text-blue-300">"$1"</span>')
+      .replace(/:\s*"([^"\\]*(\\.[^"\\]*)*)"/g, ': <span class="text-emerald-300">"$1"</span>')
+      .replace(/:\s*(\d+\.?\d*)/g, ': <span class="text-amber-300">$1</span>')
+      .replace(/:\s*(true|false|null)/g, ': <span class="text-purple-300">$1</span>')
+    // Keyword highlight
+    if (query) {
+      const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const regex = new RegExp(`(${escaped})`, 'gi')
+      html = html.replace(regex, '<mark class="bg-yellow-300/40 text-yellow-200 rounded px-0.5">$1</mark>')
+    }
+    return html
+  } catch {
+    return String(payload)
+  }
 }
 
 const filteredLog = computed(() => {
@@ -209,7 +244,7 @@ onUnmounted(() => {
           <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
-          <input v-model="filterText" placeholder="过滤事件..."
+          <input v-model="filterText" placeholder="过滤事件..." autocomplete="off"
             class="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500">
         </div>
         <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
@@ -228,8 +263,8 @@ onUnmounted(() => {
           class="font-mono text-xs leading-relaxed flex items-start gap-2 py-0.5 hover:bg-gray-800/50 px-1 rounded">
           <span class="text-gray-500 flex-shrink-0 w-20">{{ formatTime(e.time) }}</span>
           <span class="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" :class="getEventColor(e.event).replace('text-', 'bg-')"></span>
-          <span class="flex-shrink-0 w-32 truncate" :class="getEventColor(e.event)">{{ e.event }}</span>
-          <span class="text-gray-400 break-all">{{ formatPayload(e.payload) }}</span>
+          <span class="flex-shrink-0 w-32 truncate" :class="getEventColor(e.event)" v-html="highlightText(e.event, filterText)"></span>
+          <span class="text-gray-400 break-all" v-html="highlightJson(e.payload, filterText)"></span>
         </div>
       </div>
     </div>

@@ -14,6 +14,7 @@ const searchQuery = ref('')
 const toastRef = ref(null)
 const confirmRef = ref(null)
 const activeTab = ref('installed')
+const selectedPlugins = ref(new Set())
 
 function showToast(msg) {
   toastRef.value?.show(msg)
@@ -120,6 +121,39 @@ function formatDate(ts) {
   return new Date(ts).toLocaleDateString('zh-CN')
 }
 
+function toggleSelectPlugin(id) {
+  const newSet = new Set(selectedPlugins.value)
+  if (newSet.has(id)) newSet.delete(id)
+  else newSet.add(id)
+  selectedPlugins.value = newSet
+}
+
+function toggleSelectAllPlugins() {
+  if (selectedPlugins.value.size === pluginEntries.value.length) {
+    selectedPlugins.value = new Set()
+  } else {
+    selectedPlugins.value = new Set(pluginEntries.value.map(p => p.id))
+  }
+}
+
+async function batchTogglePlugins(enable) {
+  if (selectedPlugins.value.size === 0) return
+  const ok = await showConfirm(`确定批量${enable ? '启用' : '禁用'} ${selectedPlugins.value.size} 个插件？`)
+  if (!ok) return
+  let success = 0
+  for (const id of selectedPlugins.value) {
+    const pl = pluginEntries.value.find(p => p.id === id)
+    if (pl && pl.enabled !== enable) {
+      try {
+        await togglePlugin(pl)
+        success++
+      } catch (e) { /* skip */ }
+    }
+  }
+  selectedPlugins.value = new Set()
+  showToast(`已${enable ? '启用' : '禁用'} ${success} 个插件`)
+}
+
 onMounted(fetchData)
 </script>
 
@@ -187,11 +221,27 @@ onMounted(fetchData)
             </div>
           </div>
         </div>
+        <!-- Batch operations for plugins -->
+        <div v-if="pluginEntries.length > 0" class="flex items-center gap-3 mt-3">
+          <input type="checkbox" :checked="selectedPlugins.size === pluginEntries.length && pluginEntries.length > 0" @change="toggleSelectAllPlugins"
+            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+          <span class="text-xs text-gray-500">全选插件</span>
+          <button v-if="selectedPlugins.size > 0" @click="batchTogglePlugins(true)"
+            class="px-3 py-1.5 text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-all">
+            批量启用 ({{ selectedPlugins.size }})
+          </button>
+          <button v-if="selectedPlugins.size > 0" @click="batchTogglePlugins(false)"
+            class="px-3 py-1.5 text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-all">
+            批量禁用 ({{ selectedPlugins.size }})
+          </button>
+        </div>
         <!-- Plugins from config -->
         <div v-for="pl in pluginEntries" :key="pl.id"
           class="bg-white rounded-xl border border-gray-200 p-4 transition-all hover:border-gray-300">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3 min-w-0">
+              <input type="checkbox" :checked="selectedPlugins.has(pl.id)" @click.stop="toggleSelectPlugin(pl.id)"
+                class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0">
               <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
                 :class="pl.enabled ? 'bg-green-50' : 'bg-gray-100'">🧩</div>
               <div class="min-w-0">
@@ -226,6 +276,7 @@ onMounted(fetchData)
           </svg>
           <input v-model="searchQuery" @keyup.enter="searchSkills"
             placeholder="搜索 Skill（如 docker、git、deploy...）"
+            autocomplete="off"
             class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
         </div>
         <button @click="searchSkills" :disabled="searching || !searchQuery.trim()"
