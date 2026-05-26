@@ -18,8 +18,8 @@ const confirmRef = ref(null)
 const activeTab = ref('installed')
 const selectedPlugins = ref(new Set())
 
-function showToast(msg) {
-  toastRef.value?.show(msg)
+function showToast(msg, type = 'info') {
+  toastRef.value?.show(msg, { type })
 }
 
 async function showConfirm(msg) {
@@ -143,17 +143,24 @@ async function batchTogglePlugins(enable) {
   const ok = await showConfirm(`确定批量${enable ? '启用' : '禁用'} ${selectedPlugins.value.size} 个插件？`)
   if (!ok) return
   let success = 0
+  let failed = 0
   for (const id of selectedPlugins.value) {
     const pl = pluginEntries.value.find(p => p.id === id)
     if (pl && pl.enabled !== enable) {
       try {
         await togglePlugin(pl)
         success++
-      } catch (e) { /* skip */ }
+      } catch (e) {
+        failed++
+      }
     }
   }
   selectedPlugins.value = new Set()
-  showToast(`已${enable ? '启用' : '禁用'} ${success} 个插件`)
+  if (failed > 0) {
+    showToast(`已${enable ? '启用' : '禁用'} ${success} 个插件（${failed} 个失败）`, 'warning')
+  } else {
+    showToast(`已${enable ? '启用' : '禁用'} ${success} 个插件`)
+  }
 }
 
 onMounted(fetchData)

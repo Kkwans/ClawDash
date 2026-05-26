@@ -3,7 +3,9 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { gwRequest, authenticated, useGatewayEvent } from '../stores/gateway.js'
 import { renderMarkdown } from '../utils/markdown.js'
 import AppToast from '../components/AppToast.vue'
+import { createLogger } from '../utils/logger.js'
 // highlight.js CSS 在组件挂载时动态加载
+const log = createLogger('Chat')
 
 const sessions = ref([])
 const selectedSession = ref(null)
@@ -124,7 +126,7 @@ useGatewayEvent('message', () => {
         })
         messages.value = res?.messages || res || []
         nextTick(() => scrollToBottom())
-      } catch (e) { /* ignore */ }
+      } catch (e) { log.warn('加载消息失败:', e) }
     }, 500)
   }
 })

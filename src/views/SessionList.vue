@@ -15,8 +15,8 @@ const refreshing = ref(false)
 const searchQuery = ref('')
 const selectedKeys = ref(new Set())
 
-function showToast(msg) {
-  toastRef.value?.show(msg)
+function showToast(msg, type = 'info') {
+  toastRef.value?.show(msg, { type })
 }
 
 async function showConfirm(msg) {
@@ -104,14 +104,21 @@ async function batchReset() {
   const ok = await showConfirm(`确定批量重置 ${selectedKeys.value.size} 个会话？`)
   if (!ok) return
   let success = 0
+  let failed = 0
   for (const key of selectedKeys.value) {
     try {
       await gwRequest('sessions.reset', { key })
       success++
-    } catch (e) { /* skip */ }
+    } catch (e) {
+      failed++
+    }
   }
   selectedKeys.value = new Set()
-  showToast(`已重置 ${success} 个会话`)
+  if (failed > 0) {
+    showToast(`已重置 ${success} 个会话（${failed} 个失败）`, 'warning')
+  } else {
+    showToast(`已重置 ${success} 个会话`)
+  }
   await fetchSessions()
 }
 
