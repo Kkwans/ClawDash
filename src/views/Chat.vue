@@ -25,7 +25,7 @@ async function fetchSessions() {
     const res = await gwRequest('sessions.list', { limit: 50 })
     sessions.value = res?.sessions || []
   } catch (e) {
-    // Error handled by useErrorHandler (T3)
+    log.warn('加载会话列表失败:', e)
   }
 }
 
@@ -75,7 +75,7 @@ async function sendMessage() {
         messages.value = res?.messages || res || []
         nextTick(() => scrollToBottom())
       } catch (e) {
-        // ignore
+        log.warn('刷新消息失败:', e)
       }
     }, 2000)
   } catch (e) {
