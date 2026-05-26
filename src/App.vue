@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, h } from 'vue'
+import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, h, watch, nextTick } from 'vue'
 import { connected, authenticated, connecting, connectionError, statusText, statusColor, connect, disconnect, token, updateToken } from './stores/gateway.js'
 import AppErrorBoundary from './components/AppErrorBoundary.vue'
 import { createLogger } from './utils/logger.js'
@@ -91,6 +91,15 @@ function goToSettings() {
   currentTab.value = 'settings'
 }
 
+// Token 弹窗焦点管理
+watch(showTokenModal, (val) => {
+  if (val) {
+    nextTick(() => {
+      document.querySelector('input[aria-label="Gateway Token"]')?.focus()
+    })
+  }
+})
+
 const tabs = [
   { id: 'dashboard', name: '仪表盘', icon: '📊' },
   { id: 'models', name: '模型管理', icon: '🤖' },
@@ -140,7 +149,7 @@ onUnmounted(() => {
     <!-- Token 配置弹窗 -->
     <Teleport to="body">
       <Transition name="fade">
-        <div v-if="showTokenModal" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+        <div v-if="showTokenModal" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4" tabindex="-1" @keyup.escape="showTokenModal = false">
           <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
             <div class="text-center">
               <div class="w-16 h-16 mx-auto bg-blue-50 rounded-full flex items-center justify-center text-3xl mb-4">🔑</div>
