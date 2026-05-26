@@ -260,7 +260,7 @@ onUnmounted(() => {
             class="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500">
         </div>
         <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
-          <input type="checkbox" v-model="autoScroll" class="rounded">
+          <input type="checkbox" v-model="autoScroll" class="rounded" aria-label="自动滚动">
           自动滚动
         </label>
       </div>

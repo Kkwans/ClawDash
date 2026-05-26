@@ -228,6 +228,7 @@ onMounted(fetchData)
         <!-- Batch operations for plugins -->
         <div v-if="pluginEntries.length > 0" class="flex items-center gap-3 mt-3">
           <input type="checkbox" :checked="selectedPlugins.size === pluginEntries.length && pluginEntries.length > 0" @change="toggleSelectAllPlugins"
+            aria-label="全选插件"
             class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
           <span class="text-xs text-gray-500">全选插件</span>
           <button v-if="selectedPlugins.size > 0" @click="batchTogglePlugins(true)"

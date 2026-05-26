@@ -198,6 +198,7 @@ onUnmounted(() => clearInterval(timer))
     <template v-if="filteredSessions.length > 0">
       <div class="flex items-center gap-2">
         <input type="checkbox" :checked="allSelected" @change="toggleSelectAll"
+          aria-label="全选会话"
           class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
         <span class="text-xs text-gray-500">全选 ({{ filteredSessions.length }})</span>
       </div>
