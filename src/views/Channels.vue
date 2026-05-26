@@ -21,11 +21,11 @@ const showPwd = ref({})
 
 function togglePwd(k) { showPwd.value[k] = !showPwd.value[k] }
 function showConfirm(m) { return confirmRef.value?.confirm(m) || false }
-function showToast(m, t) { toastRef.value?.show(m, t) }
+function showToast(m) { toastRef.value?.show(m) }
 
 const tabs = [
-  { key: 'channels', label: '渠道状态' },
-  { key: 'plugins', label: '插件管理' },
+  { key: 'channels', label: '渠道状态', icon: '📡' },
+  { key: 'plugins', label: '插件管理', icon: '🧩' },
 ]
 
 const channelTypes = [
@@ -224,214 +224,258 @@ onMounted(fetchData)
 </script>
 
 <template>
-  <div class="page">
+  <div class="space-y-5">
     <Toast ref="toastRef" />
     <ConfirmDialog ref="confirmRef" />
 
     <!-- 添加渠道弹窗 -->
     <Teleport to="body">
-      <div v-if="showAddModal" class="modal-overlay" @click.self="showAddModal = false">
-        <div class="modal">
-          <div class="modal-header">
-            <div class="modal-title">添加渠道</div>
-            <button class="modal-close" @click="showAddModal = false">✕</button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <div class="form-label">渠道类型</div>
-              <div class="type-grid">
-                <button v-for="ct in channelTypes" :key="ct.id"
-                  class="type-card" :class="{ active: addForm.channel === ct.id }"
-                  @click="addForm.channel = ct.id">
-                  <span class="type-icon">{{ ct.icon }}</span>
-                  <span class="type-name">{{ ct.name }}</span>
-                </button>
-              </div>
+      <Transition name="fade">
+        <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showAddModal = false">
+          <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-slide-up">
+            <div class="px-5 py-4 border-b border-gray-100">
+              <h3 class="text-sm font-semibold text-gray-900">添加渠道</h3>
             </div>
-            <template v-if="selectedType">
-              <div v-for="f in selectedType.fields" :key="f.key" class="form-group" style="margin-top: 16px;">
-                <div class="form-label">{{ f.label }} <span v-if="f.required" class="form-required">*</span></div>
-                <div class="input-wrap">
-                  <input v-model="addForm.config[f.key]"
-                    :type="f.type === 'password' && !showPwd['add_'+f.key] ? 'password' : 'text'"
-                    :placeholder="f.placeholder" class="input" :class="{ mono: f.type === 'password' }">
-                  <button v-if="f.type === 'password'" class="pwd-toggle" @click="togglePwd('add_'+f.key)">
-                    {{ showPwd['add_'+f.key] ? '🙈' : '👁️' }}
+            <div class="px-5 py-4 space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-2">渠道类型</label>
+                <div class="grid grid-cols-3 gap-2">
+                  <button v-for="ct in channelTypes" :key="ct.id"
+                    class="flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all cursor-pointer"
+                    :class="addForm.channel === ct.id ? 'border-gray-900 bg-gray-50 shadow-sm' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'"
+                    @click="addForm.channel = ct.id">
+                    <span class="text-xl">{{ ct.icon }}</span>
+                    <span class="text-xs font-medium text-gray-700">{{ ct.name }}</span>
                   </button>
                 </div>
               </div>
-            </template>
-          </div>
-          <div class="modal-footer">
-            <button class="btn" @click="showAddModal = false">取消</button>
-            <button class="btn btn-primary" @click="addChannel" :disabled="saving || !addForm.channel">
-              {{ saving ? '添加中...' : '添加渠道' }}
-            </button>
+              <template v-if="selectedType">
+                <div v-for="f in selectedType.fields" :key="f.key">
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">
+                    {{ f.label }} <span v-if="f.required" class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <input v-model="addForm.config[f.key]"
+                      :type="f.type === 'password' && !showPwd['add_'+f.key] ? 'password' : 'text'"
+                      :placeholder="f.placeholder"
+                      class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all pr-9">
+                    <button v-if="f.type === 'password'"
+                      @click="togglePwd('add_'+f.key)"
+                      class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">
+                      {{ showPwd['add_'+f.key] ? '🙈' : '👁️' }}
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </div>
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+              <button @click="showAddModal = false" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">取消</button>
+              <button @click="addChannel" :disabled="saving || !addForm.channel"
+                class="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                {{ saving ? '添加中...' : '添加渠道' }}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </Transition>
     </Teleport>
 
     <!-- 安装插件弹窗 -->
     <Teleport to="body">
-      <div v-if="showInstallModal" class="modal-overlay" @click.self="showInstallModal = false">
-        <div class="modal modal-lg">
-          <div class="modal-header">
-            <div class="modal-title">安装插件</div>
-            <button class="modal-close" @click="showInstallModal = false">✕</button>
-          </div>
-          <div class="modal-body">
-            <div class="form-label" style="margin-bottom: 12px;">推荐插件</div>
-            <div class="preset-list">
-              <div v-for="p in presetPlugins" :key="p.id" class="preset-item" @click="installFromPreset(p)">
-                <span class="preset-icon">{{ p.icon }}</span>
-                <div class="preset-info">
-                  <div class="preset-name">{{ p.name }}</div>
-                  <div class="preset-desc">{{ p.desc }}</div>
+      <Transition name="fade">
+        <div v-if="showInstallModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showInstallModal = false">
+          <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-slide-up">
+            <div class="px-5 py-4 border-b border-gray-100">
+              <h3 class="text-sm font-semibold text-gray-900">安装插件</h3>
+            </div>
+            <div class="px-5 py-4 space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-2">推荐插件</label>
+                <div class="space-y-1">
+                  <div v-for="p in presetPlugins" :key="p.id"
+                    class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group"
+                    @click="installFromPreset(p)">
+                    <span class="text-lg">{{ p.icon }}</span>
+                    <div class="flex-1 min-w-0">
+                      <div class="text-sm font-medium text-gray-900">{{ p.name }}</div>
+                      <div class="text-xs text-gray-500">{{ p.desc }}</div>
+                    </div>
+                    <span class="text-xs font-medium text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">安装</span>
+                  </div>
                 </div>
-                <span class="preset-action">安装</span>
+              </div>
+              <div class="border-t border-gray-100 pt-4">
+                <label class="block text-xs font-medium text-gray-500 mb-2">手动输入插件 ID</label>
+                <div class="flex gap-2">
+                  <input v-model="installForm.pluginId"
+                    class="flex-1 px-3 py-2 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all"
+                    placeholder="@scope/plugin-name">
+                  <button @click="installPlugin"
+                    class="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all">安装</button>
+                </div>
               </div>
             </div>
-            <div class="divider"></div>
-            <div class="form-label" style="margin-bottom: 8px;">手动安装</div>
-            <div style="display: flex; gap: 8px;">
-              <div class="input-wrap" style="flex: 1;">
-                <input v-model="installForm.pluginId" class="input mono" placeholder="@scope/plugin-name">
-              </div>
-              <button class="btn btn-primary" @click="installPlugin">安装</button>
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
+              <button @click="showInstallModal = false" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">关闭</button>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn" @click="showInstallModal = false">关闭</button>
           </div>
         </div>
-      </div>
+      </Transition>
     </Teleport>
 
     <!-- 渠道详情弹窗 -->
     <Teleport to="body">
-      <div v-if="showDetail" class="modal-overlay" @click.self="showDetail = null">
-        <div class="modal">
-          <div class="modal-header">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <span style="font-size: 24px;">{{ getIcon(showDetail.id) }}</span>
-              <div>
-                <div class="modal-title">{{ getName(showDetail.id) }}</div>
-                <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">{{ showDetail.id }}</div>
+      <Transition name="fade">
+        <div v-if="showDetail" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showDetail = null">
+          <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-slide-up">
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+              <span class="text-xl">{{ getIcon(showDetail.id) }}</span>
+              <div class="flex-1">
+                <h3 class="text-sm font-semibold text-gray-900">{{ getName(showDetail.id) }}</h3>
+                <p class="text-xs text-gray-400 font-mono">{{ showDetail.id }}</p>
               </div>
+              <button @click="showDetail = null" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
             </div>
-            <button class="modal-close" @click="showDetail = null">✕</button>
-          </div>
-          <div class="modal-body">
-            <div class="detail-status" :class="showDetail.enabled ? 'on' : 'off'">
-              <span>状态</span>
-              <span>{{ showDetail.enabled ? '已启用' : '已禁用' }}</span>
-            </div>
-            <template v-for="(val, key) in showDetail.config" :key="key">
-              <div v-if="key !== 'enabled'" class="form-group" style="margin-top: 12px;">
-                <div class="form-label">{{ key }}</div>
-                <div class="input-wrap">
-                  <input v-model="showDetail.config[key]"
-                    :type="(key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')) && !showPwd['d_'+key] ? 'password' : 'text'"
-                    class="input mono">
-                  <button v-if="key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')"
-                    class="pwd-toggle" @click="togglePwd('d_'+key)">
-                    {{ showPwd['d_'+key] ? '🙈' : '👁️' }}
-                  </button>
+            <div class="px-5 py-4 space-y-3 max-h-80 overflow-y-auto">
+              <div class="flex items-center justify-between p-2.5 rounded-lg"
+                :class="showDetail.enabled ? 'bg-green-50' : 'bg-gray-50'">
+                <span class="text-xs text-gray-500">状态</span>
+                <span class="text-xs font-medium" :class="showDetail.enabled ? 'text-green-700' : 'text-gray-500'">
+                  {{ showDetail.enabled ? '已启用' : '已禁用' }}
+                </span>
+              </div>
+              <template v-for="(val, key) in showDetail.config" :key="key">
+                <div v-if="key !== 'enabled'">
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ key }}</label>
+                  <div class="relative">
+                    <input v-model="showDetail.config[key]"
+                      :type="(key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')) && !showPwd['d_'+key] ? 'password' : 'text'"
+                      class="w-full px-3 py-2 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all pr-9">
+                    <button v-if="key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')"
+                      @click="togglePwd('d_'+key)"
+                      class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">
+                      {{ showPwd['d_'+key] ? '🙈' : '👁️' }}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </template>
-          </div>
-          <div class="modal-footer">
-            <button class="btn" @click="showDetail = null">取消</button>
-            <button class="btn btn-primary" @click="saveDetail" :disabled="saving">
-              {{ saving ? '保存中...' : '保存配置' }}
-            </button>
+              </template>
+            </div>
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+              <button @click="showDetail = null" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">取消</button>
+              <button @click="saveDetail" :disabled="saving"
+                class="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-all">
+                {{ saving ? '保存中...' : '保存配置' }}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </Transition>
     </Teleport>
 
     <!-- 页面头部 -->
-    <div class="page-header">
+    <div class="flex items-center justify-between">
       <div>
-        <h1 class="page-title">渠道管理</h1>
-        <p class="page-desc">管理消息渠道和插件</p>
+        <h2 class="text-lg font-bold text-gray-900">渠道管理</h2>
+        <p class="text-sm text-gray-500 mt-0.5">管理消息渠道和插件</p>
       </div>
-      <div class="page-actions">
-        <button class="btn" @click="fetchData">刷新</button>
-        <button class="btn btn-primary" @click="showAddModal = true">+ 添加渠道</button>
-        <button class="btn" @click="showInstallModal = true">🧩 安装插件</button>
+      <div class="flex gap-2">
+        <button @click="fetchData" class="px-3 py-1.5 text-xs text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">刷新</button>
+        <button @click="showAddModal = true" class="px-3 py-1.5 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all">+ 添加渠道</button>
+        <button @click="showInstallModal = true" class="px-3 py-1.5 text-xs text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">🧩 安装插件</button>
       </div>
     </div>
 
     <!-- EventLoop 状态 -->
-    <div v-if="eventLoop" class="event-loop" :class="eventLoop.degraded ? 'warn' : 'ok'">
+    <div v-if="eventLoop" class="rounded-lg border p-3 flex items-center gap-2 text-sm"
+      :class="eventLoop.degraded ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-green-50 border-green-200 text-green-800'">
       <span>{{ eventLoop.degraded ? '⚠️' : '✅' }}</span>
-      <span>事件循环{{ eventLoop.degraded ? '降级' : '正常' }}</span>
-      <span class="event-meta" v-if="eventLoop.utilization">利用率 {{ (eventLoop.utilization * 100).toFixed(0) }}%</span>
-      <span class="event-meta" v-if="eventLoop.delayP99Ms">P99 {{ eventLoop.delayP99Ms.toFixed(0) }}ms</span>
+      <span class="font-medium">事件循环{{ eventLoop.degraded ? '降级' : '正常' }}</span>
+      <span class="ml-auto text-xs" :class="eventLoop.degraded ? 'text-amber-600' : 'text-green-600'">
+        <template v-if="eventLoop.utilization">利用率 {{ (eventLoop.utilization * 100).toFixed(0) }}%</template>
+        <template v-if="eventLoop.delayP99Ms"> · P99 {{ eventLoop.delayP99Ms.toFixed(0) }}ms</template>
+      </span>
     </div>
 
     <!-- Tab 切换 -->
-    <div class="tabs">
+    <div class="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
       <button v-for="tab in tabs" :key="tab.key"
-        class="tab" :class="{ active: activeTab === tab.key }"
-        @click="activeTab = tab.key">{{ tab.label }}</button>
+        @click="activeTab = tab.key"
+        class="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-medium transition-all"
+        :class="activeTab === tab.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+        <span>{{ tab.icon }}</span>
+        <span>{{ tab.label }}</span>
+      </button>
     </div>
 
     <!-- 加载状态 -->
-    <div v-if="loading" class="loading">
-      <div class="spinner"></div>
-      <span class="loading-text">加载中...</span>
+    <div v-if="loading" class="flex items-center justify-center py-16">
+      <div class="w-6 h-6 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
     </div>
 
     <!-- 渠道列表 -->
-    <div v-else-if="activeTab === 'channels'" class="list">
-      <div v-if="channelEntries.length === 0" class="empty">
-        <div class="empty-icon">📡</div>
-        <div class="empty-title">暂无渠道</div>
-        <div class="empty-desc">点击"添加渠道"开始配置消息渠道</div>
+    <div v-else-if="activeTab === 'channels'" class="space-y-2">
+      <div v-if="channelEntries.length === 0" class="text-center py-16 bg-white rounded-xl border border-gray-200">
+        <span class="text-3xl mb-3 block">📡</span>
+        <p class="text-sm font-medium text-gray-600">暂无渠道</p>
+        <p class="text-xs text-gray-400 mt-1">点击"添加渠道"开始</p>
       </div>
-      <div v-for="ch in channelEntries" :key="ch.id" class="card channel-card">
-        <div class="card-left">
-          <div class="card-icon" :class="ch.enabled !== false ? 'on' : 'off'">{{ getIcon(ch.id) }}</div>
-          <div class="card-info">
-            <div class="card-name">{{ getName(ch.id) }}</div>
-            <div class="card-id">{{ ch.id }}</div>
+      <div v-for="ch in channelEntries" :key="ch.id"
+        class="bg-white rounded-xl border border-gray-200 p-4 hover:border-gray-300 hover:shadow-sm transition-all flex items-center justify-between">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg"
+            :class="ch.enabled !== false ? 'bg-blue-50' : 'bg-gray-100'">
+            {{ getIcon(ch.id) }}
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold text-gray-900">{{ getName(ch.id) }}</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                :class="ch.enabled !== false ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'">
+                {{ ch.enabled !== false ? '已启用' : '已禁用' }}
+              </span>
+            </div>
+            <p class="text-xs text-gray-400 font-mono mt-0.5">{{ ch.id }}</p>
           </div>
         </div>
-        <div class="card-actions">
-          <span class="badge" :class="ch.enabled !== false ? 'badge-green' : 'badge-gray'">
-            {{ ch.enabled !== false ? '已启用' : '已禁用' }}
-          </span>
-          <button class="btn btn-sm" @click="openDetail(ch)">配置</button>
-          <button class="btn btn-sm" @click="toggleChannel(ch)">{{ ch.enabled !== false ? '禁用' : '启用' }}</button>
-          <button class="btn btn-sm btn-danger" @click="removeChannel(ch)">删除</button>
+        <div class="flex items-center gap-1.5">
+          <button @click="openDetail(ch)" class="px-2.5 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-all">配置</button>
+          <button @click="toggleChannel(ch)" class="px-2.5 py-1.5 text-xs font-medium rounded-md transition-all"
+            :class="ch.enabled !== false ? 'text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100' : 'text-green-700 bg-green-50 border border-green-200 hover:bg-green-100'">
+            {{ ch.enabled !== false ? '禁用' : '启用' }}
+          </button>
+          <button @click="removeChannel(ch)" class="px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-all">删除</button>
         </div>
       </div>
     </div>
 
     <!-- 插件管理 -->
-    <div v-else-if="activeTab === 'plugins'" class="list">
-      <div v-if="pluginEntries.length === 0" class="empty">
-        <div class="empty-icon">🧩</div>
-        <div class="empty-title">暂无插件</div>
-        <div class="empty-desc">点击"安装插件"添加</div>
+    <div v-else-if="activeTab === 'plugins'" class="space-y-2">
+      <div v-if="pluginEntries.length === 0" class="text-center py-16 bg-white rounded-xl border border-gray-200">
+        <span class="text-3xl mb-3 block">🧩</span>
+        <p class="text-sm font-medium text-gray-600">暂无插件</p>
+        <p class="text-xs text-gray-400 mt-1">点击"安装插件"添加</p>
       </div>
-      <div v-for="pl in pluginEntries" :key="pl.id" class="card channel-card">
-        <div class="card-left">
-          <div class="card-icon" :class="pl.enabled ? 'on' : 'off'">🧩</div>
-          <div class="card-info">
-            <div class="card-name">{{ pl.id }}</div>
+      <div v-for="pl in pluginEntries" :key="pl.id"
+        class="bg-white rounded-xl border border-gray-200 p-4 hover:border-gray-300 hover:shadow-sm transition-all flex items-center justify-between">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg"
+            :class="pl.enabled ? 'bg-green-50' : 'bg-gray-100'">🧩</div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold text-gray-900">{{ pl.id }}</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                :class="pl.enabled ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'">
+                {{ pl.enabled ? '已启用' : '已禁用' }}
+              </span>
+            </div>
           </div>
         </div>
-        <div class="card-actions">
-          <span class="badge" :class="pl.enabled ? 'badge-green' : 'badge-gray'">
-            {{ pl.enabled ? '已启用' : '已禁用' }}
-          </span>
-          <button class="btn btn-sm" @click="togglePlugin(pl)">{{ pl.enabled ? '禁用' : '启用' }}</button>
-          <button class="btn btn-sm btn-danger" @click="uninstallPlugin(pl)">卸载</button>
+        <div class="flex items-center gap-1.5">
+          <button @click="togglePlugin(pl)" class="px-2.5 py-1.5 text-xs font-medium rounded-md transition-all"
+            :class="pl.enabled ? 'text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100' : 'text-green-700 bg-green-50 border border-green-200 hover:bg-green-100'">
+            {{ pl.enabled ? '禁用' : '启用' }}
+          </button>
+          <button @click="uninstallPlugin(pl)" class="px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-all">卸载</button>
         </div>
       </div>
     </div>
@@ -439,195 +483,11 @@ onMounted(fetchData)
 </template>
 
 <style scoped>
-.page { max-width: 880px; }
-
-/* ===== 头部 ===== */
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--space-5);
-  gap: var(--space-4);
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.page-title {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  color: var(--text-primary);
+.animate-slide-up {
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.page-desc {
-  font-size: 13px;
-  color: var(--text-tertiary);
-  margin-top: var(--space-1);
-}
-.page-actions { display: flex; gap: var(--space-2); flex-shrink: 0; }
-
-/* ===== EventLoop ===== */
-.event-loop {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  margin-bottom: var(--space-4);
-}
-.event-loop.ok { background: var(--green-bg); color: #166534; }
-.event-loop.warn { background: var(--amber-bg); color: #92400e; }
-.event-meta { color: var(--text-tertiary); margin-left: auto; font-size: 12px; }
-
-/* ===== Tab ===== */
-.tabs {
-  display: flex;
-  gap: 1px;
-  background: var(--bg-subtle);
-  border-radius: var(--radius);
-  padding: 2px;
-  width: fit-content;
-  margin-bottom: var(--space-4);
-}
-.tab {
-  padding: var(--space-2) var(--space-4);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-tertiary);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease);
-}
-.tab:hover { color: var(--text-primary); }
-.tab.active {
-  background: var(--bg-panel);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
-}
-
-/* ===== 列表 ===== */
-.list { display: flex; flex-direction: column; gap: var(--space-2); }
-
-/* ===== 卡片 ===== */
-.channel-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
-  gap: var(--space-4);
-}
-.card-left { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
-.card-actions { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
-.card-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius);
-  font-size: 18px;
-  flex-shrink: 0;
-}
-.card-icon.on { background: var(--blue-bg); }
-.card-icon.off { background: var(--bg-subtle); }
-.card-info { min-width: 0; }
-.card-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.card-id { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 1px; }
-
-/* ===== 空状态 ===== */
-.empty {
-  text-align: center;
-  padding: var(--space-12) var(--space-4);
-}
-.empty-icon { font-size: 40px; margin-bottom: var(--space-3); }
-.empty-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); }
-.empty-desc { font-size: 13px; color: var(--text-tertiary); margin-top: var(--space-1); }
-
-/* ===== Loading ===== */
-.loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-12);
-  gap: var(--space-3);
-}
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--border);
-  border-top-color: var(--text-primary);
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: 13px; color: var(--text-tertiary); }
-
-/* ===== 渠道选择网格 ===== */
-.type-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-2);
-}
-.type-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-2);
-  background: var(--bg-subtle);
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease);
-}
-.type-card:hover {
-  background: var(--bg-hover);
-  border-color: var(--border);
-}
-.type-card.active {
-  background: var(--bg-panel);
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(26,26,26,0.06);
-}
-.type-icon { font-size: 20px; }
-.type-name { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
-
-/* ===== 预置插件列表 ===== */
-.preset-list { display: flex; flex-direction: column; gap: 1px; }
-.preset-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: background var(--duration-fast) var(--ease);
-}
-.preset-item:hover { background: var(--bg-subtle); }
-.preset-icon { font-size: 20px; flex-shrink: 0; }
-.preset-info { flex: 1; min-width: 0; }
-.preset-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.preset-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
-.preset-action {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--blue);
-  opacity: 0;
-  transition: opacity var(--duration-fast) var(--ease);
-}
-.preset-item:hover .preset-action { opacity: 1; }
-.divider { border-top: 1px solid var(--border-subtle); margin: var(--space-4) 0; }
-
-/* ===== 详情弹窗状态 ===== */
-.detail-status {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius);
-  font-size: 13px;
-  margin-bottom: var(--space-3);
-}
-.detail-status.on { background: var(--green-bg); color: #166534; }
-.detail-status.off { background: var(--bg-subtle); color: var(--text-tertiary); }
 </style>
