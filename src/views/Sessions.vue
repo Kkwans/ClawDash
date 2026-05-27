@@ -218,27 +218,28 @@ onUnmounted(() => {
     <!-- 页面标题 -->
     <div class="sessions-section" :class="{ 'sessions-enter': entered }" style="--delay: 0ms">
       <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-bold text-gray-900">日志查看</h2>
-        <p class="text-sm text-gray-500 mt-0.5">实时 Gateway 事件流</p>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="text-xs text-gray-400">{{ eventLog.length }} 条事件</span>
-        <div class="relative group">
-          <button class="px-3 py-1.5 text-xs text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors">
-            📥 导出
-          </button>
-          <div class="absolute right-0 top-full mt-1 w-28 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-            <button @click="exportEventLog(eventLog, 'json')" class="w-full px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-t-lg text-left">JSON</button>
-            <button @click="exportEventLog(eventLog, 'csv')" class="w-full px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-b-lg text-left">CSV</button>
-          </div>
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">日志查看</h2>
+          <p class="text-sm text-gray-500 mt-0.5">实时 Gateway 事件流</p>
         </div>
-        <button @click="clearLog" class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-          清空
-        </button>
-        <button @click="copyAllLogs" class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-          复制全部
-        </button>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-gray-400">{{ eventLog.length }} 条事件</span>
+          <div class="relative group">
+            <button class="px-3 py-1.5 text-xs text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors">
+              📥 导出
+            </button>
+            <div class="absolute right-0 top-full mt-1 w-28 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+              <button @click="exportEventLog(eventLog, 'json')" class="w-full px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-t-lg text-left">JSON</button>
+              <button @click="exportEventLog(eventLog, 'csv')" class="w-full px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-b-lg text-left">CSV</button>
+            </div>
+          </div>
+          <button @click="clearLog" class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+            清空
+          </button>
+          <button @click="copyAllLogs" class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+            复制全部
+          </button>
+        </div>
       </div>
     </div>
 
@@ -330,7 +331,6 @@ onUnmounted(() => {
     </div>
     </div>
   </div>
-</div>
 </template>
 
 <style scoped>

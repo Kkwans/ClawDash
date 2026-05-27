@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { gwRequest } from '../stores/gateway.js'
 import { getRawConfig } from "../api/config-utils.js"
 import AppToast from '../components/AppToast.vue'
@@ -18,6 +18,10 @@ const installForm = ref({ pluginId: '' })
 const addForm = ref({ channel: '', config: {} })
 const saving = ref(false)
 const showPwd = ref({})
+
+// 入场动画状态
+const entered = ref(false)
+onMounted(() => { nextTick(() => { entered.value = true }) })
 
 function togglePwd(k) { showPwd.value[k] = !showPwd.value[k] }
 function showConfirm(m) { return confirmRef.value?.confirm(m) || false }
@@ -379,7 +383,7 @@ onMounted(fetchData)
     </Teleport>
 
     <!-- 页面头部 -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between channels-section" :class="{ 'channels-enter': entered }" style="--delay: 0ms">
       <div>
         <h2 class="text-lg font-bold text-gray-900">渠道管理</h2>
         <p class="text-sm text-gray-500 mt-0.5">管理消息渠道和插件</p>
@@ -392,8 +396,7 @@ onMounted(fetchData)
     </div>
 
     <!-- EventLoop 状态 -->
-    <div v-if="eventLoop" class="rounded-lg border p-3 flex items-center gap-2 text-sm"
-      :class="eventLoop.degraded ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-green-50 border-green-200 text-green-800'">
+    <div v-if="eventLoop" class="rounded-lg border p-3 flex items-center gap-2 text-sm channels-section" :class="[{ 'channels-enter': entered }, eventLoop.degraded ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-green-50 border-green-200 text-green-800']" style="--delay: 80ms">
       <span>{{ eventLoop.degraded ? '⚠️' : '✅' }}</span>
       <span class="font-medium">事件循环{{ eventLoop.degraded ? '降级' : '正常' }}</span>
       <span class="ml-auto text-xs" :class="eventLoop.degraded ? 'text-amber-600' : 'text-green-600'">
@@ -403,7 +406,7 @@ onMounted(fetchData)
     </div>
 
     <!-- Tab 切换 -->
-    <div class="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+    <div class="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit channels-section" :class="{ 'channels-enter': entered }" style="--delay: 120ms">
       <button v-for="tab in tabs" :key="tab.key"
         @click="activeTab = tab.key"
         class="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-medium transition-all"
@@ -419,7 +422,7 @@ onMounted(fetchData)
     </div>
 
     <!-- 渠道列表 -->
-    <div v-else-if="activeTab === 'channels'" class="space-y-2">
+    <div v-else-if="activeTab === 'channels'" class="space-y-2 channels-section" :class="{ 'channels-enter': entered }" style="--delay: 160ms">
       <div v-if="channelEntries.length === 0" class="text-center py-16 bg-white rounded-xl border border-gray-200">
         <span class="text-3xl mb-3 block">📡</span>
         <p class="text-sm font-medium text-gray-600">暂无渠道</p>
@@ -455,7 +458,7 @@ onMounted(fetchData)
     </div>
 
     <!-- 插件管理 -->
-    <div v-else-if="activeTab === 'plugins'" class="space-y-2">
+    <div v-else-if="activeTab === 'plugins'" class="space-y-2 channels-section" :class="{ 'channels-enter': entered }" style="--delay: 160ms">
       <div v-if="pluginEntries.length === 0" class="text-center py-16 bg-white rounded-xl border border-gray-200">
         <span class="text-3xl mb-3 block">🧩</span>
         <p class="text-sm font-medium text-gray-600">暂无插件</p>
@@ -495,5 +498,18 @@ onMounted(fetchData)
 }
 .animate-slide-up {
   animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 入场动画 */
+.channels-section {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--delay, 0ms);
+}
+.channels-enter {
+  opacity: 1;
+  transform: translateY(0);
 }
 </style>
