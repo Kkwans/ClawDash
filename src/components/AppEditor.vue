@@ -1,13 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted, shallowRef } from 'vue'
-import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view'
-import { EditorState } from '@codemirror/state'
-import { json } from '@codemirror/lang-json'
-import { oneDark } from '@codemirror/theme-one-dark'
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
-import { syntaxHighlighting, defaultHighlightStyle, bracketMatching, foldGutter } from '@codemirror/language'
-import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete'
-import { lintGutter } from '@codemirror/lint'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -21,97 +13,96 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
-const editorRef = ref(null)
-const view = shallowRef(null)
+const textareaRef = ref(null)
+const jsonError = ref('')
 
-function createExtensions() {
-  const extensions = [
-    keymap.of([
-      ...defaultKeymap,
-      ...historyKeymap,
-      ...closeBracketsKeymap
-    ]),
-    history(),
-    bracketMatching(),
-    closeBrackets(),
-    foldGutter(),
-    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-    highlightActiveLine(),
-    oneDark,
-    EditorView.updateListener.of((update) => {
-      if (update.docChanged) {
-        emit('update:modelValue', update.state.doc.toString())
-      }
-    }),
-    EditorView.theme({
-      '&': {
-        fontSize: '13px',
-        maxHeight: props.maxHeight
-      },
-      '.cm-scroller': {
-        fontFamily: "'Geist Mono', 'JetBrains Mono', 'Fira Code', monospace",
-        overflow: 'auto'
-      },
-      '.cm-content': {
-        minHeight: props.minHeight
-      }
-    })
-  ]
-
-  if (props.lineNumbers) {
-    extensions.push(lineNumbers())
-    extensions.push(highlightActiveLineGutter())
-  }
-
-  if (props.language === 'json') {
-    extensions.push(json())
-  }
-
-  if (props.readOnly) {
-    extensions.push(EditorState.readOnly.of(true))
-    extensions.push(EditorView.editable.of(false))
-  }
-
-  return extensions
+function onInput(e) {
+  const val = e.target.value
+  emit('update:modelValue', val)
+  validateJson(val)
 }
 
-onMounted(() => {
-  if (!editorRef.value) return
-
-  const state = EditorState.create({
-    doc: props.modelValue,
-    extensions: createExtensions()
-  })
-
-  view.value = new EditorView({
-    state,
-    parent: editorRef.value
-  })
-})
-
-onUnmounted(() => {
-  view.value?.destroy()
-})
-
-watch(() => props.modelValue, (newVal) => {
-  if (view.value && view.value.state.doc.toString() !== newVal) {
-    view.value.dispatch({
-      changes: {
-        from: 0,
-        to: view.value.state.doc.length,
-        insert: newVal
-      }
-    })
+function onKeydown(e) {
+  // Tab 缩进
+  if (e.key === 'Tab') {
+    e.preventDefault()
+    const start = e.target.selectionStart
+    const end = e.target.selectionEnd
+    const val = e.target.value
+    e.target.value = val.substring(0, start) + '  ' + val.substring(end)
+    e.target.selectionStart = e.target.selectionEnd = start + 2
+    emit('update:modelValue', e.target.value)
   }
-})
+}
+
+function validateJson(val) {
+  if (props.language !== 'json') { jsonError.value = ''; return }
+  if (!val.trim()) { jsonError.value = ''; return }
+  try {
+    JSON.parse(val)
+    jsonError.value = ''
+  } catch (e) {
+    jsonError.value = e.message
+  }
+}
+
+// 初始化验证
+watch(() => props.modelValue, (val) => { validateJson(val) }, { immediate: true })
 </script>
 
 <template>
-  <div ref="editorRef" class="app-editor rounded-lg overflow-hidden border border-gray-200"></div>
+  <div class="app-editor">
+    <textarea
+      ref="textareaRef"
+      :value="modelValue"
+      @input="onInput"
+      @keydown="onKeydown"
+      :readonly="readOnly"
+      :placeholder="placeholder"
+      spellcheck="false"
+      autocomplete="off"
+      aria-label="代码编辑器"
+      class="editor-textarea"
+      :style="{ minHeight, maxHeight }"
+    ></textarea>
+    <p v-if="jsonError" class="editor-error">⚠️ {{ jsonError }}</p>
+  </div>
 </template>
 
 <style scoped>
-.app-editor :deep(.cm-editor) {
-  min-height: v-bind(minHeight);
+.app-editor {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.editor-textarea {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: oklch(0.9 0 0);
+  background: oklch(0.15 0.005 240);
+  border: none;
+  resize: vertical;
+  outline: none;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+}
+.editor-textarea::placeholder {
+  color: oklch(0.45 0.005 240);
+}
+.editor-textarea:focus {
+  box-shadow: inset 0 0 0 2px var(--brand-lighter);
+}
+.editor-error {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--danger-text);
+  background: var(--danger-light);
+  border-top: 1px solid oklch(0.85 0.04 25);
 }
 </style>
