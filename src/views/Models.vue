@@ -16,8 +16,8 @@ const toastRef = ref(null)
 const showAddModal = ref(false)
 const newProvider = ref({ id: '', api: 'openai-completions', baseUrl: '', apiKey: '', models: [] })
 
-function showToast(msg) {
-  toastRef.value?.show(msg)
+function showToast(msg, type = 'info') {
+  toastRef.value?.show(msg, type)
 }
 
 const thinkingOptions = [

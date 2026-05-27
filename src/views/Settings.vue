@@ -25,8 +25,8 @@ function showConfirm(msg) {
   return confirmRef.value?.confirm(msg) || false
 }
 
-function showToast(msg) {
-  toastRef.value?.show(msg)
+function showToast(msg, type = 'info') {
+  toastRef.value?.show(msg, type)
 }
 
 function saveToken() {
@@ -81,7 +81,7 @@ async function doGatewayAction(action) {
     showToast(`Gateway ${labels[action]}命令已发送`)
     setTimeout(() => { fetchData(); controlling.value = false }, 2000)
   } catch (e) {
-    showToast(`${labels[action]}失败: ${e.message}`)
+    showToast(`${labels[action]}失败: ${e.message}`, 'error')
     controlling.value = false
   }
 }

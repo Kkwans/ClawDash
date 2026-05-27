@@ -21,7 +21,7 @@ const showPwd = ref({})
 
 function togglePwd(k) { showPwd.value[k] = !showPwd.value[k] }
 function showConfirm(m) { return confirmRef.value?.confirm(m) || false }
-function showToast(m) { toastRef.value?.show(m) }
+function showToast(m, type = 'info') { toastRef.value?.show(m, type) }
 
 const tabs = [
   { key: 'channels', label: '渠道状态', icon: '📡' },
@@ -60,7 +60,7 @@ async function fetchData() {
     const [ch, cfg] = await Promise.all([gwRequest('channels.status').catch(() => null), gwRequest('config.get').catch(() => null)])
     channelsData.value = ch
     configData.value = cfg?.parsed || null
-  } catch (e) { showToast('加载失败: ' + e.message) }
+  } catch (e) { showToast('加载失败: ' + e.message, 'error') }
   loading.value = false
 }
 
@@ -92,7 +92,7 @@ async function saveDetail() {
     showToast('配置已保存，重启后生效')
     showDetail.value = null
     await fetchData()
-  } catch (e) { showToast('保存失败: ' + e.message) }
+  } catch (e) { showToast('保存失败: ' + e.message, 'error') }
   saving.value = false
 }
 
@@ -116,7 +116,7 @@ async function addChannel() {
     showAddModal.value = false
     addForm.value = { channel: '', config: {} }
     await fetchData()
-  } catch (e) { showToast('添加失败: ' + e.message) }
+  } catch (e) { showToast('添加失败: ' + e.message, 'error') }
   saving.value = false
 }
 
@@ -131,7 +131,7 @@ async function removeChannel(ch) {
     await gwRequest('config.set', { raw: JSON.stringify(cfg), baseHash: cfgRes.hash })
     showToast(`${getName(ch.id)} 已删除`)
     await fetchData()
-  } catch (e) { showToast('删除失败: ' + e.message) }
+  } catch (e) { showToast('删除失败: ' + e.message, 'error') }
 }
 
 async function toggleChannel(ch) {
@@ -146,7 +146,7 @@ async function toggleChannel(ch) {
     await gwRequest('config.set', { raw: JSON.stringify(cfg), baseHash: cfgRes.hash })
     showToast(`${getName(ch.id)} 已${entry.enabled ? '启用' : '禁用'}`)
     await fetchData()
-  } catch (e) { showToast('操作失败: ' + e.message) }
+  } catch (e) { showToast('操作失败: ' + e.message, 'error') }
 }
 
 async function togglePlugin(pl) {
@@ -161,7 +161,7 @@ async function togglePlugin(pl) {
     await gwRequest('config.set', { raw: JSON.stringify(cfg), baseHash: cfgRes.hash })
     showToast(`${pl.id} 已${entry.enabled ? '启用' : '禁用'}`)
     await fetchData()
-  } catch (e) { showToast('操作失败: ' + e.message) }
+  } catch (e) { showToast('操作失败: ' + e.message, 'error') }
 }
 
 async function uninstallPlugin(pl) {
@@ -175,7 +175,7 @@ async function uninstallPlugin(pl) {
     await gwRequest('config.set', { raw: JSON.stringify(cfg), baseHash: cfgRes.hash })
     showToast(`${pl.id} 已卸载`)
     await fetchData()
-  } catch (e) { showToast('卸载失败: ' + e.message) }
+  } catch (e) { showToast('卸载失败: ' + e.message, 'error') }
 }
 
 const presetPlugins = [
@@ -199,7 +199,7 @@ async function installFromPreset(p) {
     showToast(`${p.name} 已安装`)
     showInstallModal.value = false
     await fetchData()
-  } catch (e) { showToast('安装失败: ' + e.message) }
+  } catch (e) { showToast('安装失败: ' + e.message, 'error') }
 }
 
 async function installPlugin() {
@@ -217,7 +217,7 @@ async function installPlugin() {
     showInstallModal.value = false
     installForm.value.pluginId = ''
     await fetchData()
-  } catch (e) { showToast('安装失败: ' + e.message) }
+  } catch (e) { showToast('安装失败: ' + e.message, 'error') }
 }
 
 onMounted(fetchData)

@@ -16,8 +16,8 @@ const sending = ref(false)
 const toastRef = ref(null)
 const messagesContainer = ref(null)
 
-function showToast(msg) {
-  toastRef.value?.show(msg)
+function showToast(msg, type = 'info') {
+  toastRef.value?.show(msg, type)
 }
 
 async function fetchSessions() {
@@ -41,7 +41,7 @@ async function selectSession(session) {
     messages.value = res?.messages || res || []
     nextTick(() => scrollToBottom())
   } catch (e) {
-    showToast('加载消息失败: ' + e.message)
+    showToast('加载消息失败: ' + e.message, 'error')
   }
   loading.value = false
 }
@@ -79,7 +79,7 @@ async function sendMessage() {
       }
     }, 2000)
   } catch (e) {
-    showToast('发送失败: ' + e.message)
+    showToast('发送失败: ' + e.message, 'error')
   }
   sending.value = false
 }

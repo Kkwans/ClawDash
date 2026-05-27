@@ -55,7 +55,7 @@ async function searchSkills() {
     const res = await gwRequest('skills.search', { query: searchQuery.value.trim() })
     searchResults.value = res?.results || []
   } catch (e) {
-    showToast('搜索失败: ' + e.message)
+    showToast('搜索失败: ' + e.message, 'error')
   }
   searching.value = false
 }
@@ -116,7 +116,7 @@ async function togglePlugin(plugin) {
     showToast(`${plugin.id} 已${entry.enabled ? '启用' : '禁用'}`)
     await fetchData()
   } catch (e) {
-    showToast('操作失败: ' + e.message)
+    showToast('操作失败: ' + e.message, 'error')
   }
 }
 

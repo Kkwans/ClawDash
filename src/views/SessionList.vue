@@ -34,7 +34,7 @@ async function resetSession(session) {
     showToast(`会话 ${session.key || session.id} 已重置`)
     await fetchSessions()
   } catch (e) {
-    showToast(`重置失败: ${e.message}`)
+    showToast(`重置失败: ${e.message}`, 'error')
   }
 }
 

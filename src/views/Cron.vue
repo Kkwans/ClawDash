@@ -28,8 +28,8 @@ function showConfirm(msg) {
   return confirmRef.value?.confirm(msg) || false
 }
 
-function showToast(msg) {
-  toastRef.value?.show(msg)
+function showToast(msg, type = 'info') {
+  toastRef.value?.show(msg, type)
 }
 
 async function fetchJobs() {
@@ -49,7 +49,7 @@ async function toggleJob(job) {
     job.enabled = !job.enabled
     showToast(`${job.name || job.id} 已${job.enabled ? '启用' : '禁用'}`)
   } catch (e) {
-    showToast(`操作失败: ${e.message}`)
+    showToast(`操作失败: ${e.message}`, 'error')
   }
 }
 
@@ -58,7 +58,7 @@ async function runJob(job) {
     await gwRequest('cron.run', { jobId: job.id })
     showToast(`${job.name || job.id} 已触发执行`)
   } catch (e) {
-    showToast(`执行失败: ${e.message}`)
+    showToast(`执行失败: ${e.message}`, 'error')
   }
 }
 
@@ -70,7 +70,7 @@ async function deleteJob(job) {
     showToast(`${job.name || job.id} 已删除`)
     await fetchJobs()
   } catch (e) {
-    showToast(`删除失败: ${e.message}`)
+    showToast(`删除失败: ${e.message}`, 'error')
   }
 }
 
@@ -94,7 +94,7 @@ async function createJob() {
     newJob.value = { name: '', scheduleKind: 'cron', scheduleExpr: '', payloadKind: 'systemEvent', payloadText: '', sessionTarget: 'main' }
     await fetchJobs()
   } catch (e) {
-    showToast(`创建失败: ${e.message}`)
+    showToast(`创建失败: ${e.message}`, 'error')
   }
   saving.value = false
 }
@@ -131,7 +131,7 @@ async function saveEdit() {
     showEditModal.value = false
     await fetchJobs()
   } catch (e) {
-    showToast(`更新失败: ${e.message}`)
+    showToast(`更新失败: ${e.message}`, 'error')
   }
   saving.value = false
 }
@@ -144,7 +144,7 @@ async function showHistory(job) {
     const res = await gwRequest('cron.runs', { jobId: job.id, limit: 20 })
     historyRuns.value = res?.runs || []
   } catch (e) {
-    showToast(`获取历史失败: ${e.message}`)
+    showToast(`获取历史失败: ${e.message}`, 'error')
     historyRuns.value = []
   }
   historyLoading.value = false

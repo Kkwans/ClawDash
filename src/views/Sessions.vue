@@ -62,8 +62,8 @@ async function fetchHealth() {
   loading.value = false
 }
 
-function showToast(msg) {
-  toastRef.value?.show(msg)
+function showToast(msg, type = 'info') {
+  toastRef.value?.show(msg, type)
 }
 
 function clearLog() {

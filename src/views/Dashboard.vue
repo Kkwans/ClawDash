@@ -62,8 +62,8 @@ const controlling = ref(false)
 const toastRef = ref(null)
 const confirmRef = ref(null)
 
-function showToast(msg) {
-  toastRef.value?.show(msg)
+function showToast(msg, type = 'info') {
+  toastRef.value?.show(msg, type)
 }
 
 async function showConfirm(msg) {
@@ -80,7 +80,7 @@ async function doGatewayAction(action) {
     showToast(`Gateway ${action === 'stop' ? '已停止' : '已启动'}`)
     setTimeout(() => { loadAllData(); controlling.value = false }, 2000)
   } catch (e) {
-    showToast('操作失败: ' + e.message)
+    showToast('操作失败: ' + e.message, 'error')
     controlling.value = false
   }
 }
