@@ -4,6 +4,7 @@ import { gwRequest, authenticated, useGatewayEvent } from '../stores/gateway.js'
 import { renderMarkdown } from '../utils/markdown.js'
 import AppToast from '../components/AppToast.vue'
 import { createLogger } from '../utils/logger.js'
+import { exportChat } from '../utils/export.js'
 // highlight.js CSS 在组件挂载时动态加载
 const log = createLogger('Chat')
 
@@ -192,8 +193,19 @@ onMounted(() => {
             <p class="text-sm font-semibold text-gray-800">{{ selectedSession.key || selectedSession.id }}</p>
             <p class="text-xs text-gray-400">{{ selectedSession.model || '-' }} · {{ selectedSession.kind || '-' }}</p>
           </div>
-          <button @click="selectedSession = null; messages = []"
-            class="text-gray-400 hover:text-gray-600 text-sm">✕</button>
+          <div class="flex items-center gap-2">
+            <div class="relative group">
+              <button class="px-2.5 py-1 text-xs text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors">
+                📥 导出
+              </button>
+              <div class="absolute right-0 top-full mt-1 w-28 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                <button @click="exportChat(selectedSession, messages, 'json')" class="w-full px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-t-lg text-left">JSON</button>
+                <button @click="exportChat(selectedSession, messages, 'txt')" class="w-full px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-b-lg text-left">TXT</button>
+              </div>
+            </div>
+            <button @click="selectedSession = null; messages = []"
+              class="text-gray-400 hover:text-gray-600 text-sm">✕</button>
+          </div>
         </div>
 
         <!-- 消息列表 -->

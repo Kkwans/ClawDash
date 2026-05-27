@@ -5,6 +5,7 @@ import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'
 import AppEditor from '../components/AppEditor.vue'
 import { createLogger } from '../utils/logger.js'
+import { exportConfig } from '../utils/export.js'
 
 const log = createLogger('Settings')
 
@@ -174,6 +175,7 @@ onMounted(() => {
         <h3 class="text-base font-semibold text-gray-800">📝 配置编辑器</h3>
         <div class="flex gap-2">
           <button @click="fetchData" class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">刷新</button>
+          <button @click="exportConfig(configData, configEditor)" class="px-3 py-1.5 text-xs text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors">📥 导出</button>
           <button @click="saveConfig" :disabled="savingConfig" class="px-3 py-1.5 text-xs text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">{{ savingConfig ? '保存中...' : '保存配置' }}</button>
         </div>
       </div>
