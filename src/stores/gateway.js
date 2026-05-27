@@ -23,11 +23,33 @@ export const gatewayHealth = ref(null)
 
 // --- 事件日志（响应式） ---
 export const eventLog = ref([])
-const EVENT_LOG_SYNC_MAX = 100
+const EVENT_LOG_MAX = 500
+const EVENT_LOG_STORAGE_KEY = 'clawdash_event_log'
 
-function syncEventLog() {
-  eventLog.value = gateway.getEventLog(EVENT_LOG_SYNC_MAX)
+// 从 localStorage 恢复日志
+function loadEventLogFromStorage() {
+  try {
+    const saved = localStorage.getItem(EVENT_LOG_STORAGE_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (Array.isArray(parsed)) eventLog.value = parsed.slice(-EVENT_LOG_MAX)
+    }
+  } catch (e) { /* ignore */ }
 }
+
+// 保存日志到 localStorage（节流）
+let _saveTimer = null
+function saveEventLogToStorage() {
+  clearTimeout(_saveTimer)
+  _saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(EVENT_LOG_STORAGE_KEY, JSON.stringify(eventLog.value.slice(-EVENT_LOG_MAX)))
+    } catch (e) { /* ignore */ }
+  }, 1000)
+}
+
+// 初始化时加载
+loadEventLogFromStorage()
 
 // --- Token ---
 export const token = ref(getToken())
@@ -140,6 +162,16 @@ gateway.on('auth-error', (payload) => {
 })
 
 // 所有事件变化时同步事件日志（通配符）
-gateway.on('*', () => {
-  syncEventLog()
+gateway.on('*', (payload, eventName) => {
+  // 向响应式 eventLog 推送带 ID 的事件
+  eventLog.value.push({
+    id: Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    event: eventName,
+    payload,
+    time: Date.now()
+  })
+  if (eventLog.value.length > EVENT_LOG_MAX) {
+    eventLog.value.splice(0, eventLog.value.length - EVENT_LOG_MAX)
+  }
+  saveEventLogToStorage()
 })

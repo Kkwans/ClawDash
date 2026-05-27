@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
-import { gwRequest, useGatewayEvent } from '../stores/gateway.js'
+import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue'
+import { gwRequest, eventLog as storeEventLog } from '../stores/gateway.js'
 import AppToast from '../components/AppToast.vue'
 
 import { createLogger } from '../utils/logger.js'
@@ -14,48 +14,15 @@ onMounted(() => { nextTick(() => { entered.value = true }) })
 const healthData = ref(null)
 const loading = ref(true)
 const toastRef = ref(null)
-const eventLog = ref([])
-const maxEvents = 500
-const LOG_STORAGE_KEY = 'clawdash_event_log'
-
-// 从 localStorage 加载日志
-function loadLogFromStorage() {
-  try {
-    const saved = localStorage.getItem(LOG_STORAGE_KEY)
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      if (Array.isArray(parsed)) {
-        eventLog.value = parsed.slice(-maxEvents)
-      }
-    }
-  } catch (e) { log.debug('Failed to load event log from localStorage:', e) }
-}
-
-// 保存日志到 localStorage
-function saveLogToStorage() {
-  try {
-    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(eventLog.value.slice(-maxEvents)))
-  } catch (e) { log.debug('Failed to save event log to localStorage:', e) }
-}
+// 使用 store 的 eventLog（已含 ID 和 localStorage 持久化）
+const eventLog = storeEventLog
 const autoScroll = ref(true)
 const logContainer = ref(null)
 const filterText = ref('')
 
-// 监听所有 Gateway 事件
-const stopListener = useGatewayEvent('*', (payload, eventName) => {
-  eventLog.value.push({
-    id: Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-    event: eventName,
-    payload,
-    time: Date.now()
-  })
-  if (eventLog.value.length > maxEvents) {
-    eventLog.value.splice(0, eventLog.value.length - maxEvents)
-  }
-  saveLogToStorage()
-  if (autoScroll.value) {
-    nextTick(() => scrollToBottom())
-  }
+// 新事件自动滚动
+watch(() => eventLog.value.length, () => {
+  if (autoScroll.value) nextTick(() => scrollToBottom())
 })
 
 async function fetchHealth() {
@@ -73,7 +40,6 @@ function showToast(msg, type = 'info') {
 
 function clearLog() {
   eventLog.value = []
-  saveLogToStorage()
   showToast('日志已清空')
 }
 
@@ -200,13 +166,11 @@ const uniqueEvents = computed(() => {
 
 let timer
 onMounted(() => {
-  loadLogFromStorage()
   fetchHealth()
   timer = setInterval(fetchHealth, 30000)
 })
 onUnmounted(() => {
   clearInterval(timer)
-  stopListener.stop()
 })
 </script>
 

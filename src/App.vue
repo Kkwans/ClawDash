@@ -40,8 +40,6 @@ const Sessions = defineAsyncComponent({ ...asyncOptions, loader: () => import('.
 const Settings = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Settings.vue') })
 const Skills = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Skills.vue') })
 const Cron = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Cron.vue') })
-const SessionList = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/SessionList.vue') })
-const Chat = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Chat.vue') })
 
 const currentTab = ref('dashboard')
 const gatewayStatus = ref('checking')
@@ -109,8 +107,6 @@ const tabs = [
   { id: 'channels', name: '渠道管理', icon: '📡' },
   { id: 'skills', name: 'Skill 管理', icon: '📦' },
   { id: 'cron', name: '定时任务', icon: '⏰' },
-  { id: 'sessionlist', name: '会话管理', icon: '💬' },
-  { id: 'chat', name: '聊天', icon: '🗨️' },
   { id: 'logs', name: '日志查看', icon: '📋' },
   { id: 'settings', name: '系统设置', icon: '⚙️' },
 ]
@@ -143,16 +139,14 @@ useKeyboard({
   'ctrl+3': () => switchTab('channels'),
   'ctrl+4': () => switchTab('skills'),
   'ctrl+5': () => switchTab('cron'),
-  'ctrl+6': () => switchTab('sessionlist'),
-  'ctrl+7': () => switchTab('chat'),
-  'ctrl+8': () => switchTab('logs'),
-  'ctrl+9': () => switchTab('settings'),
+  'ctrl+6': () => switchTab('logs'),
+  'ctrl+7': () => switchTab('settings'),
   'ctrl+b': () => toggleSidebar(),
   'ctrl+,': () => switchTab('settings'),
 })
 
 const currentComponent = computed(() => {
-  const map = { dashboard: Dashboard, models: Models, channels: Channels, skills: Skills, cron: Cron, sessionlist: SessionList, chat: Chat, logs: Sessions, settings: Settings }
+  const map = { dashboard: Dashboard, models: Models, channels: Channels, skills: Skills, cron: Cron, logs: Sessions, settings: Settings }
   return map[currentTab.value] || Dashboard
 })
 
