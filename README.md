@@ -110,6 +110,31 @@ sshpass -p 'xxx' ssh user@nas 'sudo bash -c "cd /volume1/DockerProject/openclaw-
 
 ## 更新日志
 
+### v0.8 (2026-05-28)
+- 修复 marked.js v18 语法高亮（使用自定义 renderer 替代已移除的 highlight 选项）
+- 修复 Chat 页面移动端响应式（侧边栏可折叠）
+- 优化批量插件操作（单次 config.get/set 替代 N 次调用）
+- 改进消息刷新机制（减少延迟，添加事件防抖）
+- 改进 Dashboard 刷新（refreshKey 替代 tab 切换 hack）
+- 添加 nginx 静态资源缓存策略
+- 清理死代码（api/index.js）
+- 更新导出版本引用
+
+### v0.7 (2026-05-27)
+- 添加命令面板（⌘K）
+- 添加收藏功能
+- 添加数据导出（JSON/CSV/TXT）
+- 添加 CodeMirror 配置编辑器
+- 添加确认弹窗和滚动锁定
+- 全局错误边界和键盘快捷键
+- CSS 设计系统变量（OKLCH 色彩空间）
+
+### v0.6 (2026-05-25)
+- 添加会话管理页面
+- 添加批量操作（重置会话、启停插件）
+- 添加会话搜索和筛选
+- 添加 Skills 搜索 ClawHub
+
 ### v0.5 (2026-05-24)
 - 修复 skills.list（使用静态 skills.json）
 - 修复 skills.install 参数（{source, slug}）

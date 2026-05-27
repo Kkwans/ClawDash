@@ -1,0 +1,16 @@
+{
+  "name": "ClawDash",
+  "short_name": "ClawDash",
+  "description": "OpenClaw Gateway 控制台",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
