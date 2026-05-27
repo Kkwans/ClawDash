@@ -339,7 +339,7 @@ onUnmounted(() => {
             搜索
             <kbd class="px-1 py-0.5 text-[10px] font-mono bg-gray-200/80 rounded">⌘K</kbd>
           </button>
-          <span class="text-xs text-gray-400">ClawDash v0.7.0</span>
+          <span class="text-xs text-gray-400">ClawDash v0.8.0</span>
           <a href="https://github.com/Kkwans/ClawDash" target="_blank"
             class="text-gray-400 hover:text-gray-600 transition-colors">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

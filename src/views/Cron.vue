@@ -281,7 +281,7 @@ onMounted(fetchJobs)
 
     <!-- 新建弹窗 -->
     <Teleport to="body">
-      <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @keyup.escape="showCreateModal = false">
         <div class="absolute inset-0 bg-black/40" @click="showCreateModal = false"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col">
           <div class="flex items-center justify-between p-5 border-b border-gray-200">
@@ -359,7 +359,7 @@ onMounted(fetchJobs)
 
     <!-- 编辑弹窗 -->
     <Teleport to="body">
-      <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @keyup.escape="showEditModal = false">
         <div class="absolute inset-0 bg-black/40" @click="showEditModal = false"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col">
           <div class="flex items-center justify-between p-5 border-b border-gray-200">
@@ -404,7 +404,7 @@ onMounted(fetchJobs)
 
     <!-- 执行历史弹窗 -->
     <Teleport to="body">
-      <div v-if="showHistoryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div v-if="showHistoryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @keyup.escape="showHistoryModal = false">
         <div class="absolute inset-0 bg-black/40" @click="showHistoryModal = false"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
           <div class="flex items-center justify-between p-5 border-b border-gray-200">

@@ -1,25 +1,12 @@
 <script setup>
-import { ref, onBeforeUnmount } from 'vue'
+import { ref } from 'vue'
+import { useScrollLock } from '../composables/useScrollLock.js'
 
 const visible = ref(false)
 const message = ref('')
 const title = ref('')
 let resolveFn = null
-let scrollLocked = false
-
-function lockScroll() {
-  if (!scrollLocked) {
-    document.body.style.overflow = 'hidden'
-    scrollLocked = true
-  }
-}
-
-function unlockScroll() {
-  if (scrollLocked) {
-    document.body.style.overflow = ''
-    scrollLocked = false
-  }
-}
+const { lock: lockScroll, unlock: unlockScroll } = useScrollLock()
 
 function confirm(msg, options = {}) {
   return new Promise((resolve) => {
@@ -42,10 +29,6 @@ function onCancel() {
   unlockScroll()
   resolveFn?.(false)
 }
-
-onBeforeUnmount(() => {
-  unlockScroll()
-})
 
 defineExpose({ confirm })
 </script>

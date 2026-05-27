@@ -7,6 +7,10 @@ import { createLogger } from '../utils/logger.js'
 import { exportEventLog } from '../utils/export.js'
 
 const log = createLogger('Sessions')
+
+// 入场动画状态
+const entered = ref(false)
+onMounted(() => { nextTick(() => { entered.value = true }) })
 const healthData = ref(null)
 const loading = ref(true)
 const toastRef = ref(null)
@@ -121,6 +125,28 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
+async function copyEvent(e) {
+  const text = `[${formatTime(e.time)}] ${e.event} ${JSON.stringify(e.payload || {}, null, 2)}`
+  try {
+    await navigator.clipboard.writeText(text)
+    showToast('已复制到剪贴板')
+  } catch (err) {
+    log.warn('复制失败:', err)
+  }
+}
+
+async function copyAllLogs() {
+  const text = filteredLog.value.map(e =>
+    `[${formatTime(e.time)}] ${e.event} ${JSON.stringify(e.payload || {})}`
+  ).join('\n')
+  try {
+    await navigator.clipboard.writeText(text)
+    showToast(`已复制 ${filteredLog.value.length} 条日志`)
+  } catch (err) {
+    log.warn('复制失败:', err)
+  }
+}
+
 function highlightText(text, query) {
   if (!query || !text) return escapeHtml(text || '')
   const safeText = escapeHtml(text)
@@ -190,7 +216,8 @@ onUnmounted(() => {
     <AppToast ref="toastRef" />
 
     <!-- 页面标题 -->
-    <div class="flex items-center justify-between">
+    <div class="sessions-section" :class="{ 'sessions-enter': entered }" style="--delay: 0ms">
+      <div class="flex items-center justify-between">
       <div>
         <h2 class="text-lg font-bold text-gray-900">日志查看</h2>
         <p class="text-sm text-gray-500 mt-0.5">实时 Gateway 事件流</p>
@@ -209,56 +236,64 @@ onUnmounted(() => {
         <button @click="clearLog" class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
           清空
         </button>
+        <button @click="copyAllLogs" class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+          复制全部
+        </button>
       </div>
     </div>
 
     <!-- Gateway 健康状态 -->
-    <div v-if="healthData" class="bg-white rounded-xl border border-gray-200 p-4">
-      <div class="flex items-center gap-2 mb-3">
-        <span class="text-sm font-semibold text-gray-700">Gateway 状态</span>
-        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-          :class="healthData.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'">
-          {{ healthData.ok ? '正常' : '异常' }}
-        </span>
-      </div>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-        <div>
-          <p class="text-gray-400">会话数</p>
-          <p class="font-medium text-gray-700">{{ healthData.sessions?.length || 0 }}</p>
+    <div v-if="healthData" class="sessions-section" :class="{ 'sessions-enter': entered }" style="--delay: 80ms">
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-sm font-semibold text-gray-700">Gateway 状态</span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+            :class="healthData.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'">
+            {{ healthData.ok ? '正常' : '异常' }}
+          </span>
         </div>
-        <div>
-          <p class="text-gray-400">事件循环</p>
-          <p class="font-medium" :class="healthData.eventLoop?.degraded ? 'text-amber-600' : 'text-green-600'">
-            {{ healthData.eventLoop?.degraded ? '降级' : '正常' }}
-          </p>
-        </div>
-        <div>
-          <p class="text-gray-400">渠道数</p>
-          <p class="font-medium text-gray-700">{{ healthData.channelOrder?.length || 0 }}</p>
-        </div>
-        <div>
-          <p class="text-gray-400">心跳间隔</p>
-          <p class="font-medium text-gray-700">{{ healthData.heartbeatSeconds || '-' }}s</p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div>
+            <p class="text-gray-400">会话数</p>
+            <p class="font-medium text-gray-700">{{ healthData.sessions?.length || 0 }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400">事件循环</p>
+            <p class="font-medium" :class="healthData.eventLoop?.degraded ? 'text-amber-600' : 'text-green-600'">
+              {{ healthData.eventLoop?.degraded ? '降级' : '正常' }}
+            </p>
+          </div>
+          <div>
+            <p class="text-gray-400">渠道数</p>
+            <p class="font-medium text-gray-700">{{ healthData.channelOrder?.length || 0 }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400">心跳间隔</p>
+            <p class="font-medium text-gray-700">{{ healthData.heartbeatSeconds || '-' }}s</p>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- 事件统计 -->
-    <div v-if="uniqueEvents.length > 0" class="bg-white rounded-xl border border-gray-200 p-4">
-      <p class="text-xs font-medium text-gray-500 mb-2">事件类型统计</p>
-      <div class="flex flex-wrap gap-1.5">
-        <span v-for="[event, count] in uniqueEvents" :key="event"
-          class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs bg-gray-50 border border-gray-100 cursor-pointer hover:bg-gray-100"
-          @click="filterText = event">
-          <span :class="getEventColor(event)">●</span>
-          <span class="text-gray-700">{{ event }}</span>
-          <span class="text-gray-400">{{ count }}</span>
-        </span>
+    <div v-if="uniqueEvents.length > 0" class="sessions-section" :class="{ 'sessions-enter': entered }" style="--delay: 160ms">
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <p class="text-xs font-medium text-gray-500 mb-2">事件类型统计</p>
+        <div class="flex flex-wrap gap-1.5">
+          <span v-for="[event, count] in uniqueEvents" :key="event"
+            class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs bg-gray-50 border border-gray-100 cursor-pointer hover:bg-gray-100"
+            @click="filterText = event">
+            <span :class="getEventColor(event)">●</span>
+            <span class="text-gray-700">{{ event }}</span>
+            <span class="text-gray-400">{{ count }}</span>
+          </span>
+        </div>
       </div>
     </div>
 
     <!-- 日志查看器 -->
-    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div class="sessions-section" :class="{ 'sessions-enter': entered }" style="--delay: 240ms">
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <!-- 工具栏 -->
       <div class="flex items-center gap-3 p-3 border-b border-gray-100">
         <div class="relative flex-1">
@@ -282,13 +317,33 @@ onUnmounted(() => {
       <div v-else ref="logContainer" @scroll="handleScroll"
         class="bg-gray-900 p-3 overflow-x-auto max-h-[500px] overflow-y-auto">
         <div v-for="e in filteredLog" :key="e.id"
-          class="font-mono text-xs leading-relaxed flex items-start gap-2 py-0.5 hover:bg-gray-800/50 px-1 rounded">
+          class="font-mono text-xs leading-relaxed flex items-start gap-2 py-0.5 hover:bg-gray-800/50 px-1 rounded group">
           <span class="text-gray-500 flex-shrink-0 w-20">{{ formatTime(e.time) }}</span>
           <span class="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" :class="getEventColor(e.event).replace('text-', 'bg-')"></span>
           <span class="flex-shrink-0 w-32 truncate" :class="getEventColor(e.event)" v-html="highlightText(e.event, filterText)"></span>
-          <span class="text-gray-400 break-all" v-html="highlightJson(e.payload, filterText)"></span>
+          <span class="text-gray-400 break-all flex-1" v-html="highlightJson(e.payload, filterText)"></span>
+          <button @click="copyEvent(e)" class="flex-shrink-0 opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-300 transition-opacity px-1" title="复制">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          </button>
         </div>
       </div>
     </div>
+    </div>
   </div>
+</div>
 </template>
+
+<style scoped>
+/* 入场动画 */
+.sessions-section {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--delay, 0ms);
+}
+.sessions-enter {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>

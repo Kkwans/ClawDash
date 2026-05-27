@@ -230,7 +230,7 @@ onMounted(() => {
     <div class="bg-white rounded-xl border border-gray-200 p-6">
       <h3 class="text-base font-semibold text-gray-800 mb-4">ℹ️ 关于</h3>
       <div class="space-y-2 text-sm text-gray-500">
-        <p>ClawDash v0.6.0 — OpenClaw WebSocket 控制台</p>
+        <p>ClawDash v0.8.0 — OpenClaw WebSocket 控制台</p>
         <p>基于 Vue 3 + Tailwind CSS 构建，通过 WebSocket 直连 Gateway</p>
         <div class="flex items-center gap-3 mt-3">
           <a href="/builtin/" target="_blank"

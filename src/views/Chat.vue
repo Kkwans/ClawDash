@@ -66,19 +66,18 @@ async function sendMessage() {
       sessionKey: selectedSession.value.key || selectedSession.value.id,
       message: text
     })
-    // 等一下让 Agent 处理，然后刷新消息
-    setTimeout(async () => {
-      try {
-        const res = await gwRequest('chat.history', {
-          sessionKey: selectedSession.value.key || selectedSession.value.id,
-          limit: 100
-        })
-        messages.value = res?.messages || res || []
-        nextTick(() => scrollToBottom())
-      } catch (e) {
-        log.warn('刷新消息失败:', e)
-      }
-    }, 2000)
+    // 等待 Agent 处理后刷新消息
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    try {
+      const res = await gwRequest('chat.history', {
+        sessionKey: selectedSession.value.key || selectedSession.value.id,
+        limit: 100
+      })
+      messages.value = res?.messages || res || []
+      nextTick(() => scrollToBottom())
+    } catch (e) {
+      log.warn('刷新消息失败:', e)
+    }
   } catch (e) {
     showToast('发送失败: ' + e.message, 'error')
   }
