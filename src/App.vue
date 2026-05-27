@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, h, watch, nextTick } from 'vue'
-import { connected, authenticated, connecting, connectionError, statusText, statusColor, connect, disconnect, token, updateToken } from './stores/gateway.js'
+import { connected, authenticated, connecting, connectionError, reconnecting, statusText, statusColor, connect, disconnect, cancelReconnect, token, updateToken } from './stores/gateway.js'
 import AppErrorBoundary from './components/AppErrorBoundary.vue'
 import AppCommandPalette from './components/AppCommandPalette.vue'
 import { useKeyboard } from './composables/useKeyboard.js'
@@ -346,6 +346,17 @@ onUnmounted(() => {
           </a>
         </div>
       </header>
+
+      <!-- 重连提示条 -->
+      <Transition name="fade">
+        <div v-if="reconnecting" class="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin"></div>
+            <span class="text-xs text-amber-700 font-medium">连接断开，正在重连...</span>
+          </div>
+          <button @click="cancelReconnect()" class="text-xs text-amber-600 hover:text-amber-800">取消</button>
+        </div>
+      </Transition>
 
       <div class="p-4 md:p-6">
         <AppErrorBoundary>
