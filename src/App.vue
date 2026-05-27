@@ -129,11 +129,9 @@ function handleCommandAction(actionId) {
   if (actionId === 'go-dashboard') switchTab('dashboard')
 }
 
+const refreshKey = ref(0)
 function loadAllData() {
-  // 触发当前页面刷新 - 通过重新切换 tab
-  const tab = currentTab.value
-  currentTab.value = ''
-  nextTick(() => { currentTab.value = tab })
+  refreshKey.value++
 }
 
 // 快捷键
@@ -351,7 +349,7 @@ onUnmounted(() => {
 
       <div class="p-4 md:p-6">
         <AppErrorBoundary>
-          <component :is="currentComponent" />
+          <component :is="currentComponent" :refresh-key="refreshKey" />
         </AppErrorBoundary>
       </div>
     </main>

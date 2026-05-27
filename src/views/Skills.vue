@@ -147,24 +147,26 @@ async function batchTogglePlugins(enable) {
   if (selectedPlugins.value.size === 0) return
   const ok = await showConfirm(`确定批量${enable ? '启用' : '禁用'} ${selectedPlugins.value.size} 个插件？`)
   if (!ok) return
-  let success = 0
-  let failed = 0
-  for (const id of selectedPlugins.value) {
-    const pl = pluginEntries.value.find(p => p.id === id)
-    if (pl && pl.enabled !== enable) {
-      try {
-        await togglePlugin(pl)
-        success++
-      } catch (e) {
-        failed++
+  try {
+    const cfgRes = await gwRequest('config.get')
+    const raw = getRawConfig(cfgRes)
+    const hash = cfgRes?.hash
+    if (!raw || !hash) throw new Error('无法获取配置')
+    const cfg = JSON.parse(raw)
+    let count = 0
+    for (const id of selectedPlugins.value) {
+      const entry = cfg.plugins?.entries?.[id]
+      if (entry && entry.enabled !== enable) {
+        entry.enabled = enable
+        count++
       }
     }
-  }
-  selectedPlugins.value = new Set()
-  if (failed > 0) {
-    showToast(`已${enable ? '启用' : '禁用'} ${success} 个插件（${failed} 个失败）`, 'warning')
-  } else {
-    showToast(`已${enable ? '启用' : '禁用'} ${success} 个插件`)
+    await gwRequest('config.set', { raw: JSON.stringify(cfg), baseHash: hash })
+    selectedPlugins.value = new Set()
+    showToast(`已${enable ? '启用' : '禁用'} ${count} 个插件`)
+    await fetchData()
+  } catch (e) {
+    showToast(`批量操作失败: ${e.message}`, 'error')
   }
 }
 

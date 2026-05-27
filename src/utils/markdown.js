@@ -5,26 +5,37 @@ import { createLogger } from './logger.js'
 
 const log = createLogger('Markdown')
 
-// 配置 marked 使用 highlight.js
+// 配置 marked v18+ 使用自定义 renderer 实现 highlight.js 集成
+// (marked v13+ 移除了 highlight 选项，改用 renderer)
 marked.setOptions({
   breaks: true,
   gfm: true,
-  highlight(code, lang) {
+})
+
+// 自定义 renderer：code 块使用 highlight.js
+const renderer = {
+  code({ text, lang }) {
+    const code = text
+    let highlighted = code
     if (lang && hljs.getLanguage(lang)) {
       try {
-        return hljs.highlight(code, { language: lang }).value
+        highlighted = hljs.highlight(code, { language: lang }).value
       } catch (e) {
         log.debug('Syntax highlight failed for lang:', lang, e)
       }
+    } else if (code.length > 10) {
+      try {
+        highlighted = hljs.highlightAuto(code).value
+      } catch (e) {
+        log.debug('Auto highlight failed:', e)
+      }
     }
-    try {
-      return hljs.highlightAuto(code).value
-    } catch (e) {
-      log.debug('Auto highlight failed:', e)
-    }
-    return code
+    const langClass = lang ? ` class="language-${lang}"` : ''
+    return `<pre><code${langClass}>${highlighted}</code></pre>`
   }
-})
+}
+
+marked.use({ renderer })
 
 const PURIFY_CONFIG = {
   ALLOWED_TAGS: [

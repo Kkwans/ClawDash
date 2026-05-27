@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { gwRequest, authenticated, useGatewayEvent } from '../stores/gateway.js'
 import { renderMarkdown } from '../utils/markdown.js'
 import AppToast from '../components/AppToast.vue'
@@ -16,6 +16,8 @@ const loading = ref(false)
 const sending = ref(false)
 const toastRef = ref(null)
 const messagesContainer = ref(null)
+const showSidebar = ref(window.innerWidth >= 768)
+const isMobile = ref(window.innerWidth < 768)
 
 function showToast(msg, type = 'info') {
   toastRef.value?.show(msg, type)
@@ -34,6 +36,7 @@ async function selectSession(session) {
   selectedSession.value = session
   messages.value = []
   loading.value = true
+  if (isMobile.value) showSidebar.value = false
   try {
     const res = await gwRequest('chat.history', {
       sessionKey: session.key || session.id,
@@ -66,18 +69,17 @@ async function sendMessage() {
       sessionKey: selectedSession.value.key || selectedSession.value.id,
       message: text
     })
-    // 等待 Agent 处理后刷新消息
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    try {
-      const res = await gwRequest('chat.history', {
-        sessionKey: selectedSession.value.key || selectedSession.value.id,
-        limit: 100
-      })
-      messages.value = res?.messages || res || []
-      nextTick(() => scrollToBottom())
-    } catch (e) {
-      log.warn('刷新消息失败:', e)
-    }
+    // 短延迟后刷新一次（显示用户消息），Agent 回复由 message 事件驱动刷新
+    setTimeout(async () => {
+      try {
+        const res = await gwRequest('chat.history', {
+          sessionKey: selectedSession.value?.key || selectedSession.value?.id,
+          limit: 100
+        })
+        messages.value = res?.messages || res || []
+        nextTick(() => scrollToBottom())
+      } catch (e) { log.warn('刷新消息失败:', e) }
+    }, 800)
   } catch (e) {
     showToast('发送失败: ' + e.message, 'error')
   }
@@ -114,20 +116,22 @@ function getRoleAlign(role) {
   return role === 'user' ? 'msg-right' : 'msg-left'
 }
 
-// 监听新消息事件
+// 监听新消息事件（Agent 回复时自动刷新）
+let _msgRefreshTimer = null
 useGatewayEvent('message', () => {
   if (selectedSession.value) {
-    // 延迟刷新消息
-    setTimeout(async () => {
+    // 防抖：避免短时间内重复刷新
+    clearTimeout(_msgRefreshTimer)
+    _msgRefreshTimer = setTimeout(async () => {
       try {
         const res = await gwRequest('chat.history', {
-          sessionKey: selectedSession.value.key || selectedSession.value.id,
+          sessionKey: selectedSession.value?.key || selectedSession.value?.id,
           limit: 100
         })
         messages.value = res?.messages || res || []
         nextTick(() => scrollToBottom())
       } catch (e) { log.warn('加载消息失败:', e) }
-    }, 500)
+    }, 400)
   }
 })
 
@@ -135,22 +139,45 @@ watch(authenticated, (val) => {
   if (val) fetchSessions()
 }, { immediate: true })
 
+function handleResize() {
+  isMobile.value = window.innerWidth < 768
+  if (!isMobile.value) showSidebar.value = true
+}
+
 // 动态加载 highlight.js CSS
 onMounted(() => {
   import('highlight.js/styles/github.css')
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
 <template>
-  <div class="flex h-[calc(100vh-8rem)] gap-4">
+  <div class="flex h-[calc(100vh-8rem)] gap-4 relative">
     <!-- 共享组件 -->
     <AppToast ref="toastRef" />
 
+    <!-- 移动端遮罩 -->
+    <Transition name="fade">
+      <div v-if="isMobile && showSidebar" class="fixed inset-0 bg-black/40 z-30" @click="showSidebar = false"></div>
+    </Transition>
+
     <!-- 会话列表 -->
-    <div class="w-64 flex-shrink-0 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden">
-      <div class="p-3 border-b border-gray-100">
-        <h3 class="text-sm font-semibold text-gray-700">会话列表</h3>
-        <p class="text-xs text-gray-400 mt-0.5">{{ sessions.length }} 个会话</p>
+    <div class="flex-shrink-0 bg-white border border-gray-200 flex flex-col overflow-hidden transition-all duration-300"
+      :class="isMobile
+        ? (showSidebar ? 'fixed inset-y-0 left-0 w-72 z-40 shadow-2xl rounded-none' : 'w-0 border-0 overflow-hidden')
+        : 'w-64 rounded-xl'">
+      <div class="p-3 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-semibold text-gray-700">会话列表</h3>
+          <p class="text-xs text-gray-400 mt-0.5">{{ sessions.length }} 个会话</p>
+        </div>
+        <button v-if="isMobile" @click="showSidebar = false" class="p-1 rounded text-gray-400 hover:text-gray-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
       </div>
       <div class="flex-1 overflow-y-auto">
         <div v-if="sessions.length === 0" class="text-center py-8 text-gray-400 text-xs">
@@ -181,6 +208,9 @@ onMounted(() => {
         <div class="text-center">
           <span class="text-4xl mb-3 block">💬</span>
           <p class="text-sm text-gray-500">选择一个会话开始聊天</p>
+          <button v-if="isMobile" @click="showSidebar = true" class="mt-3 px-4 py-2 text-xs text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+            选择会话
+          </button>
         </div>
       </div>
 
@@ -193,6 +223,9 @@ onMounted(() => {
             <p class="text-xs text-gray-400">{{ selectedSession.model || '-' }} · {{ selectedSession.kind || '-' }}</p>
           </div>
           <div class="flex items-center gap-2">
+            <button v-if="isMobile" @click="showSidebar = true" class="px-2.5 py-1 text-xs text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              📋 会话
+            </button>
             <div class="relative group">
               <button class="px-2.5 py-1 text-xs text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors">
                 📥 导出

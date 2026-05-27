@@ -69,7 +69,7 @@ export function exportConfig(configData, configEditor) {
   const meta = {
     exportedAt: new Date().toISOString(),
     source: 'ClawDash',
-    version: 'v0.7'
+    version: 'v0.8'
   }
   // 同时导出 parsed 和 raw
   exportJSON({ meta, config: data, raw: configEditor }, 'gateway-config')
@@ -134,7 +134,7 @@ export function exportChat(session, messages, format = 'json') {
     exportTXT(lines.join('\n'), `chat-${sessionInfo.key || 'session'}`)
   } else {
     exportJSON({
-      meta: { exportedAt: new Date().toISOString(), source: 'ClawDash', version: 'v0.7' },
+      meta: { exportedAt: new Date().toISOString(), source: 'ClawDash', version: 'v0.8' },
       session: sessionInfo,
       messages: messages.map(m => ({
         role: m.role,

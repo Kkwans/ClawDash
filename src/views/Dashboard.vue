@@ -1,10 +1,14 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue'
 import { authenticated, connecting, connectionError, gwRequest, useGatewayEvent } from '../stores/gateway.js'
 import RingChart from '../components/RingChart.vue'
 import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'
 import { Doughnut } from 'vue-chartjs'
+
+const props = defineProps({
+  refreshKey: { type: Number, default: 0 }
+})
 
 // 入场动画状态
 const entered = ref(false)
@@ -174,6 +178,9 @@ const providerEntries = computed(() => {
 })
 
 let refreshTimer
+watch(() => props.refreshKey, () => {
+  if (authenticated.value) loadAllData()
+})
 onMounted(() => {
   if (authenticated.value) loadAllData()
   refreshTimer = setInterval(() => {
