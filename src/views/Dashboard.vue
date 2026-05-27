@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { authenticated, connecting, connectionError, statusText, statusColor, connect, disconnect, gwRequest, useGatewayEvent } from '../stores/gateway.js'
+import { authenticated, connecting, connectionError, gwRequest, useGatewayEvent } from '../stores/gateway.js'
 import RingChart from '../components/RingChart.vue'
 import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'

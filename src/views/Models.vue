@@ -1,7 +1,7 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { gwRequest, authenticated, connecting } from '../stores/gateway.js'
-import { getRawConfig, getConfigHash, getParsedConfig, updateGatewayConfig } from '../api/config-utils.js'
+import { getParsedConfig, updateGatewayConfig } from '../api/config-utils.js'
 import AppToast from '../components/AppToast.vue'
 
 const providers = ref([])

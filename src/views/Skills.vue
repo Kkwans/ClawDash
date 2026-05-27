@@ -1,7 +1,7 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { gwRequest } from '../stores/gateway.js'
-import { getRawConfig, getConfigHash, updateGatewayConfig } from "../api/config-utils.js"
+import { getRawConfig } from "../api/config-utils.js"
 import AppToast from '../components/AppToast.vue'
 import AppEmpty from '../components/AppEmpty.vue'
 import AppLoading from '../components/AppLoading.vue'

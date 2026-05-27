@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
-import { gwRequest, useGatewayEvent, authenticated } from '../stores/gateway.js'
+import { gwRequest, useGatewayEvent } from '../stores/gateway.js'
 import AppToast from '../components/AppToast.vue'
 
 import { createLogger } from '../utils/logger.js'
