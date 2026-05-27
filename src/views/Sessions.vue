@@ -23,14 +23,14 @@ function loadLogFromStorage() {
         eventLog.value = parsed.slice(-maxEvents)
       }
     }
-  } catch (e) { /* ignore */ }
+  } catch (e) { log.debug('Failed to load event log from localStorage:', e) }
 }
 
 // 保存日志到 localStorage
 function saveLogToStorage() {
   try {
     localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(eventLog.value.slice(-maxEvents)))
-  } catch (e) { /* ignore */ }
+  } catch (e) { log.debug('Failed to save event log to localStorage:', e) }
 }
 const autoScroll = ref(true)
 const logContainer = ref(null)
