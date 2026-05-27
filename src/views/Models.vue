@@ -133,14 +133,31 @@ async function addProvider() {
 }
 
 const showDeleteConfirm = ref(null) // 存储待删除的 provider id
+let scrollLocked = false
+
+function lockScroll() {
+  if (!scrollLocked) {
+    document.body.style.overflow = 'hidden'
+    scrollLocked = true
+  }
+}
+
+function unlockScroll() {
+  if (scrollLocked) {
+    document.body.style.overflow = ''
+    scrollLocked = false
+  }
+}
 
 function confirmDeleteProvider(id) {
   showDeleteConfirm.value = id
+  lockScroll()
 }
 
 async function doDeleteProvider() {
   const id = showDeleteConfirm.value
   showDeleteConfirm.value = null
+  unlockScroll()
   if (!id) return
   await saveConfig(cfg => {
     if (cfg.models?.providers?.[id]) delete cfg.models.providers[id]
@@ -151,6 +168,10 @@ function toggleProvider(id) {
   if (expandedProviders.value.has(id)) expandedProviders.value.delete(id)
   else expandedProviders.value.add(id)
 }
+
+// 打开添加弹窗时锁定滚动
+watch(showAddModal, (val) => { if (val) lockScroll(); else unlockScroll() })
+watch(showDeleteConfirm, (val) => { if (val) lockScroll(); else unlockScroll() })
 </script>
 
 <template>
@@ -161,8 +182,8 @@ function toggleProvider(id) {
     <!-- 删除确认弹窗 -->
     <Teleport to="body">
       <Transition name="modal">
-        <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showDeleteConfirm = null">
-          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden animate-slide-up">
+        <div v-if="showDeleteConfirm" class="modal-mask fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showDeleteConfirm = null; unlockScroll()">
+          <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100">
               <h3 class="text-base font-semibold text-gray-900">确认删除</h3>
             </div>
@@ -170,7 +191,7 @@ function toggleProvider(id) {
               <p class="text-sm text-gray-500">确定删除提供商 <span class="font-mono font-medium text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded">{{ showDeleteConfirm }}</span>？此操作不可撤销。</p>
             </div>
             <div class="flex gap-2 px-5 py-4 border-t border-gray-100 bg-gray-50">
-              <button @click="showDeleteConfirm = null" class="btn-press flex-1 px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-white transition-all">取消</button>
+              <button @click="showDeleteConfirm = null; unlockScroll()" class="btn-press flex-1 px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-white transition-all">取消</button>
               <button @click="doDeleteProvider" class="btn-press flex-1 px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-all">删除</button>
             </div>
           </div>
@@ -181,8 +202,8 @@ function toggleProvider(id) {
     <!-- 添加提供商弹窗 -->
     <Teleport to="body">
       <Transition name="modal">
-        <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showAddModal = false">
-          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-slide-up">
+        <div v-if="showAddModal" class="modal-mask fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showAddModal = false; unlockScroll()">
+          <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100">
               <h3 class="text-base font-semibold text-gray-900">添加模型提供商</h3>
               <p class="text-xs text-gray-400 mt-0.5">配置新的 AI 模型提供商</p>
@@ -217,7 +238,7 @@ function toggleProvider(id) {
               </div>
             </div>
             <div class="flex gap-2 px-5 py-4 border-t border-gray-100 bg-gray-50">
-              <button @click="showAddModal = false" class="btn-press flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-white transition-all">取消</button>
+              <button @click="showAddModal = false; unlockScroll()" class="btn-press flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-white transition-all">取消</button>
               <button @click="addProvider" :disabled="saving"
                 class="btn-press flex-1 px-4 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 transition-all">
                 {{ saving ? '添加中...' : '添加提供商' }}

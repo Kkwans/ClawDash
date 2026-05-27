@@ -1,5 +1,5 @@
 <script setup>
-import { watch, nextTick, ref } from 'vue'
+import { watch, nextTick, ref, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -12,6 +12,7 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'close'])
 
 const modalRef = ref(null)
+let scrollLocked = false
 
 function close() {
   emit('update:visible', false)
@@ -28,15 +29,36 @@ function onKeydown(e) {
   }
 }
 
-// 焦点管理：打开时聚焦弹窗，关闭时恢复
+function lockScroll() {
+  if (!scrollLocked) {
+    document.body.style.overflow = 'hidden'
+    scrollLocked = true
+  }
+}
+
+function unlockScroll() {
+  if (scrollLocked) {
+    document.body.style.overflow = ''
+    scrollLocked = false
+  }
+}
+
+// 焦点管理 + 滚动锁定
 watch(() => props.visible, async (val) => {
   if (val) {
+    lockScroll()
     await nextTick()
     modalRef.value?.focus()
     document.addEventListener('keydown', onKeydown)
   } else {
+    unlockScroll()
     document.removeEventListener('keydown', onKeydown)
   }
+})
+
+onBeforeUnmount(() => {
+  unlockScroll()
+  document.removeEventListener('keydown', onKeydown)
 })
 </script>
 
@@ -122,6 +144,9 @@ watch(() => props.visible, async (val) => {
   background: var(--bg-hover);
   color: var(--text-primary);
 }
+.modal-close:active {
+  transform: scale(0.9);
+}
 
 .modal-body {
   padding: var(--space-6);
@@ -135,5 +160,28 @@ watch(() => props.visible, async (val) => {
   padding: var(--space-4) var(--space-6);
   border-top: 1px solid var(--border);
   background: var(--bg-subtle);
+}
+
+/* 响应式：小屏幕弹窗全宽 */
+@media (max-width: 480px) {
+  .modal-mask {
+    padding: var(--space-2);
+    align-items: flex-end;
+  }
+  .modal-content {
+    max-width: 100%;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-header {
+    padding: var(--space-4) var(--space-5);
+  }
+  .modal-body {
+    padding: var(--space-5);
+  }
+  .modal-footer {
+    padding: var(--space-4) var(--space-5);
+  }
 }
 </style>

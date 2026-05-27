@@ -1,10 +1,25 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onBeforeUnmount } from 'vue'
 
 const visible = ref(false)
 const message = ref('')
 const title = ref('')
 let resolveFn = null
+let scrollLocked = false
+
+function lockScroll() {
+  if (!scrollLocked) {
+    document.body.style.overflow = 'hidden'
+    scrollLocked = true
+  }
+}
+
+function unlockScroll() {
+  if (scrollLocked) {
+    document.body.style.overflow = ''
+    scrollLocked = false
+  }
+}
 
 function confirm(msg, options = {}) {
   return new Promise((resolve) => {
@@ -12,18 +27,25 @@ function confirm(msg, options = {}) {
     title.value = options.title || '确认操作'
     visible.value = true
     resolveFn = resolve
+    lockScroll()
   })
 }
 
 function onOk() {
   visible.value = false
+  unlockScroll()
   resolveFn?.(true)
 }
 
 function onCancel() {
   visible.value = false
+  unlockScroll()
   resolveFn?.(false)
 }
+
+onBeforeUnmount(() => {
+  unlockScroll()
+})
 
 defineExpose({ confirm })
 </script>
@@ -145,6 +167,9 @@ defineExpose({ confirm })
 .confirm-btn-cancel:hover {
   background: var(--bg-hover);
 }
+.confirm-btn-cancel:active {
+  transform: scale(0.97);
+}
 
 .confirm-btn-danger {
   background: var(--danger);
@@ -170,7 +195,7 @@ defineExpose({ confirm })
   opacity: 0;
 }
 .confirm-enter-from .confirm-content {
-  transform: scale(0.95) translateY(8px);
+  transform: scale(0.92) translateY(12px);
   opacity: 0;
 }
 .confirm-leave-to {
@@ -179,5 +204,20 @@ defineExpose({ confirm })
 .confirm-leave-to .confirm-content {
   transform: scale(0.95);
   opacity: 0;
+}
+
+/* 响应式：小屏幕底部弹出 */
+@media (max-width: 480px) {
+  .confirm-mask {
+    padding: var(--space-2);
+    align-items: flex-end;
+  }
+  .confirm-content {
+    max-width: 100%;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+  .confirm-message {
+    padding-left: 0;
+  }
 }
 </style>
