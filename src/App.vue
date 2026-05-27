@@ -190,7 +190,7 @@ onUnmounted(() => {
     <!-- Token 配置弹窗 -->
     <Teleport to="body">
       <Transition name="fade">
-        <div v-if="showTokenModal" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4" tabindex="-1" @keyup.escape="showTokenModal = false">
+        <div v-if="showTokenModal" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4" tabindex="-1" @keydown.escape="showTokenModal = false">
           <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
             <div class="text-center">
               <div class="w-16 h-16 mx-auto bg-blue-50 rounded-full flex items-center justify-center text-3xl mb-4">🔑</div>
