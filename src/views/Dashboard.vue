@@ -1,10 +1,14 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { authenticated, connecting, connectionError, gwRequest, useGatewayEvent } from '../stores/gateway.js'
 import RingChart from '../components/RingChart.vue'
 import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'
 import { Doughnut } from 'vue-chartjs'
+
+// 入场动画状态
+const entered = ref(false)
+onMounted(() => { nextTick(() => { entered.value = true }) })
 
 const gatewayInfo = ref(null)
 const healthData = ref(null)
@@ -179,43 +183,122 @@ onMounted(() => {
 onUnmounted(() => clearInterval(refreshTimer))
 </script>
 
+<style scoped>
+/* 入场动画 */
+.dashboard-enter {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.dashboard-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 卡片悬浮效果 */
+.card-hover {
+  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+}
+.card-hover:hover {
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -6px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+/* 环形图卡片悬浮 */
+.ring-card {
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.ring-card:hover {
+  box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+/* 渐变顶部边框装饰 */
+.card-accent {
+  position: relative;
+  overflow: hidden;
+}
+.card-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.card-accent:hover::before {
+  opacity: 1;
+}
+
+/* 列表项悬浮 */
+.list-item {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.list-item:hover {
+  transform: translateX(2px);
+}
+
+/* 按钮微交互 */
+.btn-press {
+  transition: all 0.15s ease;
+}
+.btn-press:active {
+  transform: scale(0.96);
+}
+</style>
+
 <template>
   <div class="space-y-5">
     <!-- 状态横幅 -->
-    <div class="rounded-xl border p-5 transition-all"
-      :class="authenticated
-        ? 'bg-white border-green-200'
-        : connectionError
-          ? 'bg-white border-red-200'
-          : 'bg-white border-gray-200'">
+    <div class="rounded-2xl border p-5 transition-all shadow-sm"
+      :class="[
+        authenticated
+          ? 'bg-gradient-to-r from-white to-green-50/30 border-green-200/60'
+          : connectionError
+            ? 'bg-gradient-to-r from-white to-red-50/30 border-red-200/60'
+            : 'bg-white border-gray-200',
+        entered ? 'dashboard-enter-active' : 'dashboard-enter'
+      ]"
+      :style="{ transitionDelay: '0ms' }">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
-            :class="authenticated ? 'bg-green-50' : connectionError ? 'bg-red-50' : 'bg-gray-50'">
+        <div class="flex items-center gap-4">
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl shadow-sm"
+            :class="authenticated ? 'bg-green-50 ring-1 ring-green-200/50' : connectionError ? 'bg-red-50 ring-1 ring-red-200/50' : 'bg-gray-50 ring-1 ring-gray-200/50'">
             {{ authenticated ? '🟢' : connectionError ? '🔴' : '⏳' }}
           </div>
           <div>
-            <h3 class="font-semibold text-gray-900">
+            <h3 class="font-bold text-gray-900 tracking-tight">
               {{ authenticated ? 'Gateway 运行中' : connectionError ? '连接失败' : '正在连接...' }}
             </h3>
-            <div class="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
-              <span v-if="gatewayInfo?.server?.version">v{{ gatewayInfo.server.version }}</span>
-              <span v-if="healthData?.uptime">运行 {{ formatUptime(healthData.uptime) }}</span>
-              <span v-if="gatewayInfo?.protocol">协议 v{{ gatewayInfo.protocol }}</span>
+            <div class="flex items-center gap-3 text-xs text-gray-400 mt-1">
+              <span v-if="gatewayInfo?.server?.version" class="inline-flex items-center gap-1">
+                <span class="w-1 h-1 rounded-full bg-gray-300"></span>v{{ gatewayInfo.server.version }}
+              </span>
+              <span v-if="healthData?.uptime" class="inline-flex items-center gap-1">
+                <span class="w-1 h-1 rounded-full bg-gray-300"></span>运行 {{ formatUptime(healthData.uptime) }}
+              </span>
+              <span v-if="gatewayInfo?.protocol" class="inline-flex items-center gap-1">
+                <span class="w-1 h-1 rounded-full bg-gray-300"></span>协议 v{{ gatewayInfo.protocol }}
+              </span>
             </div>
           </div>
         </div>
         <div class="flex items-center gap-2">
           <button @click="loadAllData()" :disabled="loading || !authenticated"
-            class="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition">
+            class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200/80 text-gray-600 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-40 transition-all shadow-sm">
             {{ loading ? '加载中...' : '刷新' }}
           </button>
           <button @click="doGatewayAction('stop')" :disabled="controlling || !authenticated"
-            class="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-40 transition">
+            class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-red-200/80 text-red-600 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 transition-all shadow-sm">
             停止
           </button>
           <button @click="doGatewayAction('start')" :disabled="controlling || authenticated"
-            class="px-3 py-1.5 rounded-lg text-xs font-medium bg-green-500 text-white hover:bg-green-600 disabled:opacity-40 transition">
+            class="btn-press px-4 py-2 rounded-xl text-xs font-semibold bg-green-500 text-white hover:bg-green-600 disabled:opacity-40 transition-all shadow-sm">
             启动
           </button>
         </div>
@@ -234,27 +317,25 @@ onUnmounted(() => clearInterval(refreshTimer))
 
     <!-- 系统状态环形图 -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <div class="rounded-xl border border-gray-200 bg-white p-4 flex flex-col items-center">
-        <RingChart :value="eventLoopUtil" :max="100" label="事件循环" unit="%" :color="eventLoopColor" :size="100" />
-        <p class="text-xs mt-2" :class="eventLoop?.degraded ? 'text-amber-600' : 'text-green-600'">{{ eventLoop?.degraded ? '降级' : '正常' }}</p>
-      </div>
-      <div class="rounded-xl border border-gray-200 bg-white p-4 flex flex-col items-center">
-        <RingChart :value="sessionCount" :max="50" label="活跃会话" unit="" color="#3b82f6" :size="100" />
-        <p class="text-xs text-gray-400 mt-2">/ 50 上限</p>
-      </div>
-      <div class="rounded-xl border border-gray-200 bg-white p-4 flex flex-col items-center">
-        <RingChart :value="modelCount" :max="20" label="模型数" unit="" color="#8b5cf6" :size="100" />
-        <p class="text-xs text-gray-400 mt-2">{{ providerEntries.length }} 个提供商</p>
-      </div>
-      <div class="rounded-xl border border-gray-200 bg-white p-4 flex flex-col items-center">
-        <RingChart :value="channelCount" :max="10" label="渠道" unit="" color="#f59e0b" :size="100" />
-        <p class="text-xs mt-2" :class="healthData?.ok ? 'text-green-600' : 'text-gray-400'">{{ healthData?.ok ? '运行中' : '-' }}</p>
+      <div v-for="(card, idx) in [
+        { value: eventLoopUtil, max: 100, label: '事件循环', unit: '%', color: eventLoopColor, sub: eventLoop?.degraded ? '降级' : '正常', subClass: eventLoop?.degraded ? 'text-amber-600' : 'text-green-600' },
+        { value: sessionCount, max: 50, label: '活跃会话', unit: '', color: '#3b82f6', sub: '/ 50 上限', subClass: 'text-gray-400' },
+        { value: modelCount, max: 20, label: '模型数', unit: '', color: '#8b5cf6', sub: providerEntries.length + ' 个提供商', subClass: 'text-gray-400' },
+        { value: channelCount, max: 10, label: '渠道', unit: '', color: '#f59e0b', sub: healthData?.ok ? '运行中' : '-', subClass: healthData?.ok ? 'text-green-600' : 'text-gray-400' }
+      ]" :key="card.label"
+        class="ring-card rounded-2xl border border-gray-200/60 bg-white p-5 flex flex-col items-center shadow-sm"
+        :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
+        :style="{ transitionDelay: (80 + idx * 60) + 'ms' }">
+        <RingChart :value="card.value" :max="card.max" :label="card.label" :unit="card.unit" :color="card.color" :size="100" />
+        <p class="text-xs mt-2.5 font-medium" :class="card.subClass">{{ card.sub }}</p>
       </div>
     </div>
 
     <!-- 模型配置 -->
-    <div v-if="modelConfig" class="rounded-xl border border-gray-200 bg-white p-5">
-      <h4 class="text-sm font-semibold text-gray-700 mb-3">模型配置</h4>
+    <div v-if="modelConfig" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
+      :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
+      :style="{ transitionDelay: '320ms' }">
+      <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">模型配置</h4>
       <div class="space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs text-gray-400">默认模型</span>
@@ -284,16 +365,20 @@ onUnmounted(() => clearInterval(refreshTimer))
       </div>
     </div>
     <!-- 兜底：无 config 时只显示默认模型 -->
-    <div v-else-if="defaultModelName" class="rounded-xl border border-gray-200 bg-white p-5">
-      <h4 class="text-sm font-semibold text-gray-700 mb-3">当前模型</h4>
+    <div v-else-if="defaultModelName" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
+      :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
+      :style="{ transitionDelay: '320ms' }">
+      <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">当前模型</h4>
       <p class="text-base font-medium text-gray-900">{{ defaultModelProvider }}/{{ defaultModelName }}</p>
     </div>
 
     <!-- 会话分布 + 模型统计 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <!-- 会话分布 -->
-      <div v-if="sessions.length > 0" class="rounded-xl border border-gray-200 bg-white p-5">
-        <h4 class="text-sm font-semibold text-gray-700 mb-3">会话分布</h4>
+      <div v-if="sessions.length > 0" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
+        :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
+        :style="{ transitionDelay: '400ms' }">
+        <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">会话分布</h4>
         <div class="flex items-center justify-center">
           <div class="w-48 h-48">
             <Doughnut :data="sessionChartData" :options="sessionChartOptions" />
@@ -301,8 +386,10 @@ onUnmounted(() => clearInterval(refreshTimer))
         </div>
       </div>
       <!-- 模型统计 -->
-      <div v-if="providerModelCount.length > 0" class="rounded-xl border border-gray-200 bg-white p-5">
-        <h4 class="text-sm font-semibold text-gray-700 mb-3">模型统计</h4>
+      <div v-if="providerModelCount.length > 0" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
+        :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
+        :style="{ transitionDelay: '480ms' }">
+        <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">模型统计</h4>
         <div class="space-y-3">
           <div v-for="p in providerModelCount" :key="p.name" class="flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -319,11 +406,13 @@ onUnmounted(() => clearInterval(refreshTimer))
     </div>
 
     <!-- 会话列表 -->
-    <div v-if="sessions.length > 0" class="rounded-xl border border-gray-200 bg-white p-5">
-      <h4 class="text-sm font-semibold text-gray-700 mb-3">活跃会话</h4>
+    <div v-if="sessions.length > 0" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
+      :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
+      :style="{ transitionDelay: '560ms' }">
+      <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">活跃会话</h4>
       <div class="space-y-2">
         <div v-for="s in sessions.slice(0, 10)" :key="s.key || s.id"
-          class="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition">
+          class="list-item flex items-center justify-between p-3.5 rounded-xl bg-gray-50/70 hover:bg-indigo-50/40 cursor-default">
           <div class="min-w-0 flex-1">
             <p class="text-sm font-medium text-gray-800 truncate">{{ s.key || s.id }}</p>
             <p class="text-xs text-gray-400 mt-0.5">{{ s.model || '-' }}</p>
@@ -334,11 +423,13 @@ onUnmounted(() => clearInterval(refreshTimer))
     </div>
 
     <!-- 模型列表 -->
-    <div v-if="modelsInfo?.models?.length" class="rounded-xl border border-gray-200 bg-white p-5">
-      <h4 class="text-sm font-semibold text-gray-700 mb-3">可用模型</h4>
+    <div v-if="modelsInfo?.models?.length" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
+      :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
+      :style="{ transitionDelay: '640ms' }">
+      <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">可用模型</h4>
       <div class="space-y-2">
         <div v-for="m in modelsInfo.models" :key="m.id"
-          class="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+          class="list-item flex items-center justify-between p-3.5 rounded-xl bg-gray-50/70 hover:bg-indigo-50/40">
           <div class="min-w-0">
             <p class="text-sm font-medium text-gray-800 truncate">{{ m.provider }}/{{ m.id }}</p>
             <p class="text-xs text-gray-400">上下文 {{ (m.contextWindow / 1000).toFixed(0) }}K</p>
@@ -352,8 +443,10 @@ onUnmounted(() => clearInterval(refreshTimer))
     </div>
 
     <!-- 渠道状态 -->
-    <div v-if="channelsInfo" class="rounded-xl border border-gray-200 bg-white p-5">
-      <h4 class="text-sm font-semibold text-gray-700 mb-3">渠道状态</h4>
+    <div v-if="channelsInfo" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
+      :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
+      :style="{ transitionDelay: '720ms' }">
+      <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">渠道状态</h4>
       <!-- EventLoop 状态 -->
       <div v-if="eventLoop" class="flex items-center justify-between p-3 rounded-lg mb-3"
         :class="eventLoop.degraded ? 'bg-amber-50' : 'bg-green-50'">
