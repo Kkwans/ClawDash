@@ -492,15 +492,7 @@ onMounted(fetchData)
 </template>
 
 <style scoped>
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-slide-up {
-  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* 入场动画 */
+/* Channels 入场动画 */
 .channels-section {
   opacity: 0;
   transform: translateY(12px);

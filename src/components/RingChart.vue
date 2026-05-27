@@ -1,9 +1,10 @@
 <script setup>
 import { computed } from 'vue'
 import { Doughnut } from 'vue-chartjs'
-import { Chart, registerables } from 'chart.js'
+import { Chart, ArcElement, Tooltip, Legend } from 'chart.js'
 
-Chart.register(...registerables)
+// 只注册需要的 Chart.js 组件（tree-shaking 优化）
+Chart.register(ArcElement, Tooltip, Legend)
 
 const props = defineProps({
   value: { type: Number, default: 0 },

@@ -407,7 +407,7 @@ useScrollLock(showDeleteConfirm)
 </template>
 
 <style scoped>
-/* 入场动画 */
+/* Models 入场动画 */
 .dashboard-enter {
   opacity: 0;
   transform: translateY(16px);
@@ -417,68 +417,5 @@ useScrollLock(showDeleteConfirm)
   transform: translateY(0);
   transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
               transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* 卡片悬浮效果 */
-.card-hover {
-  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
-}
-.card-hover:hover {
-  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -6px rgba(0, 0, 0, 0.04);
-  transform: translateY(-2px);
-  border-color: rgba(99, 102, 241, 0.2);
-}
-
-/* 渐变顶部边框装饰 */
-.card-accent {
-  position: relative;
-  overflow: hidden;
-}
-.card-accent::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-.card-accent:hover::before {
-  opacity: 1;
-}
-
-/* 列表项悬浮 */
-.list-item {
-  transition: background-color 0.2s ease, transform 0.2s ease;
-}
-.list-item:hover {
-  transform: translateX(2px);
-}
-
-/* 按钮微交互 */
-.btn-press {
-  transition: all 0.15s ease;
-}
-.btn-press:active {
-  transform: scale(0.96);
-}
-
-/* 展开/折叠动画 */
-.expand-enter-active,
-.expand-leave-active {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
-}
-.expand-enter-from,
-.expand-leave-to {
-  opacity: 0;
-  max-height: 0;
-}
-.expand-enter-to,
-.expand-leave-from {
-  opacity: 1;
-  max-height: 500px;
 }
 </style>

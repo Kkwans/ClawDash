@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./styles/variables.css";
+@import "./styles/shared-animations.css";
 
 /* ============================
  * 全局基础样式

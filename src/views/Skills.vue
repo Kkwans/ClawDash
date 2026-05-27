@@ -374,7 +374,7 @@ onMounted(fetchData)
 </template>
 
 <style scoped>
-/* 入场动画 */
+/* Skills 入场动画 */
 .skills-section {
   opacity: 0;
   transform: translateY(12px);
@@ -385,43 +385,5 @@ onMounted(fetchData)
 .skills-enter {
   opacity: 1;
   transform: translateY(0);
-}
-
-/* 卡片悬浮效果 */
-.card-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  border-color: rgba(99, 102, 241, 0.2);
-}
-
-/* 渐变顶部装饰 */
-.card-accent {
-  position: relative;
-  overflow: hidden;
-}
-.card-accent::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #6366f1, #818cf8);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-.card-accent:hover::before {
-  opacity: 1;
-}
-
-/* 按钮微交互 */
-.btn-press {
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-.btn-press:active {
-  transform: scale(0.96);
 }
 </style>
