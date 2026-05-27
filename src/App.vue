@@ -2,6 +2,9 @@
 import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, h, watch, nextTick } from 'vue'
 import { connected, authenticated, connecting, connectionError, statusText, statusColor, connect, disconnect, token, updateToken } from './stores/gateway.js'
 import AppErrorBoundary from './components/AppErrorBoundary.vue'
+import AppCommandPalette from './components/AppCommandPalette.vue'
+import { useKeyboard } from './composables/useKeyboard.js'
+import { useFavorites } from './composables/useFavorites.js'
 import { createLogger } from './utils/logger.js'
 
 const log = createLogger('App')
@@ -112,6 +115,44 @@ const tabs = [
   { id: 'settings', name: '系统设置', icon: '⚙️' },
 ]
 
+// 收藏功能
+const { favorites, toggleFavorite, isFavorite } = useFavorites()
+const favoriteTabs = computed(() => favorites.value.map(id => tabs.find(t => t.id === id)).filter(Boolean))
+
+// 命令面板
+const commandPaletteRef = ref(null)
+
+function handleCommandAction(actionId) {
+  if (actionId === 'refresh') loadAllData && loadAllData()
+  if (actionId === 'toggle-sidebar') toggleSidebar()
+  if (actionId === 'go-settings') switchTab('settings')
+  if (actionId === 'go-dashboard') switchTab('dashboard')
+}
+
+function loadAllData() {
+  // 触发当前页面刷新 - 通过重新切换 tab
+  const tab = currentTab.value
+  currentTab.value = ''
+  nextTick(() => { currentTab.value = tab })
+}
+
+// 快捷键
+useKeyboard({
+  'ctrl+k': () => commandPaletteRef.value?.toggle(),
+  'ctrl+p': () => commandPaletteRef.value?.toggle(),
+  'ctrl+1': () => switchTab('dashboard'),
+  'ctrl+2': () => switchTab('models'),
+  'ctrl+3': () => switchTab('channels'),
+  'ctrl+4': () => switchTab('skills'),
+  'ctrl+5': () => switchTab('cron'),
+  'ctrl+6': () => switchTab('sessionlist'),
+  'ctrl+7': () => switchTab('chat'),
+  'ctrl+8': () => switchTab('logs'),
+  'ctrl+9': () => switchTab('settings'),
+  'ctrl+b': () => toggleSidebar(),
+  'ctrl+,': () => switchTab('settings'),
+})
+
 const currentComponent = computed(() => {
   const map = { dashboard: Dashboard, models: Models, channels: Channels, skills: Skills, cron: Cron, sessionlist: SessionList, chat: Chat, logs: Sessions, settings: Settings }
   return map[currentTab.value] || Dashboard
@@ -214,7 +255,27 @@ onUnmounted(() => {
       </div>
 
       <!-- 导航 -->
-      <nav class="flex-1 p-3 space-y-1" role="navigation" aria-label="主导航">
+      <nav class="flex-1 p-3 space-y-1 overflow-y-auto" role="navigation" aria-label="主导航">
+        <!-- 收藏 -->
+        <div v-if="favoriteTabs.length > 0" class="mb-3">
+          <p class="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">收藏</p>
+          <button
+            v-for="tab in favoriteTabs"
+            :key="'fav-'+tab.id"
+            @click="switchTab(tab.id)"
+            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all"
+            :class="currentTab === tab.id
+              ? 'bg-amber-50 text-amber-700 font-semibold'
+              : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'"
+          >
+            <span class="text-base">{{ tab.icon }}</span>
+            {{ tab.name }}
+          </button>
+          <div class="mx-3 my-2 border-t border-gray-100"></div>
+        </div>
+
+        <!-- 全部页面 -->
+        <p class="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">全部</p>
         <button
           v-for="tab in tabs"
           :key="tab.id"
@@ -247,6 +308,10 @@ onUnmounted(() => {
       </div>
     </aside>
 
+    <!-- 命令面板 -->
+    <AppCommandPalette ref="commandPaletteRef" :tabs="tabs" :current-tab="currentTab"
+      @navigate="switchTab" @action="handleCommandAction" />
+
     <!-- 主内容区 -->
     <main class="flex-1 overflow-y-auto">
       <header class="bg-white border-b border-gray-200 px-4 md:px-6 h-14 flex items-center justify-between sticky top-0 z-10">
@@ -259,9 +324,22 @@ onUnmounted(() => {
           <h2 class="text-base font-semibold text-gray-800">
             {{ tabs.find(t => t.id === currentTab)?.name }}
           </h2>
+          <button @click="toggleFavorite(currentTab)" class="p-1 rounded-lg transition-colors"
+            :class="isFavorite(currentTab) ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-gray-500'"
+            :title="isFavorite(currentTab) ? '取消收藏' : '收藏此页面'">
+            <svg class="w-4 h-4" :fill="isFavorite(currentTab) ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+            </svg>
+          </button>
         </div>
         <div class="flex items-center gap-3">
-          <span class="text-xs text-gray-400">ClawDash v0.6.0</span>
+          <button @click="commandPaletteRef?.open()"
+            class="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs text-gray-400 bg-gray-50 border border-gray-200/80 rounded-lg hover:bg-gray-100 hover:text-gray-600 transition-all">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            搜索
+            <kbd class="px-1 py-0.5 text-[10px] font-mono bg-gray-200/80 rounded">⌘K</kbd>
+          </button>
+          <span class="text-xs text-gray-400">ClawDash v0.7.0</span>
           <a href="https://github.com/Kkwans/ClawDash" target="_blank"
             class="text-gray-400 hover:text-gray-600 transition-colors">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
