@@ -166,7 +166,7 @@ useScrollLock(showDeleteConfirm)
     <!-- 删除确认弹窗 -->
     <Teleport to="body">
       <Transition name="modal">
-        <div v-if="showDeleteConfirm" class="modal-mask fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showDeleteConfirm = null" @keyup.escape="showDeleteConfirm = null">
+        <div v-if="showDeleteConfirm" class="modal-mask fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showDeleteConfirm = null" @keydown.escape="showDeleteConfirm = null" tabindex="-1">
           <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100">
               <h3 class="text-base font-semibold text-gray-900">确认删除</h3>
@@ -186,7 +186,7 @@ useScrollLock(showDeleteConfirm)
     <!-- 添加提供商弹窗 -->
     <Teleport to="body">
       <Transition name="modal">
-        <div v-if="showAddModal" class="modal-mask fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showAddModal = false" @keyup.escape="showAddModal = false">
+        <div v-if="showAddModal" class="modal-mask fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showAddModal = false" @keydown.escape="showAddModal = false" tabindex="-1">
           <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100">
               <h3 class="text-base font-semibold text-gray-900">添加模型提供商</h3>

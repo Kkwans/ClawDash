@@ -231,7 +231,7 @@ onMounted(fetchData)
     <!-- 添加渠道弹窗 -->
     <Teleport to="body">
       <Transition name="fade">
-        <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showAddModal = false" @keyup.escape="showAddModal = false">
+        <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showAddModal = false" @keydown.escape="showAddModal = false" tabindex="-1">
           <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-slide-up">
             <div class="px-5 py-4 border-b border-gray-100">
               <h3 class="text-sm font-semibold text-gray-900">添加渠道</h3>
@@ -285,7 +285,7 @@ onMounted(fetchData)
     <!-- 安装插件弹窗 -->
     <Teleport to="body">
       <Transition name="fade">
-        <div v-if="showInstallModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showInstallModal = false" @keyup.escape="showInstallModal = false">
+        <div v-if="showInstallModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showInstallModal = false" @keydown.escape="showInstallModal = false" tabindex="-1">
           <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-slide-up">
             <div class="px-5 py-4 border-b border-gray-100">
               <h3 class="text-sm font-semibold text-gray-900">安装插件</h3>
@@ -330,7 +330,7 @@ onMounted(fetchData)
     <!-- 渠道详情弹窗 -->
     <Teleport to="body">
       <Transition name="fade">
-        <div v-if="showDetail" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showDetail = null" @keyup.escape="showDetail = null">
+        <div v-if="showDetail" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showDetail = null" @keydown.escape="showDetail = null" tabindex="-1">
           <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-slide-up">
             <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
               <span class="text-xl">{{ getIcon(showDetail.id) }}</span>
