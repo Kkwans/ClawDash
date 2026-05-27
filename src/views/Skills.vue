@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { gwRequest } from '../stores/gateway.js'
 import { getRawConfig } from "../api/config-utils.js"
 import AppToast from '../components/AppToast.vue'
@@ -9,6 +9,10 @@ import AppConfirm from '../components/AppConfirm.vue'
 import { createLogger } from '../utils/logger.js'
 
 const log = createLogger('Skills')
+
+// 入场动画状态
+const entered = ref(false)
+onMounted(() => { nextTick(() => { entered.value = true }) })
 
 const searchResults = ref([])
 const installedSkills = ref([])
@@ -22,7 +26,7 @@ const activeTab = ref('installed')
 const selectedPlugins = ref(new Set())
 
 function showToast(msg, type = 'info') {
-  toastRef.value?.show(msg, { type })
+  toastRef.value?.show(msg, type)
 }
 
 async function showConfirm(msg) {
@@ -32,7 +36,6 @@ async function showConfirm(msg) {
 async function fetchData() {
   loading.value = true
   try {
-    // skills.list 不存在，从静态文件获取内置 Skill
     const [skillsRes, cfg] = await Promise.all([
       fetch(`/skills.json`).then(r => r.json()).catch(() => []),
       gwRequest('config.get').catch(() => null)
@@ -120,7 +123,6 @@ async function togglePlugin(plugin) {
   }
 }
 
-
 function formatDate(ts) {
   if (!ts) return ''
   return new Date(ts).toLocaleDateString('zh-CN')
@@ -176,98 +178,120 @@ onMounted(fetchData)
     <AppConfirm ref="confirmRef" />
 
     <!-- 页面标题 -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-bold text-gray-900">Skill 管理</h2>
-        <p class="text-sm text-gray-500 mt-0.5">管理本地插件和搜索 ClawHub Skill</p>
+    <div class="skills-section" :class="{ 'skills-enter': entered }" style="--delay: 0ms">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-gray-900 tracking-tight">Skill 管理</h2>
+          <p class="text-sm text-gray-500 mt-0.5">管理本地插件和搜索 ClawHub Skill</p>
+        </div>
+        <button @click="fetchData"
+          class="btn-press px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm transition-all">
+          <span class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            刷新
+          </span>
+        </button>
       </div>
-      <button @click="fetchData" class="px-3 py-1.5 text-xs text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
-        刷新
-      </button>
     </div>
 
     <!-- Tab 切换 -->
-    <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-fit">
-      <button @click="activeTab = 'installed'"
-        class="flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-all"
-        :class="activeTab === 'installed' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
-        🧩 已安装插件
-      </button>
-      <button @click="activeTab = 'search'"
-        class="flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-all"
-        :class="activeTab === 'search' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
-        🔍 搜索 ClawHub
-      </button>
+    <div class="skills-section" :class="{ 'skills-enter': entered }" style="--delay: 80ms">
+      <div class="flex items-center gap-1 bg-gray-100/80 rounded-xl p-1 w-fit">
+        <button @click="activeTab = 'installed'"
+          class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+          :class="activeTab === 'installed' ? 'bg-white text-gray-800 shadow-sm ring-1 ring-gray-200/60' : 'text-gray-500 hover:text-gray-700'">
+          🧩 已安装插件
+          <span v-if="installedSkills.length + pluginEntries.length > 0"
+            class="ml-1 px-1.5 py-0.5 text-xs rounded-full"
+            :class="activeTab === 'installed' ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-200 text-gray-500'">
+            {{ installedSkills.length + pluginEntries.length }}
+          </span>
+        </button>
+        <button @click="activeTab = 'search'"
+          class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+          :class="activeTab === 'search' ? 'bg-white text-gray-800 shadow-sm ring-1 ring-gray-200/60' : 'text-gray-500 hover:text-gray-700'">
+          🔍 搜索 ClawHub
+        </button>
+      </div>
     </div>
 
     <!-- 已安装 Skill -->
-    <div v-if="activeTab === 'installed'" class="space-y-3">
+    <div v-if="activeTab === 'installed'" class="skills-section" :class="{ 'skills-enter': entered }" style="--delay: 160ms">
       <AppLoading v-if="loading" text="加载 Skill 中..." />
       <AppEmpty v-else-if="installedSkills.length === 0 && pluginEntries.length === 0"
         icon="🧩"
         title="暂无已安装 Skill"
         description="切换到「搜索 ClawHub」查找并安装 Skill"
       />
-      <div v-else>
+      <div v-else class="space-y-3">
         <!-- Skills from skills.list -->
-        <div v-for="skill in installedSkills" :key="skill.name || skill.id"
-          class="bg-white rounded-xl border border-gray-200 p-4 transition-all hover:border-gray-300">
+        <div v-for="(skill, idx) in installedSkills" :key="skill.name || skill.id"
+          class="card-hover bg-white rounded-2xl border border-gray-200/60 p-5 shadow-sm transition-all"
+          :style="{ '--card-delay': idx * 40 + 'ms' }">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-blue-50">⚡</div>
+            <div class="flex items-center gap-4 min-w-0">
+              <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl bg-gradient-to-br from-indigo-50 to-blue-50 ring-1 ring-indigo-100/60">
+                ⚡
+              </div>
               <div class="min-w-0">
-                <p class="text-sm font-semibold text-gray-900">{{ skill.displayName || skill.name }}</p>
-                <p class="text-xs text-gray-400 mt-0.5">{{ skill.description || skill.source || '本地 Skill' }}</p>
+                <p class="text-sm font-semibold text-gray-900 tracking-tight">{{ skill.displayName || skill.name }}</p>
+                <p class="text-xs text-gray-400 mt-0.5 line-clamp-1">{{ skill.description || skill.source || '本地 Skill' }}</p>
               </div>
             </div>
-            <div class="flex gap-2">
-              <button @click="deleteSkill(skill)"
-                class="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 transition-all">
-                删除
-              </button>
-            </div>
+            <button @click="deleteSkill(skill)"
+              class="btn-press px-3.5 py-1.5 rounded-xl text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 border border-red-100/80 transition-all">
+              删除
+            </button>
           </div>
         </div>
+
         <!-- Batch operations for plugins -->
-        <div v-if="pluginEntries.length > 0" class="flex items-center gap-3 mt-3">
-          <input type="checkbox" :checked="selectedPlugins.size === pluginEntries.length && pluginEntries.length > 0" @change="toggleSelectAllPlugins"
-            aria-label="全选插件"
-            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-          <span class="text-xs text-gray-500">全选插件</span>
+        <div v-if="pluginEntries.length > 0" class="flex items-center gap-3 pt-2 pb-1">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" :checked="selectedPlugins.size === pluginEntries.length && pluginEntries.length > 0" @change="toggleSelectAllPlugins"
+              aria-label="全选插件"
+              class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 transition-colors">
+            <span class="text-xs text-gray-500">全选插件</span>
+          </label>
           <button v-if="selectedPlugins.size > 0" @click="batchTogglePlugins(true)"
-            class="px-3 py-1.5 text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-all">
+            class="btn-press px-3 py-1.5 text-xs font-medium text-green-600 bg-green-50 border border-green-200/80 rounded-xl hover:bg-green-100 transition-all">
             批量启用 ({{ selectedPlugins.size }})
           </button>
           <button v-if="selectedPlugins.size > 0" @click="batchTogglePlugins(false)"
-            class="px-3 py-1.5 text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-all">
+            class="btn-press px-3 py-1.5 text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200/80 rounded-xl hover:bg-amber-100 transition-all">
             批量禁用 ({{ selectedPlugins.size }})
           </button>
         </div>
+
         <!-- Plugins from config -->
-        <div v-for="pl in pluginEntries" :key="pl.id"
-          class="bg-white rounded-xl border border-gray-200 p-4 transition-all hover:border-gray-300">
+        <div v-for="(pl, idx) in pluginEntries" :key="pl.id"
+          class="card-hover card-accent bg-white rounded-2xl border border-gray-200/60 p-5 shadow-sm transition-all"
+          :style="{ '--card-delay': (installedSkills.length + idx) * 40 + 'ms' }">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3 min-w-0">
+            <div class="flex items-center gap-4 min-w-0">
               <input type="checkbox" :checked="selectedPlugins.has(pl.id)" @click.stop="toggleSelectPlugin(pl.id)"
-                class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                :class="pl.enabled ? 'bg-green-50' : 'bg-gray-100'">🧩</div>
+                class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 flex-shrink-0 transition-colors">
+              <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl transition-colors"
+                :class="pl.enabled ? 'bg-gradient-to-br from-green-50 to-emerald-50 ring-1 ring-green-100/60' : 'bg-gray-100 ring-1 ring-gray-200/60'">
+                🧩
+              </div>
               <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                  <p class="text-sm font-semibold text-gray-900">{{ pl.id }}</p>
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-                    :class="pl.enabled ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'">
+                <div class="flex items-center gap-2.5">
+                  <p class="text-sm font-semibold text-gray-900 tracking-tight">{{ pl.id }}</p>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors"
+                    :class="pl.enabled ? 'bg-green-50 text-green-700 ring-1 ring-green-200/60' : 'bg-gray-100 text-gray-500 ring-1 ring-gray-200/60'">
                     <span class="w-1.5 h-1.5 rounded-full" :class="pl.enabled ? 'bg-green-500' : 'bg-gray-400'"></span>
                     {{ pl.enabled ? '已启用' : '已禁用' }}
                   </span>
                 </div>
+                <p v-if="pl.config?.description" class="text-xs text-gray-400 mt-0.5 line-clamp-1">{{ pl.config.description }}</p>
               </div>
             </div>
             <button @click="togglePlugin(pl)"
-              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+              class="btn-press px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all"
               :class="pl.enabled
-                ? 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-100'
-                : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-100'">
+                ? 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-100/80'
+                : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-100/80'">
               {{ pl.enabled ? '禁用' : '启用' }}
             </button>
           </div>
@@ -276,50 +300,68 @@ onMounted(fetchData)
     </div>
 
     <!-- 搜索 ClawHub -->
-    <div v-if="activeTab === 'search'" class="space-y-4">
-      <div class="flex gap-2">
+    <div v-if="activeTab === 'search'" class="skills-section" :class="{ 'skills-enter': entered }" style="--delay: 160ms">
+      <!-- 搜索框 -->
+      <div class="flex gap-3">
         <div class="relative flex-1">
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
           <input v-model="searchQuery" @keyup.enter="searchSkills"
             placeholder="搜索 Skill（如 docker、git、deploy...）"
             autocomplete="off"
             aria-label="搜索 Skill"
-            class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            class="w-full pl-10 pr-4 py-3 border border-gray-200/80 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 placeholder:text-gray-400 transition-all">
         </div>
         <button @click="searchSkills" :disabled="searching || !searchQuery.trim()"
-          class="px-4 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all">
+          class="btn-press px-5 py-3 text-sm font-medium bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 shadow-sm transition-all">
           {{ searching ? '搜索中...' : '搜索' }}
         </button>
       </div>
 
-      <div v-if="searching" class="flex items-center justify-center py-12">
-        <div class="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+      <!-- 搜索中 -->
+      <div v-if="searching" class="flex flex-col items-center justify-center py-16">
+        <div class="w-8 h-8 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+        <p class="text-xs text-gray-400 mt-3">正在搜索 ClawHub...</p>
       </div>
 
-      <div v-else-if="searchResults.length === 0 && searchQuery" class="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-gray-100">
-        <span class="text-3xl mb-3">🔍</span>
-        <p class="text-sm text-gray-500">未找到匹配的 Skill</p>
+      <!-- 无结果 -->
+      <div v-else-if="searchResults.length === 0 && searchQuery" class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-200/60 shadow-sm">
+        <div class="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center text-3xl mb-3">🔍</div>
+        <p class="text-sm font-medium text-gray-600">未找到匹配的 Skill</p>
+        <p class="text-xs text-gray-400 mt-1">试试其他关键词</p>
       </div>
 
-      <div v-else class="space-y-2">
-        <div v-for="skill in searchResults" :key="skill.slug"
-          class="bg-white rounded-xl border border-gray-200 p-4 transition-all hover:border-gray-300 hover:shadow-sm">
-          <div class="flex items-start justify-between gap-3">
+      <!-- 搜索结果 -->
+      <div v-else class="space-y-2.5">
+        <div v-for="(skill, idx) in searchResults" :key="skill.slug"
+          class="card-hover card-accent bg-white rounded-2xl border border-gray-200/60 p-5 shadow-sm transition-all"
+          :style="{ '--card-delay': idx * 40 + 'ms' }">
+          <div class="flex items-start justify-between gap-4">
             <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2">
-                <p class="text-sm font-semibold text-gray-900">{{ skill.displayName }}</p>
-                <span class="text-xs text-gray-400 font-mono">{{ skill.slug }}</span>
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base bg-gradient-to-br from-purple-50 to-indigo-50 ring-1 ring-purple-100/60 flex-shrink-0">
+                  ⚡
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-gray-900 tracking-tight">{{ skill.displayName }}</p>
+                  <p class="text-xs text-gray-400 font-mono">{{ skill.slug }}</p>
+                </div>
               </div>
-              <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ skill.summary }}</p>
-              <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                <span v-if="skill.owner?.displayName">👤 {{ skill.owner.displayName }}</span>
-                <span v-if="skill.updatedAt">📅 {{ formatDate(skill.updatedAt) }}</span>
+              <p class="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">{{ skill.summary }}</p>
+              <div class="flex items-center gap-4 mt-2.5 text-xs text-gray-400">
+                <span v-if="skill.owner?.displayName" class="flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                  {{ skill.owner.displayName }}
+                </span>
+                <span v-if="skill.updatedAt" class="flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  {{ formatDate(skill.updatedAt) }}
+                </span>
               </div>
             </div>
             <button @click="installSkill(skill)"
-              class="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100 transition-all flex-shrink-0">
+              class="btn-press px-4 py-2 rounded-xl text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-100/80 transition-all flex-shrink-0">
               安装
             </button>
           </div>
@@ -328,3 +370,56 @@ onMounted(fetchData)
     </div>
   </div>
 </template>
+
+<style scoped>
+/* 入场动画 */
+.skills-section {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--delay, 0ms);
+}
+.skills-enter {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 卡片悬浮效果 */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+/* 渐变顶部装饰 */
+.card-accent {
+  position: relative;
+  overflow: hidden;
+}
+.card-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #818cf8);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.card-accent:hover::before {
+  opacity: 1;
+}
+
+/* 按钮微交互 */
+.btn-press {
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.btn-press:active {
+  transform: scale(0.96);
+}
+</style>
