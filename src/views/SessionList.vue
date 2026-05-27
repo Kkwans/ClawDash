@@ -5,6 +5,9 @@ import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'
 import AppEmpty from '../components/AppEmpty.vue'
 import AppLoading from '../components/AppLoading.vue'
+import { createLogger } from '../utils/logger.js'
+
+const log = createLogger('SessionList')
 
 const sessions = ref([])
 const loading = ref(true)
@@ -41,7 +44,7 @@ async function fetchSessions() {
     const res = await gwRequest('sessions.list', { limit: 100 })
     sessions.value = res?.sessions || []
   } catch (e) {
-    // Error handled by useErrorHandler (T3)
+    log.warn('加载会话列表失败:', e)
   }
   loading.value = false
 }

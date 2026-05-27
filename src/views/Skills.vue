@@ -6,6 +6,9 @@ import AppToast from '../components/AppToast.vue'
 import AppEmpty from '../components/AppEmpty.vue'
 import AppLoading from '../components/AppLoading.vue'
 import AppConfirm from '../components/AppConfirm.vue'
+import { createLogger } from '../utils/logger.js'
+
+const log = createLogger('Skills')
 
 const searchResults = ref([])
 const installedSkills = ref([])
@@ -40,7 +43,7 @@ async function fetchData() {
       id, config: c, enabled: c.enabled !== false
     }))
   } catch (e) {
-    // Error handled by useErrorHandler (T3)
+    log.warn('加载 Skill 列表失败:', e)
   }
   loading.value = false
 }

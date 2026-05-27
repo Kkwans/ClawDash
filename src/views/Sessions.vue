@@ -57,7 +57,7 @@ async function fetchHealth() {
   try {
     healthData.value = await gwRequest('health')
   } catch (e) {
-    // Error handled by useErrorHandler (T3)
+    log.warn('加载健康状态失败:', e)
   }
   loading.value = false
 }

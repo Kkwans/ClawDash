@@ -4,6 +4,9 @@ import { gwRequest, token, updateToken, authenticated, connect } from '../stores
 import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'
 import AppEditor from '../components/AppEditor.vue'
+import { createLogger } from '../utils/logger.js'
+
+const log = createLogger('Settings')
 
 const tokenInput = ref('')
 const saved = ref(false)
@@ -48,7 +51,7 @@ async function fetchData() {
     configEditor.value = cfg?.raw || JSON.stringify(cfg?.parsed || {}, null, 2)
     healthData.value = health
   } catch (e) {
-    // Error handled by useErrorHandler (T3)
+    log.warn('加载配置失败:', e)
   }
   loading.value = false
 }

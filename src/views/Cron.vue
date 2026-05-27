@@ -5,6 +5,9 @@ import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'
 import AppEmpty from '../components/AppEmpty.vue'
 import AppLoading from '../components/AppLoading.vue'
+import { createLogger } from '../utils/logger.js'
+
+const log = createLogger('Cron')
 
 const jobs = ref([])
 const loading = ref(true)
@@ -35,7 +38,7 @@ async function fetchJobs() {
     const res = await gwRequest('cron.list', { limit: 100 })
     jobs.value = res?.jobs || []
   } catch (e) {
-    // Error handled by useErrorHandler (T3)
+    log.warn('加载定时任务列表失败:', e)
   }
   loading.value = false
 }
