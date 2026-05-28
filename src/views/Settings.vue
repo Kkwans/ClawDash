@@ -238,11 +238,11 @@ onMounted(() => {
         <p>基于 Vue 3 + Tailwind CSS 构建，通过 WebSocket 直连 Gateway</p>
         <div class="flex items-center gap-3 mt-3">
           <a href="/builtin/" target="_blank"
-            class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 transition-all">
+            class="btn-press px-3 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 transition-all">
             ⚡ 内置 Control UI
           </a>
           <a href="https://github.com/Kkwans/ClawDash" target="_blank"
-            class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 transition-all">
+            class="btn-press px-3 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 transition-all">
             GitHub
           </a>
         </div>

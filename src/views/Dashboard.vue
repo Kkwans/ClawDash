@@ -425,9 +425,9 @@ onUnmounted(() => {
     </div>
 
     <!-- 渠道状态 -->
-    <div v-if="channelsInfo" class="card-accent enter-anim card-hover rounded-2xl border border-gray-200/60 bg-white dark:bg-gray-800 dark:border-gray-700 p-5 shadow-sm" :class="{ 'is-entered': entered }"
+    <div v-if="channelsInfo" class="card-accent enter-anim card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm" :class="{ 'is-entered': entered }"
       style="--delay: 720ms">
-      <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 tracking-tight">渠道状态</h4>
+      <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">渠道状态</h4>
       <!-- EventLoop 状态 -->
       <div v-if="eventLoop" class="flex items-center justify-between p-3 rounded-lg mb-3"
         :class="eventLoop.degraded ? 'bg-amber-50' : 'bg-green-50'">
@@ -473,15 +473,15 @@ onUnmounted(() => {
     </div>
 
     <!-- 快速操作 -->
-    <div class="enter-anim rounded-2xl border border-gray-200/60 bg-white dark:bg-gray-800 dark:border-gray-700 p-5 shadow-sm"
+    <div class="enter-anim rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
       :class="{ 'is-entered': entered }"
       style="--delay: 800ms">
-      <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 tracking-tight">快速操作</h4>
+      <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">快速操作</h4>
       <div class="flex flex-wrap gap-2">
         <AppButton size="sm" :disabled="loading" @click="loadAllData()">🔄 刷新数据</AppButton>
         <AppButton size="sm" :disabled="copying" @click="copySystemInfo()">📋 复制系统信息</AppButton>
         <a href="/builtin/" target="_blank"
-          class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200/80 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
+          class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200/80 text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
           ⚡ 内置 UI
         </a>
         <AppButton size="sm" variant="danger" :disabled="controlling || !authenticated" @click="doGatewayAction('stop')">⏹ 停止</AppButton>
@@ -490,22 +490,22 @@ onUnmounted(() => {
     </div>
 
     <!-- 最后更新 -->
-    <p v-if="lastUpdate" class="text-xs text-gray-300 dark:text-gray-600 text-right">
+    <p v-if="lastUpdate" class="text-xs text-gray-300 text-right">
       更新于 {{ lastUpdate.toLocaleTimeString('zh-CN') }}
     </p>
 
     <!-- 空状态 -->
     <div v-if="!loading && !error && !authenticated && !connecting" class="text-center py-16">
-      <div class="w-20 h-20 mx-auto bg-gray-50 dark:bg-gray-800 rounded-3xl flex items-center justify-center text-4xl mb-5 ring-1 ring-gray-200/50 dark:ring-gray-700">
+      <div class="w-20 h-20 mx-auto bg-gray-50 rounded-3xl flex items-center justify-center text-4xl mb-5 ring-1 ring-gray-200/50">
         🦞
       </div>
-      <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">欢迎使用 ClawDash</h3>
-      <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">欢迎使用 ClawDash</h3>
+      <p class="text-sm text-gray-500 max-w-md mx-auto">
         这是 OpenClaw 的 Web 控制台。请先配置 Gateway Token 以开始使用。
       </p>
       <div class="flex items-center justify-center gap-3 mt-6">
         <a href="/builtin/" target="_blank"
-          class="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+          class="btn-press px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
           ⚡ 内置 UI
         </a>
       </div>
