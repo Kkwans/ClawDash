@@ -224,13 +224,12 @@ onMounted(fetchData)
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-2">渠道类型</label>
             <div class="grid grid-cols-3 gap-2">
-              <button v-for="ct in channelTypes" :key="ct.id" type="button"
-                class="flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all cursor-pointer"
-                :class="addForm.channel === ct.id ? 'border-gray-900 bg-gray-50 shadow-sm' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'"
+              <AppButton size="sm" :variant="addForm.channel === ct.id ? 'primary' : 'default'"
+                v-for="ct in channelTypes" :key="ct.id" type="button"
                 @click="addForm.channel = ct.id">
-                <span class="text-xl">{{ ct.icon }}</span>
-                <span class="text-xs font-medium text-gray-700">{{ ct.name }}</span>
-              </button>
+                <span>{{ ct.icon }}</span>
+                <span class="ml-1">{{ ct.name }}</span>
+              </AppButton>
             </div>
           </div>
           <template v-if="selectedType">
@@ -246,11 +245,11 @@ onMounted(fetchData)
                   :aria-label="f.label"
                   readonly @focus="$event.target.removeAttribute('readonly')"
                   class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all pr-9">
-                <button v-if="f.type === 'password'" type="button"
+                <AppButton v-if="f.type === 'password'" size="xs" variant="ghost"
                   @click="togglePwd('add_'+f.key)"
-                  class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">
+                  class="absolute right-2 top-1/2 -translate-y-1/2">
                   {{ showPwd['add_'+f.key] ? '🙈' : '👁️' }}
-                </button>
+                </AppButton>
               </div>
             </div>
           </template>
@@ -332,11 +331,11 @@ onMounted(fetchData)
                     :autocomplete="(key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')) ? 'new-password' : 'off'"
                     :aria-label="key" readonly @focus="$event.target.removeAttribute('readonly')"
                     class="w-full px-3 py-2 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all pr-9">
-                  <button v-if="key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')" type="button"
+                  <AppButton v-if="key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')" size="xs" variant="ghost"
                     @click="togglePwd('d_'+key)"
-                    class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">
+                    class="absolute right-2 top-1/2 -translate-y-1/2">
                     {{ showPwd['d_'+key] ? '🙈' : '👁️' }}
-                  </button>
+                  </AppButton>
                 </div>
               </div>
             </template>
@@ -376,13 +375,12 @@ onMounted(fetchData)
 
     <!-- Tab 切换 -->
     <div class="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit enter-anim" :class="{ 'is-entered': entered }" style="--delay: 120ms">
-      <button v-for="tab in tabs" :key="tab.key"
-        @click="activeTab = tab.key"
-        class="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-medium transition-all"
-        :class="activeTab === tab.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+      <AppButton size="sm" :variant="activeTab === tab.key ? 'primary' : 'default'"
+        v-for="tab in tabs" :key="tab.key"
+        @click="activeTab = tab.key">
         <span>{{ tab.icon }}</span>
-        <span>{{ tab.label }}</span>
-      </button>
+        <span class="ml-1">{{ tab.label }}</span>
+      </AppButton>
     </div>
 
     <!-- 加载状态 -->

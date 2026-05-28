@@ -289,29 +289,21 @@ useScrollLock(showDeleteConfirm)
         <div class="border-t border-gray-100 pt-4">
           <p class="text-xs text-gray-400 mb-2.5">思考能力（Thinking Default）</p>
           <div class="flex flex-wrap gap-1.5">
-            <button v-for="opt in thinkingOptions" :key="opt.value"
-              @click="setThinkingLevel(opt.value)" :disabled="saving"
-              class="btn-press px-3 py-1.5 rounded-lg text-xs font-medium border transition-all"
-              :title="opt.desc"
-              :class="thinkingLevel === opt.value
-                ? 'bg-indigo-50 border-indigo-300 text-indigo-700 ring-1 ring-indigo-200/50'
-                : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'">
+            <AppButton size="sm" :variant="thinkingLevel === opt.value ? 'primary' : 'default'"
+              v-for="opt in thinkingOptions" :key="opt.value"
+              @click="setThinkingLevel(opt.value)" :disabled="saving" :title="opt.desc">
               {{ opt.label }}
-            </button>
+            </AppButton>
           </div>
         </div>
         <div class="border-t border-gray-100 pt-4">
           <p class="text-xs text-gray-400 mb-2.5">推理显示（Reasoning Default）</p>
           <div class="flex flex-wrap gap-1.5">
-            <button v-for="opt in reasoningOptions" :key="opt.value"
-              @click="setReasoningLevel(opt.value)" :disabled="saving"
-              class="btn-press px-3 py-1.5 rounded-lg text-xs font-medium border transition-all"
-              :title="opt.desc"
-              :class="reasoningLevel === opt.value
-                ? 'bg-purple-50 border-purple-300 text-purple-700 ring-1 ring-purple-200/50'
-                : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'">
+            <AppButton size="sm" :variant="reasoningLevel === opt.value ? 'primary' : 'default'"
+              v-for="opt in reasoningOptions" :key="opt.value"
+              @click="setReasoningLevel(opt.value)" :disabled="saving" :title="opt.desc">
               {{ opt.label }}
-            </button>
+            </AppButton>
           </div>
         </div>
       </div>
