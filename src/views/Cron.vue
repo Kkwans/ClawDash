@@ -250,7 +250,7 @@ onMounted(fetchJobs)
         description="点击「新建」创建第一个定时任务"
       />
       <!-- 无搜索结果 -->
-      <div v-else-if="filteredJobs.length === 0 && jobs.length > 0" class="text-center py-10 bg-white rounded-xl border border-gray-200">
+      <div v-else-if="filteredJobs.length === 0 && jobs.length > 0" class="card-accent card-hover text-center py-10 bg-white rounded-2xl border border-gray-200/60">
         <p class="text-sm text-gray-400">未找到匹配「{{ jobFilter }}」的任务</p>
       </div>
 

@@ -398,13 +398,13 @@ onMounted(fetchData)
         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
       </div>
       <!-- 空状态 -->
-      <div v-if="filteredChannels.length === 0 && channelEntries.length === 0" class="text-center py-16 bg-white rounded-xl border border-gray-200">
+      <div v-if="filteredChannels.length === 0 && channelEntries.length === 0" class="card-accent card-hover text-center py-16 bg-white rounded-2xl border border-gray-200/60">
         <span class="text-3xl mb-3 block">📡</span>
         <p class="text-sm font-medium text-gray-600">暂无渠道</p>
         <p class="text-xs text-gray-400 mt-1">点击"添加渠道"开始</p>
       </div>
       <!-- 无搜索结果 -->
-      <div v-else-if="filteredChannels.length === 0 && channelEntries.length > 0" class="text-center py-10 bg-white rounded-xl border border-gray-200">
+      <div v-else-if="filteredChannels.length === 0 && channelEntries.length > 0" class="card-accent card-hover text-center py-10 bg-white rounded-2xl border border-gray-200/60">
         <p class="text-sm text-gray-400">未找到匹配「{{ channelFilter }}」的渠道</p>
       </div>
       <!-- 渠道卡片 -->
@@ -445,13 +445,13 @@ onMounted(fetchData)
         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
       </div>
       <!-- 空状态 -->
-      <div v-if="filteredPlugins.length === 0 && pluginEntries.length === 0" class="text-center py-16 bg-white rounded-xl border border-gray-200">
+      <div v-if="filteredPlugins.length === 0 && pluginEntries.length === 0" class="card-accent card-hover text-center py-16 bg-white rounded-2xl border border-gray-200/60">
         <span class="text-3xl mb-3 block">🧩</span>
         <p class="text-sm font-medium text-gray-600">暂无插件</p>
         <p class="text-xs text-gray-400 mt-1">点击"安装插件"添加</p>
       </div>
       <!-- 无搜索结果 -->
-      <div v-else-if="filteredPlugins.length === 0 && pluginEntries.length > 0" class="text-center py-10 bg-white rounded-xl border border-gray-200">
+      <div v-else-if="filteredPlugins.length === 0 && pluginEntries.length > 0" class="card-accent card-hover text-center py-10 bg-white rounded-2xl border border-gray-200/60">
         <p class="text-sm text-gray-400">未找到匹配「{{ pluginFilter }}」的插件</p>
       </div>
       <!-- 插件卡片 -->
