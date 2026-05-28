@@ -221,7 +221,7 @@ onUnmounted(() => {
 
     <!-- Gateway 健康状态 -->
     <div v-if="healthData" class="enter-anim" :class="{ 'is-entered': entered }" style="--delay: 80ms">
-      <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <div class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-4">
         <div class="flex items-center gap-2 mb-3">
           <span class="text-sm font-semibold text-gray-700">Gateway 状态</span>
           <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
@@ -254,7 +254,7 @@ onUnmounted(() => {
 
     <!-- 事件统计 -->
     <div v-if="uniqueEvents.length > 0" class="enter-anim" :class="{ 'is-entered': entered }" style="--delay: 160ms">
-      <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <div class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-4">
         <p class="text-xs font-medium text-gray-500 mb-2">事件类型统计</p>
         <div class="flex flex-wrap gap-1.5">
           <span v-for="[event, count] in uniqueEvents" :key="event"
@@ -270,7 +270,7 @@ onUnmounted(() => {
 
     <!-- 日志查看器 -->
     <div class="enter-anim" :class="{ 'is-entered': entered }" style="--delay: 240ms">
-      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 overflow-hidden">
       <!-- 工具栏 -->
       <div class="flex items-center gap-3 p-3 border-b border-gray-100">
         <div class="relative flex-1">
