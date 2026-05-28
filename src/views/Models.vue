@@ -323,7 +323,7 @@ useScrollLock(showDeleteConfirm)
           <input v-model="providerFilter"
             type="search" placeholder="搜索提供商..."
             class="w-full pl-8 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all">
-          <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
         </div>
 
         <div class="flex items-center justify-between">
