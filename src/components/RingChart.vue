@@ -50,9 +50,9 @@ const chartOptions = {
     <div class="relative" :style="{ width: size + 'px', height: size + 'px' }">
       <Doughnut :data="chartData" :options="chartOptions" />
       <div class="absolute inset-0 flex flex-col items-center justify-center">
-        <span class="text-xl font-bold" :class="colorClass">{{ value }}<span class="text-xs font-normal text-gray-400">{{ unit }}</span></span>
+        <span class="text-xl font-bold" :class="colorClass">{{ value }}<span class="text-xs font-normal" style="color: var(--text-tertiary);">{{ unit }}</span></span>
       </div>
     </div>
-    <span class="text-xs text-gray-500 font-medium">{{ label }}</span>
+    <span class="text-xs font-medium" style="color: var(--text-tertiary);">{{ label }}</span>
   </div>
 </template>

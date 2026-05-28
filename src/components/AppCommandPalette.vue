@@ -110,36 +110,40 @@ defineExpose({ open, close, toggle })
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="close"></div>
 
         <!-- 面板 -->
-        <div class="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden ring-1 ring-gray-200/60">
+        <div class="relative w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden ring-1" style="background-color: var(--bg-panel); box-shadow: var(--shadow-xl);">
           <!-- 搜索框 -->
-          <div class="flex items-center gap-3 px-4 py-3.5 border-b border-gray-100">
-            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex items-center gap-3 px-4 py-3.5 border-b" style="border-color: var(--border);">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--text-tertiary);">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
             <input ref="inputRef" v-model="query" autocomplete="off" spellcheck="false"
               placeholder="搜索页面、命令..."
               aria-label="快速搜索"
-              class="flex-1 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none bg-transparent">
-            <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-gray-400 bg-gray-100 rounded">ESC</kbd>
+              class="flex-1 text-sm focus:outline-none bg-transparent" style="color: var(--text-primary); placeholder-color: var(--text-tertiary);">
+            <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono rounded" style="color: var(--text-tertiary); background-color: var(--bg-muted);">ESC</kbd>
           </div>
 
           <!-- 结果列表 -->
           <div class="max-h-80 overflow-y-auto py-1.5">
             <div v-if="results.length === 0" class="px-4 py-8 text-center">
-              <p class="text-sm text-gray-400">无匹配结果</p>
+              <p class="text-sm" style="color: var(--text-tertiary);">无匹配结果</p>
             </div>
             <template v-else>
               <div v-for="(item, idx) in results" :key="item.id"
                 class="flex items-center gap-3 px-4 py-2.5 mx-1.5 rounded-xl cursor-pointer transition-colors"
-                :class="idx === selectedIndex ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-50'"
+                :style="idx === selectedIndex
+                  ? 'background-color: var(--brand-lighter);'
+                  : ''"
                 @click="execute(item)"
                 @mouseenter="selectedIndex = idx">
                 <span class="text-base flex-shrink-0 w-6 text-center">{{ item.icon }}</span>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium truncate">{{ item.label }}</p>
+                  <p class="text-sm font-medium truncate" :style="idx === selectedIndex ? 'color: var(--brand);' : ''">{{ item.label }}</p>
                 </div>
-                <span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-400 flex-shrink-0"
-                  :class="idx === selectedIndex ? 'bg-indigo-100 text-indigo-500' : ''">
+                <span class="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0"
+                  :style="idx === selectedIndex
+                    ? 'background-color: var(--brand-lighter); color: var(--brand);'
+                    : 'background-color: var(--bg-subtle); color: var(--text-tertiary);'">
                   {{ item.category }}
                 </span>
               </div>
@@ -147,10 +151,10 @@ defineExpose({ open, close, toggle })
           </div>
 
           <!-- 底部提示 -->
-          <div class="px-4 py-2 border-t border-gray-100 flex items-center gap-4 text-[10px] text-gray-400">
-            <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 bg-gray-100 rounded font-mono">↑↓</kbd> 移动</span>
-            <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 bg-gray-100 rounded font-mono">↵</kbd> 执行</span>
-            <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 bg-gray-100 rounded font-mono">ESC</kbd> 关闭</span>
+          <div class="px-4 py-2 border-t flex items-center gap-4 text-[10px]" style="border-color: var(--border); color: var(--text-tertiary);">
+            <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded font-mono" style="background-color: var(--bg-muted);">↑↓</kbd> 移动</span>
+            <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded font-mono" style="background-color: var(--bg-muted);">↵</kbd> 执行</span>
+            <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded font-mono" style="background-color: var(--bg-muted);">ESC</kbd> 关闭</span>
           </div>
         </div>
       </div>
