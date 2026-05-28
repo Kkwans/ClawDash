@@ -246,18 +246,28 @@ onUnmounted(() => {
     <div class="rounded-2xl border p-5 transition-all shadow-sm"
       :class="[
         'enter-anim',
-        { 'is-entered': entered },
-        authenticated
-          ? 'bg-gradient-to-r from-white to-green-50/30 border-green-200/60'
-          : connectionError
-            ? 'bg-gradient-to-r from-white to-red-50/30 border-red-200/60'
-            : 'bg-white border-gray-200'
+        { 'is-entered': entered }
       ]"
-      style="--delay: 0ms">
+      :style="{
+        background: authenticated
+          ? 'linear-gradient(to right, var(--bg-panel), var(--success-light))'
+          : connectionError
+            ? 'linear-gradient(to right, var(--bg-panel), var(--danger-light))'
+            : 'var(--bg-panel)',
+        borderColor: authenticated
+          ? 'var(--success-text)'
+          : connectionError
+            ? 'var(--danger-text)'
+            : 'var(--border)',
+        '--delay': '0ms'
+      }"
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-4">
           <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl shadow-sm"
-            :class="authenticated ? 'bg-green-50 ring-1 ring-green-200/50' : connectionError ? 'bg-red-50 ring-1 ring-red-200/50' : 'bg-gray-50 ring-1 ring-gray-200/50'">
+            :style="{
+              backgroundColor: authenticated ? 'var(--success-light)' : connectionError ? 'var(--danger-light)' : 'var(--bg-muted)',
+              boxShadow: '0 0 0 1px ' + (authenticated ? 'var(--success-text)' : connectionError ? 'var(--danger-text)' : 'var(--border)')
+            }">
             {{ authenticated ? '🟢' : connectionError ? '🔴' : '⏳' }}
           </div>
           <div>
@@ -378,12 +388,13 @@ onUnmounted(() => {
         <div class="space-y-3">
           <div v-for="p in providerModelCount" :key="p.name" class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-xs font-bold text-blue-600">{{ p.name[0].toUpperCase() }}</div>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
+                :style="{ backgroundColor: 'var(--info-light)', color: 'var(--info-text)' }">{{ p.name[0].toUpperCase() }}</div>
               <span class="text-sm font-medium text-gray-800">{{ p.name }}</span>
             </div>
             <div class="flex items-center gap-3">
               <span class="text-xs text-gray-500">{{ p.count }} 模型</span>
-              <span v-if="p.reasoning > 0" class="text-xs px-2 py-0.5 rounded bg-purple-50 text-purple-600">{{ p.reasoning }} 推理</span>
+              <span v-if="p.reasoning > 0" class="text-xs px-2 py-0.5 rounded" style="background-color: var(--purple-light, var(--info-light)); color: var(--purple-text, var(--info-text));">{{ p.reasoning }} 推理</span>
             </div>
           </div>
         </div>
@@ -418,8 +429,8 @@ onUnmounted(() => {
             <p class="text-xs text-gray-400">上下文 {{ (m.contextWindow / 1000).toFixed(0) }}K</p>
           </div>
           <div class="flex items-center gap-2 ml-3">
-            <span v-if="m.reasoning" class="text-xs px-2 py-0.5 rounded bg-purple-50 text-purple-600">推理</span>
-            <span v-if="defaultModelName === m.id" class="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-600">当前</span>
+            <span v-if="m.reasoning" class="text-xs px-2 py-0.5 rounded" style="background-color: var(--info-light); color: var(--info-text);">推理</span>
+            <span v-if="defaultModelName === m.id" class="text-xs px-2 py-0.5 rounded" style="background-color: var(--info-light); color: var(--info-text);">当前</span>
           </div>
         </div>
       </div>
@@ -430,11 +441,14 @@ onUnmounted(() => {
       style="--delay: 720ms">
       <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">渠道状态</h4>
       <!-- EventLoop 状态 -->
-      <div v-if="eventLoop" class="flex items-center justify-between p-3 rounded-lg mb-3"
-        :class="eventLoop.degraded ? 'bg-amber-50' : 'bg-green-50'">
+      <div v-if="eventLoop" class="flex items-center justify-between p-3 rounded-lg mb-3 border"
+        :style="{
+          backgroundColor: eventLoop.degraded ? 'var(--warning-light)' : 'var(--success-light)'
+        }">
+
         <div class="flex items-center gap-2">
           <span>{{ eventLoop.degraded ? '⚠️' : '✅' }}</span>
-          <span class="text-sm" :class="eventLoop.degraded ? 'text-amber-700' : 'text-green-700'">
+          <span class="text-sm" :style="{ color: eventLoop.degraded ? 'var(--warning-text)' : 'var(--success-text)' }">
             事件循环{{ eventLoop.degraded ? '降级' : '正常' }}
           </span>
         </div>
@@ -453,7 +467,10 @@ onUnmounted(() => {
             <p class="text-xs text-gray-400">{{ ch.status || '-' }}</p>
           </div>
           <span class="text-xs px-2 py-0.5 rounded"
-            :class="ch.connected ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-500'">
+            :style="{
+              backgroundColor: ch.connected ? 'var(--success-light)' : 'var(--bg-muted)',
+              color: ch.connected ? 'var(--success-text)' : 'var(--text-tertiary)'
+            }">
             {{ ch.connected ? '已连接' : '未连接' }}
           </span>
         </div>
