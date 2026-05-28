@@ -5,14 +5,14 @@ import RingChart from '../components/RingChart.vue'
 import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'
 import { Doughnut } from 'vue-chartjs'
+import { useEnterAnim } from '../composables/useEnterAnim.js'
 
 const props = defineProps({
   refreshKey: { type: Number, default: 0 }
 })
 
-// 入场动画状态
-const entered = ref(false)
-onMounted(() => { nextTick(() => { entered.value = true }) })
+// 入场动画
+const { entered } = useEnterAnim()
 
 const gatewayInfo = ref(null)
 const healthData = ref(null)
@@ -235,17 +235,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Dashboard 入场动画（特殊：使用 translateY(16px)） */
-.dashboard-enter {
-  opacity: 0;
-  transform: translateY(16px);
-}
-.dashboard-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
+/* Dashboard 使用 shared-animations.css 中的 .enter-anim / .is-entered */
 </style>
 
 <template>
@@ -253,14 +243,15 @@ onUnmounted(() => {
     <!-- 状态横幅 -->
     <div class="rounded-2xl border p-5 transition-all shadow-sm"
       :class="[
+        'enter-anim',
+        { 'is-entered': entered },
         authenticated
           ? 'bg-gradient-to-r from-white to-green-50/30 border-green-200/60'
           : connectionError
             ? 'bg-gradient-to-r from-white to-red-50/30 border-red-200/60'
-            : 'bg-white border-gray-200',
-        entered ? 'dashboard-enter-active' : 'dashboard-enter'
+            : 'bg-white border-gray-200'
       ]"
-      :style="{ transitionDelay: '0ms' }">
+      style="--delay: 0ms">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-4">
           <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl shadow-sm"
@@ -321,18 +312,17 @@ onUnmounted(() => {
         { value: modelCount, max: 20, label: '模型数', unit: '', color: '#8b5cf6', sub: providerEntries.length + ' 个提供商', subClass: 'text-gray-400' },
         { value: channelCount, max: 10, label: '渠道', unit: '', color: '#f59e0b', sub: healthData?.ok ? '运行中' : '-', subClass: healthData?.ok ? 'text-green-600' : 'text-gray-400' }
       ]" :key="card.label"
-        class="ring-card rounded-2xl border border-gray-200/60 bg-white p-5 flex flex-col items-center shadow-sm"
-        :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
-        :style="{ transitionDelay: (80 + idx * 60) + 'ms' }">
+        class="ring-card enter-anim rounded-2xl border border-gray-200/60 bg-white p-5 flex flex-col items-center shadow-sm"
+        :class="{ 'is-entered': entered }"
+        :style="{ '--delay': (80 + idx * 60) + 'ms' }">
         <RingChart :value="card.value" :max="card.max" :label="card.label" :unit="card.unit" :color="card.color" :size="100" />
         <p class="text-xs mt-2.5 font-medium" :class="card.subClass">{{ card.sub }}</p>
       </div>
     </div>
 
     <!-- 模型配置 -->
-    <div v-if="modelConfig" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
-      :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
-      :style="{ transitionDelay: '320ms' }">
+    <div v-if="modelConfig" class="card-accent enter-anim card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm" :class="{ 'is-entered': entered }"
+      style="--delay: 320ms">
       <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">模型配置</h4>
       <div class="space-y-3">
         <div class="flex items-center justify-between">
@@ -363,9 +353,8 @@ onUnmounted(() => {
       </div>
     </div>
     <!-- 兜底：无 config 时只显示默认模型 -->
-    <div v-else-if="defaultModelName" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
-      :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
-      :style="{ transitionDelay: '320ms' }">
+    <div v-else-if="defaultModelName" class="card-accent enter-anim card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm" :class="{ 'is-entered': entered }"
+      style="--delay: 320ms">
       <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">当前模型</h4>
       <p class="text-base font-medium text-gray-900">{{ defaultModelProvider }}/{{ defaultModelName }}</p>
     </div>
@@ -373,9 +362,8 @@ onUnmounted(() => {
     <!-- 会话分布 + 模型统计 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <!-- 会话分布 -->
-      <div v-if="sessions.length > 0" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
-        :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
-        :style="{ transitionDelay: '400ms' }">
+      <div v-if="sessions.length > 0" class="card-accent enter-anim card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm" :class="{ 'is-entered': entered }"
+        style="--delay: 400ms">
         <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">会话分布</h4>
         <div class="flex items-center justify-center">
           <div class="w-48 h-48">
@@ -384,9 +372,8 @@ onUnmounted(() => {
         </div>
       </div>
       <!-- 模型统计 -->
-      <div v-if="providerModelCount.length > 0" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
-        :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
-        :style="{ transitionDelay: '480ms' }">
+      <div v-if="providerModelCount.length > 0" class="card-accent enter-anim card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm" :class="{ 'is-entered': entered }"
+        style="--delay: 480ms">
         <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">模型统计</h4>
         <div class="space-y-3">
           <div v-for="p in providerModelCount" :key="p.name" class="flex items-center justify-between">
@@ -404,9 +391,8 @@ onUnmounted(() => {
     </div>
 
     <!-- 会话列表 -->
-    <div v-if="sessions.length > 0" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
-      :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
-      :style="{ transitionDelay: '560ms' }">
+    <div v-if="sessions.length > 0" class="card-accent enter-anim card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm" :class="{ 'is-entered': entered }"
+      style="--delay: 560ms">
       <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">活跃会话</h4>
       <div class="space-y-2">
         <div v-for="s in sessions.slice(0, 10)" :key="s.key || s.id"
@@ -421,9 +407,8 @@ onUnmounted(() => {
     </div>
 
     <!-- 模型列表 -->
-    <div v-if="modelsInfo?.models?.length" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
-      :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
-      :style="{ transitionDelay: '640ms' }">
+    <div v-if="modelsInfo?.models?.length" class="card-accent enter-anim card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm" :class="{ 'is-entered': entered }"
+      style="--delay: 640ms">
       <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">可用模型</h4>
       <div class="space-y-2">
         <div v-for="m in modelsInfo.models" :key="m.id"
@@ -441,9 +426,8 @@ onUnmounted(() => {
     </div>
 
     <!-- 渠道状态 -->
-    <div v-if="channelsInfo" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white dark:bg-gray-800 dark:border-gray-700 p-5 shadow-sm"
-      :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
-      :style="{ transitionDelay: '720ms' }">
+    <div v-if="channelsInfo" class="card-accent enter-anim card-hover rounded-2xl border border-gray-200/60 bg-white dark:bg-gray-800 dark:border-gray-700 p-5 shadow-sm" :class="{ 'is-entered': entered }"
+      style="--delay: 720ms">
       <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 tracking-tight">渠道状态</h4>
       <!-- EventLoop 状态 -->
       <div v-if="eventLoop" class="flex items-center justify-between p-3 rounded-lg mb-3"
@@ -490,9 +474,9 @@ onUnmounted(() => {
     </div>
 
     <!-- 快速操作 -->
-    <div class="rounded-2xl border border-gray-200/60 bg-white dark:bg-gray-800 dark:border-gray-700 p-5 shadow-sm"
-      :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
-      :style="{ transitionDelay: '800ms' }">
+    <div class="enter-anim rounded-2xl border border-gray-200/60 bg-white dark:bg-gray-800 dark:border-gray-700 p-5 shadow-sm"
+      :class="{ 'is-entered': entered }"
+      style="--delay: 800ms">
       <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 tracking-tight">快速操作</h4>
       <div class="flex flex-wrap gap-2">
         <button @click="loadAllData()" :disabled="loading"

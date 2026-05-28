@@ -5,12 +5,12 @@ import AppToast from '../components/AppToast.vue'
 
 import { createLogger } from '../utils/logger.js'
 import { exportEventLog } from '../utils/export.js'
+import { useEnterAnim } from '../composables/useEnterAnim.js'
 
 const log = createLogger('Sessions')
 
-// 入场动画状态
-const entered = ref(false)
-onMounted(() => { nextTick(() => { entered.value = true }) })
+// 入场动画
+const { entered } = useEnterAnim()
 const healthData = ref(null)
 const loading = ref(true)
 const toastRef = ref(null)
@@ -196,7 +196,7 @@ onUnmounted(() => {
     <AppToast ref="toastRef" />
 
     <!-- 页面标题 -->
-    <div class="sessions-section" :class="{ 'sessions-enter': entered }" style="--delay: 0ms">
+    <div class="enter-anim" :class="{ 'is-entered': entered }" style="--delay: 0ms">
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-lg font-bold text-gray-900">日志查看</h2>
@@ -224,7 +224,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Gateway 健康状态 -->
-    <div v-if="healthData" class="sessions-section" :class="{ 'sessions-enter': entered }" style="--delay: 80ms">
+    <div v-if="healthData" class="enter-anim" :class="{ 'is-entered': entered }" style="--delay: 80ms">
       <div class="bg-white rounded-xl border border-gray-200 p-4">
         <div class="flex items-center gap-2 mb-3">
           <span class="text-sm font-semibold text-gray-700">Gateway 状态</span>
@@ -257,7 +257,7 @@ onUnmounted(() => {
     </div>
 
     <!-- 事件统计 -->
-    <div v-if="uniqueEvents.length > 0" class="sessions-section" :class="{ 'sessions-enter': entered }" style="--delay: 160ms">
+    <div v-if="uniqueEvents.length > 0" class="enter-anim" :class="{ 'is-entered': entered }" style="--delay: 160ms">
       <div class="bg-white rounded-xl border border-gray-200 p-4">
         <p class="text-xs font-medium text-gray-500 mb-2">事件类型统计</p>
         <div class="flex flex-wrap gap-1.5">
@@ -273,7 +273,7 @@ onUnmounted(() => {
     </div>
 
     <!-- 日志查看器 -->
-    <div class="sessions-section" :class="{ 'sessions-enter': entered }" style="--delay: 240ms">
+    <div class="enter-anim" :class="{ 'is-entered': entered }" style="--delay: 240ms">
       <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <!-- 工具栏 -->
       <div class="flex items-center gap-3 p-3 border-b border-gray-100">
@@ -314,16 +314,5 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* 入场动画 */
-.sessions-section {
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--delay, 0ms);
-}
-.sessions-enter {
-  opacity: 1;
-  transform: translateY(0);
-}
+/* Sessions 使用 shared-animations.css 中的 .enter-anim / .is-entered */
 </style>
