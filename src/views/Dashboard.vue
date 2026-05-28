@@ -507,6 +507,14 @@ onUnmounted(() => {
           class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200/80 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
           ⚡ 内置 UI
         </a>
+        <button @click="doGatewayAction('stop')" :disabled="controlling || !authenticated"
+          class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-red-200/80 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-40 transition-all shadow-sm">
+          ⏹ 停止
+        </button>
+        <button @click="doGatewayAction('start')" :disabled="controlling || authenticated"
+          class="btn-press px-4 py-2 rounded-xl text-xs font-semibold bg-green-500 text-white hover:bg-green-600 disabled:opacity-40 transition-all shadow-sm">
+          ▶ 启动
+        </button>
       </div>
     </div>
 
