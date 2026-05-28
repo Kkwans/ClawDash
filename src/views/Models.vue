@@ -248,9 +248,8 @@ useScrollLock(showDeleteConfirm)
 
     <template v-if="authenticated">
       <!-- 页面标题 -->
-      <div class="flex items-center justify-between"
-        :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
-        :style="{ transitionDelay: '0ms' }">
+      <div class="flex items-center justify-between enter-anim"
+        :class="{ 'is-entered': entered }" style="--delay: 0ms">
         <div>
           <h2 class="text-lg font-bold text-gray-900 tracking-tight">模型管理</h2>
           <p class="text-sm text-gray-500 mt-0.5">管理 AI 模型提供商和默认配置</p>
@@ -266,9 +265,8 @@ useScrollLock(showDeleteConfirm)
       </div>
 
       <!-- 全局配置卡片 -->
-      <div class="card-accent card-hover bg-white rounded-2xl border border-gray-200/60 p-5 shadow-sm space-y-5"
-        :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
-        :style="{ transitionDelay: '80ms' }">
+      <div class="card-accent card-hover bg-white rounded-2xl border border-gray-200/60 p-5 shadow-sm space-y-5 enter-anim"
+        :class="{ 'is-entered': entered }" style="--delay: 80ms">
         <h4 class="text-sm font-bold text-gray-800 tracking-tight">默认配置</h4>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="p-3.5 rounded-xl bg-gradient-to-br from-blue-50/60 to-indigo-50/30 ring-1 ring-blue-100/50">
@@ -317,9 +315,8 @@ useScrollLock(showDeleteConfirm)
       </div>
 
       <!-- 提供商列表 -->
-      <div v-else class="space-y-3"
-        :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
-        :style="{ transitionDelay: '160ms' }">
+      <div v-else class="space-y-3 enter-anim"
+        :class="{ 'is-entered': entered }" style="--delay: 160ms">
         <div class="flex items-center justify-between">
           <p class="text-xs text-gray-400 font-medium">共 {{ providers.length }} 个提供商</p>
         </div>
@@ -407,15 +404,5 @@ useScrollLock(showDeleteConfirm)
 </template>
 
 <style scoped>
-/* Models 入场动画 */
-.dashboard-enter {
-  opacity: 0;
-  transform: translateY(16px);
-}
-.dashboard-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
+/* Models 使用 shared-animations.css 中的 .enter-anim / .is-entered */
 </style>

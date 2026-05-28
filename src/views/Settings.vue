@@ -123,13 +123,13 @@ onMounted(() => {
     <AppConfirm ref="confirmRef" />
 
     <!-- 页面标题 -->
-    <div class="settings-section" :class="{ 'settings-enter': entered }" style="--delay: 0ms">
+    <div class="enter-anim" :class="{ 'is-entered': entered }" style="--delay: 0ms">
       <h2 class="text-lg font-bold text-gray-900">系统设置</h2>
       <p class="text-sm text-gray-500 mt-0.5">管理 Gateway 连接和配置</p>
     </div>
 
     <!-- Gateway 控制 -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 settings-section" :class="{ 'settings-enter': entered }" style="--delay: 80ms">
+    <div class="bg-white rounded-xl border border-gray-200 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 80ms">
       <h3 class="text-base font-semibold text-gray-800 mb-4">🎛️ Gateway 控制</h3>
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
         <div class="flex-1">
@@ -158,7 +158,7 @@ onMounted(() => {
     </div>
 
     <!-- Token 配置 -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 settings-section" :class="{ 'settings-enter': entered }" style="--delay: 160ms">
+    <div class="bg-white rounded-xl border border-gray-200 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 160ms">
       <h3 class="text-base font-semibold text-gray-800 mb-2">🔑 Gateway Token</h3>
       <p class="text-sm text-gray-500 mb-4">输入 Gateway Token 以访问 API 功能。Token 保存在本地浏览器中。</p>
       <div class="flex items-center gap-3">
@@ -174,7 +174,7 @@ onMounted(() => {
     </div>
 
     <!-- 配置编辑器 -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 settings-section" :class="{ 'settings-enter': entered }" style="--delay: 240ms">
+    <div class="bg-white rounded-xl border border-gray-200 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 240ms">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-base font-semibold text-gray-800">📝 配置编辑器</h3>
         <div class="flex gap-2">
@@ -189,7 +189,7 @@ onMounted(() => {
     </div>
 
     <!-- 当前配置 -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 settings-section" :class="{ 'settings-enter': entered }" style="--delay: 320ms">
+    <div class="bg-white rounded-xl border border-gray-200 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 320ms">
       <h3 class="text-base font-semibold text-gray-800 mb-4">⚙️ 当前配置</h3>
       <div v-if="loading" class="text-center py-4 text-gray-400">加载中...</div>
       <div v-else class="space-y-1">
@@ -213,7 +213,7 @@ onMounted(() => {
     </div>
 
     <!-- 已安装插件 -->
-    <div v-if="pluginEntries.length > 0" class="bg-white rounded-xl border border-gray-200 p-6 settings-section" :class="{ 'settings-enter': entered }" style="--delay: 400ms">
+    <div v-if="pluginEntries.length > 0" class="bg-white rounded-xl border border-gray-200 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 400ms">
       <h3 class="text-base font-semibold text-gray-800 mb-4">🧩 已安装插件</h3>
       <div class="space-y-2">
         <div v-for="pl in pluginEntries" :key="pl.id"
@@ -231,7 +231,7 @@ onMounted(() => {
     </div>
 
     <!-- 关于 -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 settings-section" :class="{ 'settings-enter': entered }" style="--delay: 480ms">
+    <div class="bg-white rounded-xl border border-gray-200 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 480ms">
       <h3 class="text-base font-semibold text-gray-800 mb-4">ℹ️ 关于</h3>
       <div class="space-y-2 text-sm text-gray-500">
         <p>ClawDash v0.8.0 — OpenClaw WebSocket 控制台</p>
@@ -252,16 +252,5 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* 入场动画 */
-.settings-section {
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--delay, 0ms);
-}
-.settings-enter {
-  opacity: 1;
-  transform: translateY(0);
-}
+/* Settings 使用 shared-animations.css 中的 .enter-anim / .is-entered */
 </style>

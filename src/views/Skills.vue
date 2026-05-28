@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
-import { gwRequest } from '../stores/gateway.js'
+import { gwRequest, token } from '../stores/gateway.js'
 import { getRawConfig } from "../api/config-utils.js"
 import AppToast from '../components/AppToast.vue'
 import AppEmpty from '../components/AppEmpty.vue'
@@ -65,10 +65,9 @@ async function searchSkills() {
 
 async function installSkill(skill) {
   try {
-    const token = localStorage.getItem('clawdash_gateway_token') || ''
     const res = await fetch('/api/skills/install', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token.value },
       body: JSON.stringify({ slug: skill.slug })
     })
     const data = await res.json()
@@ -87,10 +86,9 @@ async function deleteSkill(skill) {
   const ok = await showConfirm(`确定删除 Skill "${skill.name || skill.id}"？`)
   if (!ok) return
   try {
-    const token = localStorage.getItem('clawdash_gateway_token') || ''
     const res = await fetch('/api/skills/delete', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token.value },
       body: JSON.stringify({ name: skill.name || skill.id })
     })
     const data = await res.json()
@@ -180,7 +178,7 @@ onMounted(fetchData)
     <AppConfirm ref="confirmRef" />
 
     <!-- 页面标题 -->
-    <div class="skills-section" :class="{ 'skills-enter': entered }" style="--delay: 0ms">
+    <div class="enter-anim" :class="{ 'is-entered': entered }" style="--delay: 0ms">
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-lg font-bold text-gray-900 tracking-tight">Skill 管理</h2>
@@ -197,7 +195,7 @@ onMounted(fetchData)
     </div>
 
     <!-- Tab 切换 -->
-    <div class="skills-section" :class="{ 'skills-enter': entered }" style="--delay: 80ms">
+    <div class="enter-anim" :class="{ 'is-entered': entered }" style="--delay: 80ms">
       <div class="flex items-center gap-1 bg-gray-100/80 rounded-xl p-1 w-fit">
         <button @click="activeTab = 'installed'"
           class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
@@ -218,7 +216,7 @@ onMounted(fetchData)
     </div>
 
     <!-- 已安装 Skill -->
-    <div v-if="activeTab === 'installed'" class="skills-section" :class="{ 'skills-enter': entered }" style="--delay: 160ms">
+    <div v-if="activeTab === 'installed'" class="enter-anim" :class="{ 'is-entered': entered }" style="--delay: 160ms">
       <AppLoading v-if="loading" text="加载 Skill 中..." />
       <AppEmpty v-else-if="installedSkills.length === 0 && pluginEntries.length === 0"
         icon="🧩"
@@ -302,7 +300,7 @@ onMounted(fetchData)
     </div>
 
     <!-- 搜索 ClawHub -->
-    <div v-if="activeTab === 'search'" class="skills-section" :class="{ 'skills-enter': entered }" style="--delay: 160ms">
+    <div v-if="activeTab === 'search'" class="enter-anim" :class="{ 'is-entered': entered }" style="--delay: 160ms">
       <!-- 搜索框 -->
       <div class="flex gap-3">
         <div class="relative flex-1">
@@ -374,16 +372,5 @@ onMounted(fetchData)
 </template>
 
 <style scoped>
-/* Skills 入场动画 */
-.skills-section {
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--delay, 0ms);
-}
-.skills-enter {
-  opacity: 1;
-  transform: translateY(0);
-}
+/* Skills 使用 shared-animations.css 中的 .enter-anim / .is-entered */
 </style>

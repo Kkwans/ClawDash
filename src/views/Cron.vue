@@ -183,7 +183,7 @@ onMounted(fetchJobs)
     <AppConfirm ref="confirmRef" />
 
     <!-- 页面标题 -->
-    <div class="flex items-center justify-between cron-section" :class="{ 'cron-enter': entered }" style="--delay: 0ms">
+    <div class="flex items-center justify-between enter-anim" :class="{ 'is-entered': entered }" style="--delay: 0ms">
       <div>
         <h2 class="text-lg font-bold text-gray-900">定时任务</h2>
         <p class="text-sm text-gray-500 mt-0.5">管理 Cron 定时任务</p>
@@ -199,7 +199,7 @@ onMounted(fetchJobs)
     </div>
 
     <!-- 统计 -->
-    <div class="grid grid-cols-3 gap-3 cron-section" :class="{ 'cron-enter': entered }" style="--delay: 80ms">
+    <div class="grid grid-cols-3 gap-3 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 80ms">
       <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
         <p class="text-2xl font-bold text-blue-600">{{ jobs.length }}</p>
         <p class="text-xs text-gray-500 mt-1">任务总数</p>
@@ -215,7 +215,7 @@ onMounted(fetchJobs)
     </div>
 
     <!-- 帮助提示 -->
-    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 cron-section" :class="{ 'cron-enter': entered }" style="--delay: 120ms">
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 120ms">
       <div class="flex items-start gap-2">
         <span class="text-blue-500 mt-0.5">💡</span>
         <div class="text-xs text-blue-700 space-y-1">
@@ -236,7 +236,7 @@ onMounted(fetchJobs)
     />
 
     <!-- 任务列表 -->
-    <div v-else class="space-y-2 cron-section" :class="{ 'cron-enter': entered }" style="--delay: 160ms">
+    <div v-else class="space-y-2 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 160ms">
       <div v-for="job in jobs" :key="job.id"
         class="bg-white rounded-xl border border-gray-200 p-4 transition-all hover:border-gray-300 hover:shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0">
@@ -449,16 +449,5 @@ onMounted(fetchJobs)
 </template>
 
 <style scoped>
-/* 入场动画 */
-.cron-section {
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--delay, 0ms);
-}
-.cron-enter {
-  opacity: 1;
-  transform: translateY(0);
-}
+/* Cron 使用 shared-animations.css 中的 .enter-anim / .is-entered */
 </style>
