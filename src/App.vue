@@ -5,6 +5,7 @@ import AppErrorBoundary from './components/AppErrorBoundary.vue'
 import AppCommandPalette from './components/AppCommandPalette.vue'
 import AppKeyboardHelp from './components/AppKeyboardHelp.vue'
 import AppBackToTop from './components/AppBackToTop.vue'
+import AppButton from './components/AppButton.vue'
 import { useKeyboard } from './composables/useKeyboard.js'
 import { useFavorites } from './composables/useFavorites.js'
 import { useTheme } from './composables/useTheme.js'
@@ -203,21 +204,15 @@ onUnmounted(() => {
                 class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 @keyup.enter="saveTokenFromModal">
 
-              <button @click="saveTokenFromModal" :disabled="!tokenInput.trim()"
-                class="w-full py-3 rounded-xl text-sm font-medium transition-all"
-                :class="tokenSaved
-                  ? 'bg-green-500 text-white'
-                  : tokenInput.trim()
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
+              <AppButton variant="primary" :loading="tokenSaved" :disabled="!tokenInput.trim()" class="w-full" @click="saveTokenFromModal">
                 {{ tokenSaved ? '✓ 已保存' : '保存并继续' }}
-              </button>
+              </AppButton>
             </div>
 
             <div class="flex items-center justify-center gap-4 text-xs">
-              <button @click="skipToken" class="text-gray-400 hover:text-gray-600">暂时跳过</button>
+              <AppButton size="sm" variant="ghost" @click="skipToken" class="!text-gray-400 hover:!text-gray-600">暂时跳过</AppButton>
               <span class="text-gray-300">|</span>
-              <button @click="goToSettings" class="text-blue-500 hover:text-blue-600">前往系统设置</button>
+              <AppButton size="sm" variant="ghost" @click="goToSettings" class="!text-blue-500 hover:!text-blue-600">前往系统设置</AppButton>
             </div>
           </div>
         </div>
@@ -245,9 +240,9 @@ onUnmounted(() => {
               <p class="text-xs text-gray-400">OpenClaw 控制台</p>
             </div>
           </div>
-          <button v-if="isMobile" @click="sidebarOpen = false" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" aria-label="关闭侧边栏">
+          <AppButton v-if="isMobile" size="xs" variant="ghost" @click="sidebarOpen = false" aria-label="关闭侧边栏">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+          </AppButton>
         </div>
       </div>
 
@@ -256,35 +251,33 @@ onUnmounted(() => {
         <!-- 收藏 -->
         <div v-if="favoriteTabs.length > 0" class="mb-3">
           <p class="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">收藏</p>
-          <button
+          <AppButton
             v-for="tab in favoriteTabs"
             :key="'fav-'+tab.id"
+            size="sm"
+            :variant="currentTab === tab.id ? 'primary' : 'ghost'"
+            class="w-full justify-start"
             @click="switchTab(tab.id)"
-            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all"
-            :class="currentTab === tab.id
-              ? 'bg-amber-50 text-amber-700 font-semibold'
-              : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'"
           >
             <span class="text-base">{{ tab.icon }}</span>
             {{ tab.name }}
-          </button>
+          </AppButton>
           <div class="mx-3 my-2 border-t border-gray-100"></div>
         </div>
 
         <!-- 全部页面 -->
         <p class="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">全部</p>
-        <button
+        <AppButton
           v-for="tab in tabs"
           :key="tab.id"
+          size="sm"
+          :variant="currentTab === tab.id ? 'primary' : 'ghost'"
+          class="w-full justify-start"
           @click="switchTab(tab.id)"
-          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all"
-          :class="currentTab === tab.id
-            ? 'bg-blue-50 text-blue-600 font-semibold'
-            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'"
         >
           <span class="text-base">{{ tab.icon }}</span>
           {{ tab.name }}
-        </button>
+        </AppButton>
       </nav>
 
       <!-- 底部状态 -->
@@ -299,7 +292,7 @@ onUnmounted(() => {
           </span>
         </div>
         <a href="/builtin/" target="_blank"
-          class="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg border border-gray-200 text-xs text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all">
+          class="btn-press flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg border border-gray-200 text-xs text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all">
           ⚡ 高级设置（内置 UI）
         </a>
       </div>
@@ -316,50 +309,52 @@ onUnmounted(() => {
     <main class="flex-1 overflow-y-auto">
       <header class="bg-white border-b border-gray-200 px-4 md:px-6 h-14 flex items-center justify-between sticky top-0 z-10">
         <div class="flex items-center gap-3">
-          <button v-if="isMobile" @click="toggleSidebar" class="text-gray-600 hover:text-gray-800" aria-label="切换侧边栏">
+          <AppButton v-if="isMobile" size="xs" variant="ghost" @click="toggleSidebar" aria-label="切换侧边栏">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
-          </button>
+          </AppButton>
           <h2 class="text-base font-semibold text-gray-800">
             {{ tabs.find(t => t.id === currentTab)?.name }}
           </h2>
-          <button @click="toggleFavorite(currentTab)" class="p-1 rounded-lg transition-colors"
-            :class="isFavorite(currentTab) ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-gray-500'"
+          <AppButton size="xs" variant="ghost"
+            :class="isFavorite(currentTab) ? '!text-amber-500' : '!text-gray-300 hover:!text-gray-500'"
             :title="isFavorite(currentTab) ? '取消收藏' : '收藏此页面'"
-            :aria-label="isFavorite(currentTab) ? '取消收藏' : '收藏此页面'">
+            :aria-label="isFavorite(currentTab) ? '取消收藏' : '收藏此页面'"
+            @click="toggleFavorite(currentTab)">
             <svg class="w-4 h-4" :fill="isFavorite(currentTab) ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
             </svg>
-          </button>
+          </AppButton>
         </div>
         <div class="flex items-center gap-3">
-          <!-- 连接状态指示器 -->
-          <button @click="!authenticated && !connecting && reconnect()"
-            class="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs transition-all"
-            :class="authenticated ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : connecting ? 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20' : 'text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 cursor-pointer'"
-            :title="authenticated ? '已连接' : connecting ? '连接中...' : '点击重连'">
+          <AppButton size="xs"
+            class="hidden sm:flex"
+            :class="authenticated ? '!text-green-600 !bg-green-50 !dark:!text-green-400 !dark:!bg-green-900/20' : connecting ? '!text-yellow-600 !bg-yellow-50 !dark:!text-yellow-400 !dark:!bg-yellow-900/20' : '!text-red-500 !bg-red-50 !dark:!text-red-400 !dark:!bg-red-900/20 hover:!bg-red-100 !dark:!bg-red-900/40 cursor-pointer'"
+            :title="authenticated ? '已连接' : connecting ? '连接中...' : '点击重连'"
+            @click="!authenticated && !connecting && reconnect()">
             <span class="w-1.5 h-1.5 rounded-full"
               :class="authenticated ? 'bg-green-500' : connecting ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'"></span>
             {{ authenticated ? '已连接' : connecting ? '连接中' : '点击重连' }}
-          </button>
-          <button @click="commandPaletteRef?.open()"
-            class="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs text-gray-400 bg-gray-50 border border-gray-200/80 rounded-lg hover:bg-gray-100 hover:text-gray-600 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300 transition-all">
+          </AppButton>
+          <AppButton size="xs" variant="ghost" class="hidden sm:flex"
+            @click="commandPaletteRef?.open()">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             搜索
             <kbd class="px-1 py-0.5 text-[10px] font-mono bg-gray-200/80 dark:bg-gray-600 rounded">⌘K</kbd>
-          </button>
-          <button @click="keyboardHelpRef?.open()"
-            class="hidden sm:flex items-center gap-1 p-1.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
-            title="键盘快捷键 (?)">
+          </AppButton>
+          <AppButton size="xs" variant="ghost" class="hidden sm:flex"
+            title="键盘快捷键 (?)"
+            @click="keyboardHelpRef?.open()">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          </button>
-          <button @click="toggleTheme" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
-            :title="theme === 'system' ? '跟随系统' : theme === 'dark' ? '深色模式' : '浅色模式'">
+          </AppButton>
+          <AppButton size="xs" variant="ghost"
+            :title="theme === 'system' ? '跟随系统' : theme === 'dark' ? '深色模式' : '浅色模式'"
+            @click="toggleTheme">
             <span v-if="theme === 'system'" class="text-sm">🖥️</span>
             <span v-else-if="isDark" class="text-sm">🌙</span>
             <span v-else class="text-sm">☀️</span>
-          </button>
+          </AppButton>
           <span class="text-xs text-gray-400">ClawDash v0.8.0</span>
           <a href="https://github.com/Kkwans/ClawDash" target="_blank"
             class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -377,7 +372,7 @@ onUnmounted(() => {
             <div class="w-4 h-4 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin"></div>
             <span class="text-xs text-amber-700 font-medium">连接断开，正在重连...</span>
           </div>
-          <button @click="cancelReconnect()" class="text-xs text-amber-600 hover:text-amber-800">取消</button>
+          <AppButton size="xs" variant="ghost" class="!text-amber-600 hover:!text-amber-800" @click="cancelReconnect()">取消</AppButton>
         </div>
       </Transition>
 
