@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import AppButton from './AppButton.vue'
 
 const visible = ref(false)
 
@@ -39,7 +40,11 @@ defineExpose({ open, close, toggle })
               <span class="text-lg">⌨️</span>
               <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">键盘快捷键</h3>
             </div>
-            <button @click="close" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl">&times;</button>
+            <AppButton size="sm" variant="ghost" class="!text-xl" @click="close" aria-label="关闭">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </AppButton>
           </div>
           <div class="px-5 py-4 max-h-[60vh] overflow-y-auto space-y-5">
             <div v-for="section in shortcuts" :key="section.group">

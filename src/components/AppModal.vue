@@ -1,5 +1,6 @@
 <script setup>
 import { watch, nextTick, ref, onBeforeUnmount } from 'vue'
+import AppButton from './AppButton.vue'
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -70,11 +71,11 @@ onBeforeUnmount(() => {
           role="dialog" aria-modal="true" :aria-label="title || '弹窗'" tabindex="-1">
           <div v-if="title || closable" class="modal-header">
             <h3 v-if="title" class="modal-title">{{ title }}</h3>
-            <button v-if="closable" class="modal-close" @click="close" aria-label="关闭弹窗">
+            <AppButton v-if="closable" size="sm" variant="ghost" @click="close" aria-label="关闭弹窗">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
               </svg>
-            </button>
+            </AppButton>
           </div>
           <div class="modal-body">
             <slot />
@@ -125,27 +126,6 @@ onBeforeUnmount(() => {
   font-weight: var(--font-semibold);
   color: var(--text-primary);
   line-height: var(--leading-tight);
-}
-
-.modal-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  border-radius: var(--radius);
-  transition: all var(--duration) var(--ease);
-}
-.modal-close:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-.modal-close:active {
-  transform: scale(0.9);
 }
 
 .modal-body {

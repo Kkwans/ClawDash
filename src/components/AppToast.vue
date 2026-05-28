@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive } from 'vue'
+import AppButton from './AppButton.vue'
 
 const toasts = reactive([])
 let nextId = 0
@@ -87,7 +88,7 @@ defineExpose({ show, close, closeAll })
         >
           <span class="toast-icon" aria-hidden="true">{{ icons[toast.type] }}</span>
           <span class="toast-message">{{ toast.message }}</span>
-          <button class="toast-close" @click="close(toast.id)" aria-label="关闭提示">✕</button>
+          <AppButton size="xs" variant="ghost" class="!p-0.5 !h-5 !min-h-0 !border-0" @click="close(toast.id)" aria-label="关闭提示">✕</AppButton>
           <div class="toast-progress" :style="{ width: toast.progress + '%' }" />
         </div>
       </TransitionGroup>
@@ -154,26 +155,6 @@ defineExpose({ show, close, closeAll })
   flex: 1;
   min-width: 0;
   word-break: break-word;
-}
-
-.toast-close {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  transition: all var(--duration) var(--ease);
-}
-.toast-close:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
 }
 
 /* 进度条 */

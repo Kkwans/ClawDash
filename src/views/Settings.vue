@@ -218,7 +218,7 @@ onMounted(() => {
       <h3 class="text-base font-semibold text-gray-800 mb-4">🧩 已安装插件</h3>
       <div class="space-y-2">
         <div v-for="pl in pluginEntries" :key="pl.id"
-          class="card-accent card-hover flex items-center justify-between p-3 rounded-lg border border-gray-100 transition-all">
+          class="card-accent card-hover flex items-center justify-between p-3 rounded-lg transition-all hover:bg-purple-50/30">
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-sm">🧩</div>
             <p class="text-sm font-medium text-gray-800">{{ pl.id }}</p>
