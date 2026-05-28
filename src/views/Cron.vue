@@ -28,6 +28,7 @@ const historyJob = ref(null)
 const historyRuns = ref([])
 const historyLoading = ref(false)
 const newJob = ref({ name: '', scheduleKind: 'cron', scheduleExpr: '', payloadKind: 'systemEvent', payloadText: '', sessionTarget: 'main' })
+const jobFilter = ref('')
 
 function showConfirm(msg) {
   return confirmRef.value?.confirm(msg) || false
@@ -47,6 +48,13 @@ async function fetchJobs() {
   }
   loading.value = false
 }
+
+// 任务搜索过滤
+const filteredJobs = computed(() => {
+  if (!jobFilter.value) return jobs.value
+  const q = jobFilter.value.toLowerCase()
+  return jobs.value.filter(j => (j.name || j.id).toLowerCase().includes(q))
+})
 
 async function toggleJob(job) {
   try {
@@ -68,7 +76,7 @@ async function runJob(job) {
 }
 
 async function deleteJob(job) {
-  const ok = await showConfirm(`确定要删除任务 "${job.name || job.id}" 吗？`)
+  const ok = await showConfirm(`确定删除任务「${job.name || job.id}」？此操作不可撤销。`)
   if (!ok) return
   try {
     await gwRequest('cron.remove', { jobId: job.id })
@@ -80,6 +88,8 @@ async function deleteJob(job) {
 }
 
 async function createJob() {
+  if (!newJob.value.scheduleExpr) { showToast('请填写调度表达式'); return }
+  if (!newJob.value.payloadText) { showToast('请填写任务内容'); return }
   saving.value = true
   try {
     const schedule = newJob.value.scheduleKind === 'cron'
@@ -224,16 +234,33 @@ onMounted(fetchJobs)
     <!-- 加载状态 -->
     <AppLoading v-if="loading" text="加载任务中..." />
 
-    <!-- 空状态 -->
-    <AppEmpty v-else-if="jobs.length === 0"
-      icon="⏰"
-      title="暂无定时任务"
-      description="点击「新建」创建第一个定时任务"
-    />
-
     <!-- 任务列表 -->
-    <div v-else class="space-y-2 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 160ms">
-      <div v-for="job in jobs" :key="job.id"
+    <div v-else class="space-y-3 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 160ms">
+      <!-- 搜索框（有数据时显示） -->
+      <div v-if="jobs.length > 0" class="relative">
+        <input v-model="jobFilter" type="search" placeholder="搜索任务..."
+          class="w-full pl-8 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all">
+        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+      </div>
+
+      <!-- 空状态 -->
+      <AppEmpty v-if="filteredJobs.length === 0 && jobs.length === 0"
+        icon="⏰"
+        title="暂无定时任务"
+        description="点击「新建」创建第一个定时任务"
+      />
+      <!-- 无搜索结果 -->
+      <div v-else-if="filteredJobs.length === 0 && jobs.length > 0" class="text-center py-10 bg-white rounded-xl border border-gray-200">
+        <p class="text-sm text-gray-400">未找到匹配「{{ jobFilter }}」的任务</p>
+      </div>
+
+      <!-- 任务计数 -->
+      <div v-if="filteredJobs.length > 0" class="flex items-center justify-between">
+        <p class="text-xs text-gray-400 font-medium">共 {{ jobs.length }} 个任务 · 已筛选 {{ filteredJobs.length }} 个</p>
+      </div>
+
+      <!-- 任务卡片列表 -->
+      <div v-for="job in filteredJobs" :key="job.id"
         class="bg-white rounded-xl border border-gray-200 p-4 transition-all hover:border-gray-300 hover:shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0">
           <div class="flex-1 min-w-0">
@@ -248,7 +275,7 @@ onMounted(fetchJobs)
               <span>{{ formatPayload(job.payload) }}</span>
             </div>
           </div>
-          <div class="flex items-center gap-2 flex-shrink-0">
+          <div class="flex items-center gap-1.5 flex-shrink-0">
             <AppButton size="sm" @click="showHistory(job)">📋</AppButton>
             <AppButton size="sm" @click="startEdit(job)">✏️</AppButton>
             <AppButton size="sm" variant="primary" @click="runJob(job)">▶ 执行</AppButton>
@@ -269,67 +296,53 @@ onMounted(fetchJobs)
         <input type="password" name="password" autocomplete="new-password" style="display:none" aria-hidden="true">
         <div class="space-y-4">
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">任务名称</label>
-            <input v-model="newJob.name" placeholder="可选，留空自动生成" autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
+            <label class="block text-xs font-medium text-gray-600 mb-1.5">任务名称 <span class="text-gray-400 font-normal">(可选)</span></label>
+            <input v-model="newJob.name" placeholder="留空自动生成" autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
               aria-label="任务名称"
-              class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300">
           </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">调度方式</label>
-          <div class="flex gap-2">
-            <button @click="newJob.scheduleKind = 'cron'"
-              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-              :class="newJob.scheduleKind === 'cron' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">
-              Cron 表达式
-            </button>
-            <button @click="newJob.scheduleKind = 'every'"
-              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-              :class="newJob.scheduleKind === 'every' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">
-              固定间隔
-            </button>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-2">调度方式</label>
+            <div class="flex gap-2">
+              <AppButton size="sm" :variant="newJob.scheduleKind === 'cron' ? 'primary' : 'default'" @click="newJob.scheduleKind = 'cron'">Cron 表达式</AppButton>
+              <AppButton size="sm" :variant="newJob.scheduleKind === 'every' ? 'primary' : 'default'" @click="newJob.scheduleKind = 'every'">固定间隔</AppButton>
+            </div>
           </div>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">
-            {{ newJob.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔（分钟）' }}
-          </label>
-          <input v-model="newJob.scheduleExpr"
-            :placeholder="newJob.scheduleKind === 'cron' ? '0 */6 * * *' : '60'"
-            autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
-            :aria-label="newJob.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔分钟数'"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">任务类型</label>
-          <div class="flex gap-2">
-            <button type="button" @click="newJob.payloadKind = 'systemEvent'; newJob.sessionTarget = 'main'"
-              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-              :class="newJob.payloadKind === 'systemEvent' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">
-              📢 系统事件
-            </button>
-            <button type="button" @click="newJob.payloadKind = 'agentTurn'; newJob.sessionTarget = 'isolated'"
-              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-              :class="newJob.payloadKind === 'agentTurn' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">
-              🤖 Agent 执行
-            </button>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5">
+              {{ newJob.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔（分钟）' }}
+            </label>
+            <input v-model="newJob.scheduleExpr"
+              :placeholder="newJob.scheduleKind === 'cron' ? '0 */6 * * *' : '60'"
+              autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
+              :aria-label="newJob.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔分钟数'"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-2">任务类型</label>
+            <div class="flex gap-2">
+              <AppButton size="sm" :variant="newJob.payloadKind === 'systemEvent' ? 'primary' : 'default'"
+                @click="newJob.payloadKind = 'systemEvent'; newJob.sessionTarget = 'main'">📢 系统事件</AppButton>
+              <AppButton size="sm" :variant="newJob.payloadKind === 'agentTurn' ? 'primary' : 'default'"
+                @click="newJob.payloadKind = 'agentTurn'; newJob.sessionTarget = 'isolated'">🤖 Agent 执行</AppButton>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5">
+              {{ newJob.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息' }}
+            </label>
+            <textarea v-model="newJob.payloadText" rows="3"
+              :placeholder="newJob.payloadKind === 'systemEvent' ? '注入到主会话的文本...' : '发送给 Agent 的消息...'"
+              autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
+              :aria-label="newJob.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息'"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all resize-none placeholder:text-gray-300"></textarea>
           </div>
         </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">
-            {{ newJob.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息' }}
-          </label>
-          <textarea v-model="newJob.payloadText" rows="3"
-            :placeholder="newJob.payloadKind === 'systemEvent' ? '注入到主会话的文本...' : '发送给 Agent 的消息...'"
-            autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
-            :aria-label="newJob.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息'"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
-        </div>
-      </div>
       </form>
       <template #footer>
-        <AppButton @click="showCreateModal = false">取消</AppButton>
-        <AppButton variant="primary" :loading="saving" :disabled="!newJob.payloadText" @click="createJob">
-          {{ saving ? '创建中...' : '创建' }}
+        <AppButton variant="ghost" @click="showCreateModal = false">取消</AppButton>
+        <AppButton variant="primary" :loading="saving" @click="createJob">
+          {{ saving ? '创建中...' : '创建任务' }}
         </AppButton>
       </template>
     </AppModal>
@@ -342,35 +355,51 @@ onMounted(fetchJobs)
         <input type="password" name="password" autocomplete="new-password" style="display:none" aria-hidden="true">
         <div class="space-y-4">
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">任务名称</label>
-            <input v-model="editForm.name" placeholder="可选" autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')" aria-label="任务名称" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <label class="block text-xs font-medium text-gray-600 mb-1.5">任务名称</label>
+            <input v-model="editForm.name" placeholder="可选" autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
+              aria-label="任务名称"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300">
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">调度方式</label>
+            <label class="block text-xs font-medium text-gray-600 mb-2">调度方式</label>
             <div class="flex gap-2">
-              <button type="button" @click="editForm.scheduleKind = 'cron'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.scheduleKind === 'cron' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">Cron 表达式</button>
-              <button type="button" @click="editForm.scheduleKind = 'every'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.scheduleKind === 'every' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">固定间隔</button>
+              <AppButton size="sm" :variant="editForm.scheduleKind === 'cron' ? 'primary' : 'default'"
+                @click="editForm.scheduleKind = 'cron'">Cron 表达式</AppButton>
+              <AppButton size="sm" :variant="editForm.scheduleKind === 'every' ? 'primary' : 'default'"
+                @click="editForm.scheduleKind = 'every'">固定间隔</AppButton>
             </div>
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">{{ editForm.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔（分钟）' }}</label>
-            <input v-model="editForm.scheduleExpr" autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')" :aria-label="editForm.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔分钟数'" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <label class="block text-xs font-medium text-gray-600 mb-1.5">
+              {{ editForm.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔（分钟）' }}
+            </label>
+            <input v-model="editForm.scheduleExpr"
+              autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
+              :aria-label="editForm.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔分钟数'"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300">
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">任务类型</label>
+            <label class="block text-xs font-medium text-gray-600 mb-2">任务类型</label>
             <div class="flex gap-2">
-              <button type="button" @click="editForm.payloadKind = 'systemEvent'; editForm.sessionTarget = 'main'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.payloadKind === 'systemEvent' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">📢 系统事件</button>
-              <button type="button" @click="editForm.payloadKind = 'agentTurn'; editForm.sessionTarget = 'isolated'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.payloadKind === 'agentTurn' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">🤖 Agent 执行</button>
+              <AppButton size="sm" :variant="editForm.payloadKind === 'systemEvent' ? 'primary' : 'default'"
+                @click="editForm.payloadKind = 'systemEvent'; editForm.sessionTarget = 'main'">📢 系统事件</AppButton>
+              <AppButton size="sm" :variant="editForm.payloadKind === 'agentTurn' ? 'primary' : 'default'"
+                @click="editForm.payloadKind = 'agentTurn'; editForm.sessionTarget = 'isolated'">🤖 Agent 执行</AppButton>
             </div>
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">{{ editForm.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息' }}</label>
-            <textarea v-model="editForm.payloadText" rows="3" autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')" :aria-label="editForm.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息'" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5">
+              {{ editForm.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息' }}
+            </label>
+            <textarea v-model="editForm.payloadText" rows="3"
+              autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
+              :aria-label="editForm.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息'"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all resize-none placeholder:text-gray-300"></textarea>
           </div>
         </div>
       </form>
       <template #footer>
-        <AppButton @click="showEditModal = false">取消</AppButton>
+        <AppButton variant="ghost" @click="showEditModal = false">取消</AppButton>
         <AppButton variant="primary" :loading="saving" @click="saveEdit">
           {{ saving ? '保存中...' : '保存' }}
         </AppButton>
@@ -380,26 +409,28 @@ onMounted(fetchJobs)
     <!-- 执行历史弹窗 -->
     <AppModal v-model:visible="showHistoryModal" :title="'执行历史 — ' + (historyJob?.name || historyJob?.id || '')" width="500px">
       <div v-if="historyLoading" class="text-center py-8">
-        <div class="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+        <div class="w-6 h-6 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
       </div>
       <div v-else-if="historyRuns.length === 0" class="text-center py-8">
         <p class="text-sm text-gray-400">暂无执行记录</p>
       </div>
-      <div v-else class="space-y-2">
+      <div v-else class="space-y-2 max-h-80 overflow-y-auto">
         <div v-for="run in historyRuns" :key="run.id || run.runId"
-          class="p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
+          class="p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
           <div class="flex items-center justify-between">
             <AppBadge :type="run.status === 'completed' || run.ok ? 'success' : run.status === 'failed' || run.error ? 'danger' : 'warning'" size="sm">
               {{ run.status || (run.ok ? '成功' : '失败') }}
             </AppBadge>
-            <span class="text-xs text-gray-400">{{ run.startedAt ? new Date(run.startedAt).toLocaleString('zh-CN') : run.createdAt ? new Date(run.createdAt).toLocaleString('zh-CN') : '-' }}</span>
+            <span class="text-xs text-gray-400">
+              {{ run.startedAt ? new Date(run.startedAt).toLocaleString('zh-CN') : run.createdAt ? new Date(run.createdAt).toLocaleString('zh-CN') : '-' }}
+            </span>
           </div>
           <p v-if="run.error" class="text-xs text-red-500 mt-1">{{ run.error }}</p>
           <p v-if="run.summary" class="text-xs text-gray-600 mt-1">{{ run.summary }}</p>
         </div>
       </div>
       <template #footer>
-        <AppButton @click="showHistoryModal = false">关闭</AppButton>
+        <AppButton variant="ghost" @click="showHistoryModal = false">关闭</AppButton>
       </template>
     </AppModal>
   </div>
