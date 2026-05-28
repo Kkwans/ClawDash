@@ -263,13 +263,17 @@ onMounted(fetchJobs)
 
     <!-- 新建弹窗 -->
     <AppModal v-model:visible="showCreateModal" title="新建定时任务" width="500px">
-      <div class="space-y-4">
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">任务名称</label>
-          <input v-model="newJob.name" placeholder="可选，留空自动生成" autocomplete="off"
-            aria-label="任务名称"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
+      <form autocomplete="off" @submit.prevent="createJob">
+        <!-- 隐藏虚拟输入框，吸收浏览器自动填充 -->
+        <input type="text" name="username" autocomplete="username" style="display:none" aria-hidden="true">
+        <input type="password" name="password" autocomplete="new-password" style="display:none" aria-hidden="true">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">任务名称</label>
+            <input v-model="newJob.name" placeholder="可选，留空自动生成" autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
+              aria-label="任务名称"
+              class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">调度方式</label>
           <div class="flex gap-2">
@@ -291,19 +295,19 @@ onMounted(fetchJobs)
           </label>
           <input v-model="newJob.scheduleExpr"
             :placeholder="newJob.scheduleKind === 'cron' ? '0 */6 * * *' : '60'"
-            autocomplete="off"
+            autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
             :aria-label="newJob.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔分钟数'"
             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">任务类型</label>
           <div class="flex gap-2">
-            <button @click="newJob.payloadKind = 'systemEvent'; newJob.sessionTarget = 'main'"
+            <button type="button" @click="newJob.payloadKind = 'systemEvent'; newJob.sessionTarget = 'main'"
               class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
               :class="newJob.payloadKind === 'systemEvent' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">
               📢 系统事件
             </button>
-            <button @click="newJob.payloadKind = 'agentTurn'; newJob.sessionTarget = 'isolated'"
+            <button type="button" @click="newJob.payloadKind = 'agentTurn'; newJob.sessionTarget = 'isolated'"
               class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
               :class="newJob.payloadKind === 'agentTurn' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">
               🤖 Agent 执行
@@ -316,11 +320,12 @@ onMounted(fetchJobs)
           </label>
           <textarea v-model="newJob.payloadText" rows="3"
             :placeholder="newJob.payloadKind === 'systemEvent' ? '注入到主会话的文本...' : '发送给 Agent 的消息...'"
-            autocomplete="off"
+            autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
             :aria-label="newJob.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息'"
             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
         </div>
       </div>
+      </form>
       <template #footer>
         <AppButton @click="showCreateModal = false">取消</AppButton>
         <AppButton variant="primary" :loading="saving" :disabled="!newJob.payloadText" @click="createJob">
@@ -331,34 +336,39 @@ onMounted(fetchJobs)
 
     <!-- 编辑弹窗 -->
     <AppModal v-model:visible="showEditModal" title="编辑定时任务" width="500px">
-      <div class="space-y-4">
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">任务名称</label>
-          <input v-model="editForm.name" placeholder="可选" autocomplete="off" aria-label="任务名称" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">调度方式</label>
-          <div class="flex gap-2">
-            <button @click="editForm.scheduleKind = 'cron'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.scheduleKind === 'cron' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">Cron 表达式</button>
-            <button @click="editForm.scheduleKind = 'every'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.scheduleKind === 'every' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">固定间隔</button>
+      <form autocomplete="off" @submit.prevent="saveEdit">
+        <!-- 隐藏虚拟输入框，吸收浏览器自动填充 -->
+        <input type="text" name="username" autocomplete="username" style="display:none" aria-hidden="true">
+        <input type="password" name="password" autocomplete="new-password" style="display:none" aria-hidden="true">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">任务名称</label>
+            <input v-model="editForm.name" placeholder="可选" autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')" aria-label="任务名称" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">调度方式</label>
+            <div class="flex gap-2">
+              <button type="button" @click="editForm.scheduleKind = 'cron'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.scheduleKind === 'cron' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">Cron 表达式</button>
+              <button type="button" @click="editForm.scheduleKind = 'every'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.scheduleKind === 'every' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">固定间隔</button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">{{ editForm.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔（分钟）' }}</label>
+            <input v-model="editForm.scheduleExpr" autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')" :aria-label="editForm.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔分钟数'" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">任务类型</label>
+            <div class="flex gap-2">
+              <button type="button" @click="editForm.payloadKind = 'systemEvent'; editForm.sessionTarget = 'main'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.payloadKind === 'systemEvent' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">📢 系统事件</button>
+              <button type="button" @click="editForm.payloadKind = 'agentTurn'; editForm.sessionTarget = 'isolated'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.payloadKind === 'agentTurn' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">🤖 Agent 执行</button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">{{ editForm.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息' }}</label>
+            <textarea v-model="editForm.payloadText" rows="3" autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')" :aria-label="editForm.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息'" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
           </div>
         </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">{{ editForm.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔（分钟）' }}</label>
-          <input v-model="editForm.scheduleExpr" autocomplete="off" :aria-label="editForm.scheduleKind === 'cron' ? 'Cron 表达式' : '间隔分钟数'" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">任务类型</label>
-          <div class="flex gap-2">
-            <button @click="editForm.payloadKind = 'systemEvent'; editForm.sessionTarget = 'main'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.payloadKind === 'systemEvent' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">📢 系统事件</button>
-            <button @click="editForm.payloadKind = 'agentTurn'; editForm.sessionTarget = 'isolated'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" :class="editForm.payloadKind === 'agentTurn' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">🤖 Agent 执行</button>
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">{{ editForm.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息' }}</label>
-          <textarea v-model="editForm.payloadText" rows="3" autocomplete="off" :aria-label="editForm.payloadKind === 'systemEvent' ? '事件文本' : 'Agent 消息'" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
-        </div>
-      </div>
+      </form>
       <template #footer>
         <AppButton @click="showEditModal = false">取消</AppButton>
         <AppButton variant="primary" :loading="saving" @click="saveEdit">

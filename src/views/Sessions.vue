@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue'
 import { gwRequest, eventLog as storeEventLog } from '../stores/gateway.js'
 import AppToast from '../components/AppToast.vue'
-
+import AppButton from '../components/AppButton.vue'
 import { createLogger } from '../utils/logger.js'
 import { exportEventLog } from '../utils/export.js'
 import { useEnterAnim } from '../composables/useEnterAnim.js'
@@ -205,20 +205,16 @@ onUnmounted(() => {
         <div class="flex items-center gap-2">
           <span class="text-xs text-gray-400">{{ eventLog.length }} 条事件</span>
           <div class="relative group">
-            <button class="px-3 py-1.5 text-xs text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors">
+            <AppButton size="sm">
               📥 导出
-            </button>
+            </AppButton>
             <div class="absolute right-0 top-full mt-1 w-28 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
               <button @click="exportEventLog(eventLog, 'json')" class="w-full px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-t-lg text-left">JSON</button>
               <button @click="exportEventLog(eventLog, 'csv')" class="w-full px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-b-lg text-left">CSV</button>
             </div>
           </div>
-          <button @click="clearLog" class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-            清空
-          </button>
-          <button @click="copyAllLogs" class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-            复制全部
-          </button>
+          <AppButton size="sm" @click="clearLog">清空</AppButton>
+          <AppButton size="sm" @click="copyAllLogs">复制全部</AppButton>
         </div>
       </div>
     </div>
@@ -303,9 +299,9 @@ onUnmounted(() => {
           <span class="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" :class="getEventColor(e.event).replace('text-', 'bg-')"></span>
           <span class="flex-shrink-0 w-32 truncate" :class="getEventColor(e.event)" v-html="highlightText(e.event, filterText)"></span>
           <span class="text-gray-400 break-all flex-1" v-html="highlightJson(e.payload, filterText)"></span>
-          <button @click="copyEvent(e)" class="flex-shrink-0 opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-300 transition-opacity px-1" title="复制">
+          <AppButton size="sm" variant="ghost" @click="copyEvent(e)" class="flex-shrink-0 opacity-0 group-hover:opacity-100 !p-1" title="复制">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>

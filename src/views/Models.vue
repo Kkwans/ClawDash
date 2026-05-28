@@ -176,35 +176,40 @@ useScrollLock(showDeleteConfirm)
     <!-- 添加提供商弹窗 -->
     <AppModal v-model:visible="showAddModal" title="添加模型提供商" width="440px">
       <p class="text-xs text-gray-400 mb-4 -mt-1">配置新的 AI 模型提供商</p>
-      <div class="space-y-4">
-        <div>
-          <label for="new-provider-id" class="block text-xs font-medium text-gray-600 mb-1.5">提供商 ID <span class="text-red-500">*</span></label>
-          <input id="new-provider-id" v-model="newProvider.id" autocomplete="off"
-            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
-            placeholder="openai">
+      <form autocomplete="off" @submit.prevent="addProvider">
+        <!-- 隐藏虚拟输入框，吸收浏览器自动填充 -->
+        <input type="text" name="username" autocomplete="username" style="display:none" aria-hidden="true">
+        <input type="password" name="password" autocomplete="new-password" style="display:none" aria-hidden="true">
+        <div class="space-y-4">
+          <div>
+            <label for="new-provider-id" class="block text-xs font-medium text-gray-600 mb-1.5">提供商 ID <span class="text-red-500">*</span></label>
+            <input id="new-provider-id" v-model="newProvider.id" autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
+              placeholder="openai">
+          </div>
+          <div>
+            <label for="new-provider-api" class="block text-xs font-medium text-gray-600 mb-1.5">API 类型</label>
+            <select id="new-provider-api" v-model="newProvider.api"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all">
+              <option value="openai-completions">OpenAI Compatible</option>
+              <option value="anthropic">Anthropic</option>
+              <option value="google">Google AI</option>
+            </select>
+          </div>
+          <div>
+            <label for="new-provider-url" class="block text-xs font-medium text-gray-600 mb-1.5">Base URL</label>
+            <input id="new-provider-url" v-model="newProvider.baseUrl" autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
+              placeholder="https://api.openai.com/v1">
+          </div>
+          <div>
+            <label for="new-provider-key" class="block text-xs font-medium text-gray-600 mb-1.5">API Key</label>
+            <input id="new-provider-key" v-model="newProvider.apiKey" type="password" autocomplete="new-password" readonly @focus="$event.target.removeAttribute('readonly')"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
+              placeholder="sk-...">
+          </div>
         </div>
-        <div>
-          <label for="new-provider-api" class="block text-xs font-medium text-gray-600 mb-1.5">API 类型</label>
-          <select id="new-provider-api" v-model="newProvider.api"
-            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all">
-            <option value="openai-completions">OpenAI Compatible</option>
-            <option value="anthropic">Anthropic</option>
-            <option value="google">Google AI</option>
-          </select>
-        </div>
-        <div>
-          <label for="new-provider-url" class="block text-xs font-medium text-gray-600 mb-1.5">Base URL</label>
-          <input id="new-provider-url" v-model="newProvider.baseUrl" autocomplete="off"
-            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
-            placeholder="https://api.openai.com/v1">
-        </div>
-        <div>
-          <label for="new-provider-key" class="block text-xs font-medium text-gray-600 mb-1.5">API Key</label>
-          <input id="new-provider-key" v-model="newProvider.apiKey" type="password" autocomplete="new-password"
-            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
-            placeholder="sk-...">
-        </div>
-      </div>
+      </form>
       <template #footer>
         <AppButton @click="showAddModal = false">取消</AppButton>
         <AppButton variant="primary" :loading="saving" @click="addProvider">

@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useScrollLock } from '../composables/useScrollLock.js'
+import AppButton from './AppButton.vue'
 
 const visible = ref(false)
 const message = ref('')
@@ -50,8 +51,8 @@ defineExpose({ confirm })
           </div>
           <p class="confirm-message">{{ message }}</p>
           <div class="confirm-actions">
-            <button @click="onCancel" class="confirm-btn confirm-btn-cancel">取消</button>
-            <button @click="onOk" class="confirm-btn confirm-btn-danger" autofocus>确定</button>
+            <AppButton variant="ghost" size="sm" @click="onCancel">取消</AppButton>
+            <AppButton variant="danger" size="sm" @click="onOk" autofocus>确定</AppButton>
           </div>
         </div>
       </div>
@@ -127,44 +128,6 @@ defineExpose({ confirm })
   display: flex;
   gap: var(--space-2);
   justify-content: flex-end;
-}
-
-.confirm-btn {
-  padding: var(--space-2) var(--space-5);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: all var(--duration) var(--ease);
-  font-family: inherit;
-}
-.confirm-btn:active {
-  transform: scale(0.97);
-}
-
-.confirm-btn-cancel {
-  background: var(--bg-subtle);
-  color: var(--text-secondary);
-}
-.confirm-btn-cancel:hover {
-  background: var(--bg-hover);
-}
-.confirm-btn-cancel:active {
-  transform: scale(0.97);
-}
-
-.confirm-btn-danger {
-  background: var(--danger);
-  color: var(--text-inverse);
-  border-color: var(--danger);
-}
-.confirm-btn-danger:hover {
-  filter: brightness(0.9);
-}
-.confirm-btn-danger:focus-visible {
-  outline: 2px solid var(--danger);
-  outline-offset: 2px;
 }
 
 /* 弹窗动画 */
