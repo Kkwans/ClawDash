@@ -380,8 +380,8 @@ useScrollLock(showDeleteConfirm)
                 <div v-if="p.models?.length > 0" class="relative">
                   <input :value="modelFilter(p.id)" @input="setModelFilter(p.id, $event.target.value)"
                     type="search" placeholder="搜索模型..."
-                    class="w-full pl-7 pr-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-900/20 focus:border-gray-300 transition-all">
-                  <span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
+                    class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-900/20 focus:border-gray-300 transition-all">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
                 </div>
                 <!-- 模型列表 -->
                 <div v-if="getFilteredModels(p).length" class="space-y-2">
