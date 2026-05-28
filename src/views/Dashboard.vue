@@ -299,7 +299,7 @@ onUnmounted(() => {
     <Transition name="slide-up">
       <div v-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-400 flex items-center gap-2">
         <span>⚠️</span> {{ error }}
-        <button @click="error = ''; loadAllData()" class="ml-auto underline text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300">重试</button>
+        <AppButton variant="ghost" size="xs" @click="error = ''; loadAllData()" class="ml-auto">重试</AppButton>
       </div>
     </Transition>
 

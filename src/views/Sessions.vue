@@ -209,8 +209,8 @@ onUnmounted(() => {
               📥 导出
             </AppButton>
             <div class="absolute right-0 top-full mt-1 w-28 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-              <button @click="exportEventLog(eventLog, 'json')" class="w-full px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-t-lg text-left">JSON</button>
-              <button @click="exportEventLog(eventLog, 'csv')" class="w-full px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-b-lg text-left">CSV</button>
+              <AppButton size="xs" variant="ghost" @click="exportEventLog(eventLog, 'json')">JSON</AppButton>
+              <AppButton size="xs" variant="ghost" @click="exportEventLog(eventLog, 'csv')">CSV</AppButton>
             </div>
           </div>
           <AppButton size="sm" @click="clearLog">清空</AppButton>
