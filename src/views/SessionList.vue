@@ -19,7 +19,7 @@ const searchQuery = ref('')
 const selectedKeys = ref(new Set())
 
 function showToast(msg, type = 'info') {
-  toastRef.value?.show(msg, { type })
+  toastRef.value?.show(msg, type)
 }
 
 async function showConfirm(msg) {

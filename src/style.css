@@ -2,6 +2,9 @@
 @import "./styles/variables.css";
 @import "./styles/shared-animations.css";
 
+/* Tailwind 暗色模式：基于 class 切换 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ============================
  * 全局基础样式
  * ============================ */
@@ -23,6 +26,8 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* 主题切换平滑过渡 */
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Body */
@@ -146,3 +151,18 @@ pre,
 kbd {
   font-family: var(--font-mono);
 }
+
+/* 暗色模式下 Tailwind 类的补充 */
+.dark .bg-gray-50 { background-color: var(--bg-subtle); }
+.dark .bg-gray-100 { background-color: var(--bg-muted); }
+.dark .bg-white { background-color: var(--bg-panel); }
+.dark .text-gray-900 { color: var(--text-primary); }
+.dark .text-gray-800 { color: var(--text-primary); }
+.dark .text-gray-700 { color: var(--text-primary); }
+.dark .text-gray-600 { color: var(--text-secondary); }
+.dark .text-gray-500 { color: var(--text-secondary); }
+.dark .text-gray-400 { color: var(--text-tertiary); }
+.dark .text-gray-300 { color: var(--text-tertiary); }
+.dark .border-gray-200 { border-color: var(--border); }
+.dark .border-gray-100 { border-color: var(--border); }
+.dark .ring-gray-200 { --tw-ring-color: var(--border); }

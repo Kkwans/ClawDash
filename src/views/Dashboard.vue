@@ -69,9 +69,33 @@ async function loadAllData(silent = false) {
 const controlling = ref(false)
 const toastRef = ref(null)
 const confirmRef = ref(null)
+const copying = ref(false)
 
 function showToast(msg, type = 'info') {
   toastRef.value?.show(msg, type)
+}
+
+async function copySystemInfo() {
+  if (copying.value) return
+  copying.value = true
+  const info = [
+    `ClawDash System Info`,
+    `Time: ${new Date().toLocaleString('zh-CN')}`,
+    `Gateway: ${authenticated.value ? 'Connected' : 'Disconnected'}`,
+    `Version: ${gatewayInfo.value?.server?.version || '-'}`,
+    `Uptime: ${formatUptime(healthData.value?.uptime)}`,
+    `Sessions: ${sessionCount.value}`,
+    `Models: ${modelCount.value}`,
+    `Channels: ${channelCount.value}`,
+    `Event Loop: ${eventLoopUtil.value}% (${eventLoop.value?.degraded ? 'Degraded' : 'Normal'})`,
+  ].join('\n')
+  try {
+    await navigator.clipboard.writeText(info)
+    showToast('系统信息已复制')
+  } catch (e) {
+    showToast('复制失败', 'error')
+  }
+  copying.value = false
 }
 
 async function showConfirm(msg) {
@@ -282,10 +306,12 @@ onUnmounted(() => {
     <AppConfirm ref="confirmRef" />
 
     <!-- 错误提示 -->
-    <div v-if="error" class="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 flex items-center gap-2">
-      <span>⚠️</span> {{ error }}
-      <button @click="error = ''; loadAllData()" class="ml-auto underline text-red-600">重试</button>
-    </div>
+    <Transition name="slide-up">
+      <div v-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-400 flex items-center gap-2">
+        <span>⚠️</span> {{ error }}
+        <button @click="error = ''; loadAllData()" class="ml-auto underline text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300">重试</button>
+      </div>
+    </Transition>
 
     <!-- 系统状态环形图 -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -415,10 +441,10 @@ onUnmounted(() => {
     </div>
 
     <!-- 渠道状态 -->
-    <div v-if="channelsInfo" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white p-5 shadow-sm"
+    <div v-if="channelsInfo" class="card-accent card-hover rounded-2xl border border-gray-200/60 bg-white dark:bg-gray-800 dark:border-gray-700 p-5 shadow-sm"
       :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
       :style="{ transitionDelay: '720ms' }">
-      <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">渠道状态</h4>
+      <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 tracking-tight">渠道状态</h4>
       <!-- EventLoop 状态 -->
       <div v-if="eventLoop" class="flex items-center justify-between p-3 rounded-lg mb-3"
         :class="eventLoop.degraded ? 'bg-amber-50' : 'bg-green-50'">
@@ -456,13 +482,48 @@ onUnmounted(() => {
 
     <!-- 未连接 -->
     <div v-if="!authenticated && !connecting" class="text-center py-12">
-      <p class="text-4xl mb-3">🔌</p>
-      <p class="text-sm text-gray-500">请配置 Gateway Token</p>
+      <div class="w-16 h-16 mx-auto bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center text-3xl mb-4 ring-1 ring-gray-200/50 dark:ring-gray-700">
+        🔌
+      </div>
+      <p class="text-sm font-medium text-gray-600 dark:text-gray-400">请配置 Gateway Token</p>
+      <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">在系统设置中配置 Token 后即可管理 Gateway</p>
+    </div>
+
+    <!-- 快速操作 -->
+    <div class="rounded-2xl border border-gray-200/60 bg-white dark:bg-gray-800 dark:border-gray-700 p-5 shadow-sm"
+      :class="entered ? 'dashboard-enter-active' : 'dashboard-enter'"
+      :style="{ transitionDelay: '800ms' }">
+      <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 tracking-tight">快速操作</h4>
+      <div class="flex flex-wrap gap-2">
+        <button @click="loadAllData()" :disabled="loading"
+          class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200/80 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition-all shadow-sm">
+          🔄 刷新数据
+        </button>
+        <button @click="copySystemInfo()" :disabled="copying"
+          class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200/80 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition-all shadow-sm">
+          📋 复制系统信息
+        </button>
+        <a href="/builtin/" target="_blank"
+          class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200/80 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
+          ⚡ 内置 UI
+        </a>
+      </div>
     </div>
 
     <!-- 最后更新 -->
-    <p v-if="lastUpdate" class="text-xs text-gray-300 text-right">
+    <p v-if="lastUpdate" class="text-xs text-gray-300 dark:text-gray-600 text-right">
       更新于 {{ lastUpdate.toLocaleTimeString('zh-CN') }}
     </p>
+
+    <!-- 空状态 -->
+    <div v-if="!loading && !error && !authenticated && !connecting" class="text-center py-16">
+      <div class="w-20 h-20 mx-auto bg-gray-50 dark:bg-gray-800 rounded-3xl flex items-center justify-center text-4xl mb-5 ring-1 ring-gray-200/50 dark:ring-gray-700">
+        🦞
+      </div>
+      <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">欢迎使用 ClawDash</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+        这是 OpenClaw 的 Web 控制台。请先配置 Gateway Token 以开始使用。
+      </p>
+    </div>
   </div>
 </template>

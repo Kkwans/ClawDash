@@ -1,10 +1,13 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, h, watch, nextTick } from 'vue'
-import { connected, authenticated, connecting, connectionError, reconnecting, statusText, statusColor, connect, disconnect, cancelReconnect, token, updateToken } from './stores/gateway.js'
+import { connected, authenticated, connecting, connectionError, reconnecting, statusText, statusColor, connect, disconnect, reconnect, cancelReconnect, token, updateToken } from './stores/gateway.js'
 import AppErrorBoundary from './components/AppErrorBoundary.vue'
 import AppCommandPalette from './components/AppCommandPalette.vue'
+import AppKeyboardHelp from './components/AppKeyboardHelp.vue'
+import AppBackToTop from './components/AppBackToTop.vue'
 import { useKeyboard } from './composables/useKeyboard.js'
 import { useFavorites } from './composables/useFavorites.js'
+import { useTheme } from './composables/useTheme.js'
 import { createLogger } from './utils/logger.js'
 
 const log = createLogger('App')
@@ -111,12 +114,16 @@ const tabs = [
   { id: 'settings', name: '系统设置', icon: '⚙️' },
 ]
 
+// 主题
+const { theme, isDark, toggleTheme } = useTheme()
+
 // 收藏功能
 const { favorites, toggleFavorite, isFavorite } = useFavorites()
 const favoriteTabs = computed(() => favorites.value.map(id => tabs.find(t => t.id === id)).filter(Boolean))
 
 // 命令面板
 const commandPaletteRef = ref(null)
+const keyboardHelpRef = ref(null)
 
 function handleCommandAction(actionId) {
   if (actionId === 'refresh') loadAllData && loadAllData()
@@ -143,6 +150,7 @@ useKeyboard({
   'ctrl+7': () => switchTab('settings'),
   'ctrl+b': () => toggleSidebar(),
   'ctrl+,': () => switchTab('settings'),
+  '?': () => keyboardHelpRef.value?.toggle(),
 })
 
 const currentComponent = computed(() => {
@@ -304,6 +312,9 @@ onUnmounted(() => {
     <AppCommandPalette ref="commandPaletteRef" :tabs="tabs" :current-tab="currentTab"
       @navigate="switchTab" @action="handleCommandAction" />
 
+    <!-- 快捷键帮助 -->
+    <AppKeyboardHelp ref="keyboardHelpRef" />
+
     <!-- 主内容区 -->
     <main class="flex-1 overflow-y-auto">
       <header class="bg-white border-b border-gray-200 px-4 md:px-6 h-14 flex items-center justify-between sticky top-0 z-10">
@@ -326,11 +337,31 @@ onUnmounted(() => {
           </button>
         </div>
         <div class="flex items-center gap-3">
+          <!-- 连接状态指示器 -->
+          <button @click="!authenticated && !connecting && reconnect()"
+            class="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs transition-all"
+            :class="authenticated ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : connecting ? 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20' : 'text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 cursor-pointer'"
+            :title="authenticated ? '已连接' : connecting ? '连接中...' : '点击重连'">
+            <span class="w-1.5 h-1.5 rounded-full"
+              :class="authenticated ? 'bg-green-500' : connecting ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'"></span>
+            {{ authenticated ? '已连接' : connecting ? '连接中' : '点击重连' }}
+          </button>
           <button @click="commandPaletteRef?.open()"
-            class="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs text-gray-400 bg-gray-50 border border-gray-200/80 rounded-lg hover:bg-gray-100 hover:text-gray-600 transition-all">
+            class="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs text-gray-400 bg-gray-50 border border-gray-200/80 rounded-lg hover:bg-gray-100 hover:text-gray-600 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300 transition-all">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             搜索
-            <kbd class="px-1 py-0.5 text-[10px] font-mono bg-gray-200/80 rounded">⌘K</kbd>
+            <kbd class="px-1 py-0.5 text-[10px] font-mono bg-gray-200/80 dark:bg-gray-600 rounded">⌘K</kbd>
+          </button>
+          <button @click="keyboardHelpRef?.open()"
+            class="hidden sm:flex items-center gap-1 p-1.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+            title="键盘快捷键 (?)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </button>
+          <button @click="toggleTheme" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+            :title="theme === 'system' ? '跟随系统' : theme === 'dark' ? '深色模式' : '浅色模式'">
+            <span v-if="theme === 'system'" class="text-sm">🖥️</span>
+            <span v-else-if="isDark" class="text-sm">🌙</span>
+            <span v-else class="text-sm">☀️</span>
           </button>
           <span class="text-xs text-gray-400">ClawDash v0.8.0</span>
           <a href="https://github.com/Kkwans/ClawDash" target="_blank"
@@ -358,6 +389,9 @@ onUnmounted(() => {
           <component :is="currentComponent" :refresh-key="refreshKey" />
         </AppErrorBoundary>
       </div>
+
+      <!-- 回到顶部 -->
+      <AppBackToTop />
     </main>
   </div>
 </template>
