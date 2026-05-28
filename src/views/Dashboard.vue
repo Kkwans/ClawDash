@@ -260,13 +260,13 @@ onUnmounted(() => {
             ? 'var(--danger-text)'
             : 'var(--border)',
         '--delay': '0ms'
-      }"
+      }">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-4">
           <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl shadow-sm"
             :style="{
               backgroundColor: authenticated ? 'var(--success-light)' : connectionError ? 'var(--danger-light)' : 'var(--bg-muted)',
-              boxShadow: '0 0 0 1px ' + (authenticated ? 'var(--success-text)' : connectionError ? 'var(--danger-text)' : 'var(--border)')
+              boxShadow: 'inset 0 0 0 1px ' + (authenticated ? 'var(--success-text)' : connectionError ? 'var(--danger-text)' : 'var(--border)')
             }">
             {{ authenticated ? '🟢' : connectionError ? '🔴' : '⏳' }}
           </div>
@@ -394,7 +394,7 @@ onUnmounted(() => {
             </div>
             <div class="flex items-center gap-3">
               <span class="text-xs text-gray-500">{{ p.count }} 模型</span>
-              <span v-if="p.reasoning > 0" class="text-xs px-2 py-0.5 rounded" style="background-color: var(--purple-light, var(--info-light)); color: var(--purple-text, var(--info-text));">{{ p.reasoning }} 推理</span>
+              <span v-if="p.reasoning > 0" class="text-xs px-2 py-0.5 rounded" style="background-color: var(--info-light); color: var(--info-text);">{{ p.reasoning }} 推理</span>
             </div>
           </div>
         </div>
@@ -441,11 +441,8 @@ onUnmounted(() => {
       style="--delay: 720ms">
       <h4 class="text-sm font-bold text-gray-800 mb-4 tracking-tight">渠道状态</h4>
       <!-- EventLoop 状态 -->
-      <div v-if="eventLoop" class="flex items-center justify-between p-3 rounded-lg mb-3 border"
-        :style="{
-          backgroundColor: eventLoop.degraded ? 'var(--warning-light)' : 'var(--success-light)'
-        }">
-
+      <div v-if="eventLoop" class="flex items-center justify-between p-3 rounded-lg mb-3"
+        :style="{ backgroundColor: eventLoop.degraded ? 'var(--warning-light)' : 'var(--success-light)' }">
         <div class="flex items-center gap-2">
           <span>{{ eventLoop.degraded ? '⚠️' : '✅' }}</span>
           <span class="text-sm" :style="{ color: eventLoop.degraded ? 'var(--warning-text)' : 'var(--success-text)' }">
