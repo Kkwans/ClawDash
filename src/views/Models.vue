@@ -229,10 +229,11 @@ useScrollLock(showDeleteConfirm)
                 autocomplete="new-password" readonly @focus="$event.target.removeAttribute('readonly')"
                 class="w-full px-3 py-2.5 pr-9 border border-gray-200 rounded-xl text-sm font-mono bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
                 placeholder="sk-...">
-              <button type="button" @click="togglePwd('new_apiKey')"
-                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">
+              <AppButton size="xs" variant="ghost"
+                @click="togglePwd('new_apiKey')"
+                class="absolute right-2 top-1/2 -translate-y-1/2">
                 {{ showPwd['new_apiKey'] ? '🙈' : '👁️' }}
-              </button>
+              </AppButton>
             </div>
           </div>
         </div>
