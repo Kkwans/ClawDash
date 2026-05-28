@@ -3,7 +3,7 @@
     <div class="error-boundary__icon">⚠️</div>
     <h3 class="error-boundary__title">页面出错了</h3>
     <p class="error-boundary__message">{{ errorMessage }}</p>
-    <button class="error-boundary__btn" @click="retry">重试</button>
+    <AppButton size="sm" @click="retry">重试</AppButton>
   </div>
   <slot v-else />
 </template>
@@ -11,6 +11,7 @@
 <script setup>
 import { ref, onErrorCaptured, provide } from 'vue'
 import { createLogger } from '../utils/logger.js'
+import AppButton from './AppButton.vue'
 
 const log = createLogger('ErrorBoundary')
 
