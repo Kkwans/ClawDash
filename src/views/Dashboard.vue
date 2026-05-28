@@ -4,6 +4,8 @@ import { authenticated, connecting, connectionError, gwRequest, useGatewayEvent 
 import RingChart from '../components/RingChart.vue'
 import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'
+import AppButton from '../components/AppButton.vue'
+import AppBadge from '../components/AppBadge.vue'
 import { Doughnut } from 'vue-chartjs'
 import { useEnterAnim } from '../composables/useEnterAnim.js'
 
@@ -276,18 +278,15 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button @click="loadAllData()" :disabled="loading || !authenticated"
-            class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200/80 text-gray-600 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-40 transition-all shadow-sm">
+          <AppButton size="sm" :disabled="loading || !authenticated" @click="loadAllData()">
             {{ loading ? '加载中...' : '刷新' }}
-          </button>
-          <button @click="doGatewayAction('stop')" :disabled="controlling || !authenticated"
-            class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-red-200/80 text-red-600 hover:bg-red-50 hover:border-red-300 disabled:opacity-40 transition-all shadow-sm">
+          </AppButton>
+          <AppButton size="sm" variant="danger" :disabled="controlling || !authenticated" @click="doGatewayAction('stop')">
             停止
-          </button>
-          <button @click="doGatewayAction('start')" :disabled="controlling || authenticated"
-            class="btn-press px-4 py-2 rounded-xl text-xs font-semibold bg-green-500 text-white hover:bg-green-600 disabled:opacity-40 transition-all shadow-sm">
+          </AppButton>
+          <AppButton size="sm" variant="primary" :disabled="controlling || authenticated" @click="doGatewayAction('start')">
             启动
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -479,26 +478,14 @@ onUnmounted(() => {
       style="--delay: 800ms">
       <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 tracking-tight">快速操作</h4>
       <div class="flex flex-wrap gap-2">
-        <button @click="loadAllData()" :disabled="loading"
-          class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200/80 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition-all shadow-sm">
-          🔄 刷新数据
-        </button>
-        <button @click="copySystemInfo()" :disabled="copying"
-          class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200/80 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition-all shadow-sm">
-          📋 复制系统信息
-        </button>
+        <AppButton size="sm" :disabled="loading" @click="loadAllData()">🔄 刷新数据</AppButton>
+        <AppButton size="sm" :disabled="copying" @click="copySystemInfo()">📋 复制系统信息</AppButton>
         <a href="/builtin/" target="_blank"
           class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200/80 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
           ⚡ 内置 UI
         </a>
-        <button @click="doGatewayAction('stop')" :disabled="controlling || !authenticated"
-          class="btn-press px-4 py-2 rounded-xl text-xs font-semibold border border-red-200/80 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-40 transition-all shadow-sm">
-          ⏹ 停止
-        </button>
-        <button @click="doGatewayAction('start')" :disabled="controlling || authenticated"
-          class="btn-press px-4 py-2 rounded-xl text-xs font-semibold bg-green-500 text-white hover:bg-green-600 disabled:opacity-40 transition-all shadow-sm">
-          ▶ 启动
-        </button>
+        <AppButton size="sm" variant="danger" :disabled="controlling || !authenticated" @click="doGatewayAction('stop')">⏹ 停止</AppButton>
+        <AppButton size="sm" variant="primary" :disabled="controlling || authenticated" @click="doGatewayAction('start')">▶ 启动</AppButton>
       </div>
     </div>
 
