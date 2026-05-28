@@ -6,6 +6,8 @@ import AppToast from '../components/AppToast.vue'
 import AppEmpty from '../components/AppEmpty.vue'
 import AppLoading from '../components/AppLoading.vue'
 import AppConfirm from '../components/AppConfirm.vue'
+import AppButton from '../components/AppButton.vue'
+import AppBadge from '../components/AppBadge.vue'
 import { createLogger } from '../utils/logger.js'
 import { useEnterAnim } from '../composables/useEnterAnim.js'
 
@@ -171,7 +173,6 @@ onMounted(fetchData)
 
 <template>
   <div class="space-y-6">
-    <!-- 共享组件 -->
     <AppToast ref="toastRef" />
     <AppConfirm ref="confirmRef" />
 
@@ -182,13 +183,12 @@ onMounted(fetchData)
           <h2 class="text-lg font-bold text-gray-900 tracking-tight">Skill 管理</h2>
           <p class="text-sm text-gray-500 mt-0.5">管理本地插件和搜索 ClawHub Skill</p>
         </div>
-        <button @click="fetchData"
-          class="btn-press px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm transition-all">
+        <AppButton size="sm" variant="primary" @click="fetchData">
           <span class="flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             刷新
           </span>
-        </button>
+        </AppButton>
       </div>
     </div>
 
@@ -236,10 +236,7 @@ onMounted(fetchData)
                 <p class="text-xs text-gray-400 mt-0.5 line-clamp-1">{{ skill.description || skill.source || '本地 Skill' }}</p>
               </div>
             </div>
-            <button @click="deleteSkill(skill)"
-              class="btn-press px-3.5 py-1.5 rounded-xl text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 border border-red-100/80 transition-all">
-              删除
-            </button>
+            <AppButton size="sm" variant="danger" @click="deleteSkill(skill)">删除</AppButton>
           </div>
         </div>
 
@@ -251,14 +248,12 @@ onMounted(fetchData)
               class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 transition-colors">
             <span class="text-xs text-gray-500">全选插件</span>
           </label>
-          <button v-if="selectedPlugins.size > 0" @click="batchTogglePlugins(true)"
-            class="btn-press px-3 py-1.5 text-xs font-medium text-green-600 bg-green-50 border border-green-200/80 rounded-xl hover:bg-green-100 transition-all">
+          <AppButton v-if="selectedPlugins.size > 0" size="sm" @click="batchTogglePlugins(true)">
             批量启用 ({{ selectedPlugins.size }})
-          </button>
-          <button v-if="selectedPlugins.size > 0" @click="batchTogglePlugins(false)"
-            class="btn-press px-3 py-1.5 text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200/80 rounded-xl hover:bg-amber-100 transition-all">
+          </AppButton>
+          <AppButton v-if="selectedPlugins.size > 0" size="sm" @click="batchTogglePlugins(false)">
             批量禁用 ({{ selectedPlugins.size }})
-          </button>
+          </AppButton>
         </div>
 
         <!-- Plugins from config -->
@@ -276,22 +271,16 @@ onMounted(fetchData)
               <div class="min-w-0">
                 <div class="flex items-center gap-2.5">
                   <p class="text-sm font-semibold text-gray-900 tracking-tight">{{ pl.id }}</p>
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors"
-                    :class="pl.enabled ? 'bg-green-50 text-green-700 ring-1 ring-green-200/60' : 'bg-gray-100 text-gray-500 ring-1 ring-gray-200/60'">
-                    <span class="w-1.5 h-1.5 rounded-full" :class="pl.enabled ? 'bg-green-500' : 'bg-gray-400'"></span>
+                  <AppBadge :type="pl.enabled ? 'success' : 'default'" size="sm" dot>
                     {{ pl.enabled ? '已启用' : '已禁用' }}
-                  </span>
+                  </AppBadge>
                 </div>
                 <p v-if="pl.config?.description" class="text-xs text-gray-400 mt-0.5 line-clamp-1">{{ pl.config.description }}</p>
               </div>
             </div>
-            <button @click="togglePlugin(pl)"
-              class="btn-press px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all"
-              :class="pl.enabled
-                ? 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-100/80'
-                : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-100/80'">
+            <AppButton size="sm" @click="togglePlugin(pl)">
               {{ pl.enabled ? '禁用' : '启用' }}
-            </button>
+            </AppButton>
           </div>
         </div>
       </div>
@@ -311,10 +300,9 @@ onMounted(fetchData)
             aria-label="搜索 Skill"
             class="w-full pl-10 pr-4 py-3 border border-gray-200/80 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 placeholder:text-gray-400 transition-all">
         </div>
-        <button @click="searchSkills" :disabled="searching || !searchQuery.trim()"
-          class="btn-press px-5 py-3 text-sm font-medium bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 shadow-sm transition-all">
+        <AppButton variant="primary" :loading="searching" :disabled="!searchQuery.trim()" @click="searchSkills">
           {{ searching ? '搜索中...' : '搜索' }}
-        </button>
+        </AppButton>
       </div>
 
       <!-- 搜索中 -->
@@ -358,10 +346,7 @@ onMounted(fetchData)
                 </span>
               </div>
             </div>
-            <button @click="installSkill(skill)"
-              class="btn-press px-4 py-2 rounded-xl text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-100/80 transition-all flex-shrink-0">
-              安装
-            </button>
+            <AppButton size="sm" @click="installSkill(skill)">安装</AppButton>
           </div>
         </div>
       </div>

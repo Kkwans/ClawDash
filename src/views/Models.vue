@@ -4,6 +4,9 @@ import { gwRequest, authenticated, connecting } from '../stores/gateway.js'
 import { getParsedConfig, updateGatewayConfig } from '../api/config-utils.js'
 import { useScrollLock } from '../composables/useScrollLock.js'
 import AppToast from '../components/AppToast.vue'
+import AppButton from '../components/AppButton.vue'
+import AppModal from '../components/AppModal.vue'
+import AppBadge from '../components/AppBadge.vue'
 import { useEnterAnim } from '../composables/useEnterAnim.js'
 
 const toastRef = ref(null)
@@ -132,7 +135,7 @@ async function addProvider() {
   newProvider.value = { id: '', api: 'openai-completions', baseUrl: '', apiKey: '', models: [] }
 }
 
-const showDeleteConfirm = ref(null) // 存储待删除的 provider id
+const showDeleteConfirm = ref(null)
 
 function confirmDeleteProvider(id) {
   showDeleteConfirm.value = id
@@ -152,85 +155,63 @@ function toggleProvider(id) {
   else expandedProviders.value.add(id)
 }
 
-// 弹窗状态自动锁定滚动
 useScrollLock(showAddModal)
 useScrollLock(showDeleteConfirm)
 </script>
 
 <template>
   <div class="space-y-5">
-    <!-- 共享组件 -->
     <AppToast ref="toastRef" />
 
     <!-- 删除确认弹窗 -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="showDeleteConfirm" class="modal-mask fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showDeleteConfirm = null" @keydown.escape="showDeleteConfirm = null" tabindex="-1">
-          <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-100">
-              <h3 class="text-base font-semibold text-gray-900">确认删除</h3>
-            </div>
-            <div class="px-5 py-4">
-              <p class="text-sm text-gray-500">确定删除提供商 <span class="font-mono font-medium text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded">{{ showDeleteConfirm }}</span>？此操作不可撤销。</p>
-            </div>
-            <div class="flex gap-2 px-5 py-4 border-t border-gray-100 bg-gray-50">
-              <button @click="showDeleteConfirm = null" class="btn-press flex-1 px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-white transition-all">取消</button>
-              <button @click="doDeleteProvider" class="btn-press flex-1 px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-all">删除</button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <AppModal :visible="!!showDeleteConfirm" title="确认删除" width="384px"
+      @close="showDeleteConfirm = null" @update:visible="val => { if (!val) showDeleteConfirm = null }">
+      <p class="text-sm text-gray-500">确定删除提供商 <span class="font-mono font-medium text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded">{{ showDeleteConfirm }}</span>？此操作不可撤销。</p>
+      <template #footer>
+        <AppButton @click="showDeleteConfirm = null">取消</AppButton>
+        <AppButton variant="danger" @click="doDeleteProvider">删除</AppButton>
+      </template>
+    </AppModal>
 
     <!-- 添加提供商弹窗 -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="showAddModal" class="modal-mask fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showAddModal = false" @keydown.escape="showAddModal = false" tabindex="-1">
-          <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-100">
-              <h3 class="text-base font-semibold text-gray-900">添加模型提供商</h3>
-              <p class="text-xs text-gray-400 mt-0.5">配置新的 AI 模型提供商</p>
-            </div>
-            <div class="px-5 py-4 space-y-4">
-              <div>
-                <label for="new-provider-id" class="block text-xs font-medium text-gray-600 mb-1.5">提供商 ID <span class="text-red-500">*</span></label>
-                <input id="new-provider-id" v-model="newProvider.id" autocomplete="off"
-                  class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
-                  placeholder="openai">
-              </div>
-              <div>
-                <label for="new-provider-api" class="block text-xs font-medium text-gray-600 mb-1.5">API 类型</label>
-                <select id="new-provider-api" v-model="newProvider.api"
-                  class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all">
-                  <option value="openai-completions">OpenAI Compatible</option>
-                  <option value="anthropic">Anthropic</option>
-                  <option value="google">Google AI</option>
-                </select>
-              </div>
-              <div>
-                <label for="new-provider-url" class="block text-xs font-medium text-gray-600 mb-1.5">Base URL</label>
-                <input id="new-provider-url" v-model="newProvider.baseUrl" autocomplete="off"
-                  class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
-                  placeholder="https://api.openai.com/v1">
-              </div>
-              <div>
-                <label for="new-provider-key" class="block text-xs font-medium text-gray-600 mb-1.5">API Key</label>
-                <input id="new-provider-key" v-model="newProvider.apiKey" type="password" autocomplete="new-password"
-                  class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
-                  placeholder="sk-...">
-              </div>
-            </div>
-            <div class="flex gap-2 px-5 py-4 border-t border-gray-100 bg-gray-50">
-              <button @click="showAddModal = false" class="btn-press flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-white transition-all">取消</button>
-              <button @click="addProvider" :disabled="saving"
-                class="btn-press flex-1 px-4 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 transition-all">
-                {{ saving ? '添加中...' : '添加提供商' }}
-              </button>
-            </div>
-          </div>
+    <AppModal v-model:visible="showAddModal" title="添加模型提供商" width="440px">
+      <p class="text-xs text-gray-400 mb-4 -mt-1">配置新的 AI 模型提供商</p>
+      <div class="space-y-4">
+        <div>
+          <label for="new-provider-id" class="block text-xs font-medium text-gray-600 mb-1.5">提供商 ID <span class="text-red-500">*</span></label>
+          <input id="new-provider-id" v-model="newProvider.id" autocomplete="off"
+            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
+            placeholder="openai">
         </div>
-      </Transition>
-    </Teleport>
+        <div>
+          <label for="new-provider-api" class="block text-xs font-medium text-gray-600 mb-1.5">API 类型</label>
+          <select id="new-provider-api" v-model="newProvider.api"
+            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all">
+            <option value="openai-completions">OpenAI Compatible</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="google">Google AI</option>
+          </select>
+        </div>
+        <div>
+          <label for="new-provider-url" class="block text-xs font-medium text-gray-600 mb-1.5">Base URL</label>
+          <input id="new-provider-url" v-model="newProvider.baseUrl" autocomplete="off"
+            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
+            placeholder="https://api.openai.com/v1">
+        </div>
+        <div>
+          <label for="new-provider-key" class="block text-xs font-medium text-gray-600 mb-1.5">API Key</label>
+          <input id="new-provider-key" v-model="newProvider.apiKey" type="password" autocomplete="new-password"
+            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
+            placeholder="sk-...">
+        </div>
+      </div>
+      <template #footer>
+        <AppButton @click="showAddModal = false">取消</AppButton>
+        <AppButton variant="primary" :loading="saving" @click="addProvider">
+          {{ saving ? '添加中...' : '添加提供商' }}
+        </AppButton>
+      </template>
+    </AppModal>
 
     <!-- 未连接状态 -->
     <div v-if="!authenticated && !connecting" class="text-center py-16">
@@ -254,12 +235,8 @@ useScrollLock(showDeleteConfirm)
           <p class="text-sm text-gray-500 mt-0.5">管理 AI 模型提供商和默认配置</p>
         </div>
         <div class="flex items-center gap-2">
-          <button @click="showAddModal = true" class="btn-press px-4 py-2 text-xs font-semibold text-white bg-green-500 rounded-xl hover:bg-green-600 shadow-sm transition-all">
-            + 添加提供商
-          </button>
-          <button @click="fetchData" class="btn-press px-4 py-2 text-xs font-semibold text-gray-600 bg-white border border-gray-200/80 rounded-xl hover:bg-gray-50 hover:border-gray-300 shadow-sm transition-all">
-            刷新
-          </button>
+          <AppButton size="sm" variant="primary" @click="showAddModal = true">+ 添加提供商</AppButton>
+          <AppButton size="sm" @click="fetchData">刷新</AppButton>
         </div>
       </div>
 
@@ -332,9 +309,7 @@ useScrollLock(showDeleteConfirm)
               </div>
             </div>
             <div class="flex items-center gap-2">
-              <button @click.stop="confirmDeleteProvider(p.id)" class="btn-press px-2.5 py-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all">
-                删除
-              </button>
+              <AppButton size="sm" variant="danger" @click.stop="confirmDeleteProvider(p.id)">删除</AppButton>
               <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': expandedProviders.has(p.id) }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
@@ -362,27 +337,21 @@ useScrollLock(showDeleteConfirm)
                     <div class="min-w-0">
                       <div class="flex items-center gap-2">
                         <p class="text-sm font-medium text-gray-900 truncate">{{ m.name || m.id }}</p>
-                        <span v-if="m.reasoning" class="inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 font-medium">
-                          ⚡ 推理
-                        </span>
+                        <AppBadge v-if="m.reasoning" type="brand" size="sm">⚡ 推理</AppBadge>
                       </div>
                       <p class="text-xs text-gray-400 mt-0.5">{{ m.contextWindow ? (m.contextWindow/1000).toFixed(0)+'K 上下文' : '' }}</p>
                     </div>
                     <div class="flex gap-1.5 ml-3 flex-shrink-0">
-                      <button @click.stop="setDefaultModel(p.id+'/'+m.id)" :disabled="saving"
-                        class="btn-press px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all"
-                        :class="defaultModel===p.id+'/'+m.id
-                          ? 'bg-blue-50 border-blue-200 text-blue-700 ring-1 ring-blue-200/50'
-                          : 'border-gray-200 text-gray-500 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700'">
+                      <AppButton size="sm"
+                        :variant="defaultModel===p.id+'/'+m.id ? 'primary' : 'default'"
+                        @click.stop="setDefaultModel(p.id+'/'+m.id)" :disabled="saving">
                         {{ defaultModel===p.id+'/'+m.id ? '✓ 主模型' : '设为主' }}
-                      </button>
-                      <button @click.stop="setFallbackModel(p.id+'/'+m.id)" :disabled="saving"
-                        class="btn-press px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all"
-                        :class="fallbackModel===p.id+'/'+m.id
-                          ? 'bg-amber-50 border-amber-200 text-amber-700 ring-1 ring-amber-200/50'
-                          : 'border-gray-200 text-gray-500 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700'">
+                      </AppButton>
+                      <AppButton size="sm"
+                        :variant="fallbackModel===p.id+'/'+m.id ? 'primary' : 'default'"
+                        @click.stop="setFallbackModel(p.id+'/'+m.id)" :disabled="saving">
                         {{ fallbackModel===p.id+'/'+m.id ? '✓ 备用' : '设备用' }}
-                      </button>
+                      </AppButton>
                     </div>
                   </div>
                 </div>

@@ -4,6 +4,8 @@ import { gwRequest, token, updateToken, authenticated, connect } from '../stores
 import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'
 import AppEditor from '../components/AppEditor.vue'
+import AppButton from '../components/AppButton.vue'
+import AppBadge from '../components/AppBadge.vue'
 import { createLogger } from '../utils/logger.js'
 import { exportConfig } from '../utils/export.js'
 import { useEnterAnim } from '../composables/useEnterAnim.js'
@@ -116,7 +118,6 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6">
-    <!-- 共享组件 -->
     <AppToast ref="toastRef" />
     <AppConfirm ref="confirmRef" />
 
@@ -132,10 +133,9 @@ onMounted(() => {
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
         <div class="flex-1">
           <div class="flex items-center gap-2 mb-2">
-            <span class="w-3 h-3 rounded-full" :class="authenticated ? 'bg-green-500' : 'bg-red-500'"></span>
-            <span class="text-sm font-medium" :class="authenticated ? 'text-green-700' : 'text-red-700'">
+            <AppBadge :type="authenticated ? 'success' : 'danger'" size="sm" dot>
               {{ authenticated ? '已连接' : '未连接' }}
-            </span>
+            </AppBadge>
           </div>
           <div v-if="healthData" class="flex items-center gap-4 text-xs text-gray-500">
             <span>会话: {{ healthData.sessions?.length || 0 }}</span>
@@ -143,14 +143,12 @@ onMounted(() => {
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button @click="doGatewayAction('stop')" :disabled="controlling || !authenticated"
-            class="px-4 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50 transition-all border border-red-200">
+          <AppButton size="sm" variant="danger" :disabled="controlling || !authenticated" @click="doGatewayAction('stop')">
             ⏹ 停止
-          </button>
-          <button @click="doGatewayAction('start')" :disabled="controlling || authenticated"
-            class="px-4 py-2 rounded-lg text-sm font-medium bg-green-50 text-green-600 hover:bg-green-100 disabled:opacity-50 transition-all border border-green-200">
+          </AppButton>
+          <AppButton size="sm" variant="primary" :disabled="controlling || authenticated" @click="doGatewayAction('start')">
             ▶ 启动
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -163,11 +161,9 @@ onMounted(() => {
         <input v-model="tokenInput" type="password" autocomplete="new-password" placeholder="输入 Gateway Token"
           aria-label="Gateway Token"
           class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <button @click="saveToken"
-          class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
-          :class="saved ? 'bg-green-500 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'">
+        <AppButton :variant="saved ? 'primary' : 'primary'" @click="saveToken">
           {{ saved ? '✓ 已保存' : '保存' }}
-        </button>
+        </AppButton>
       </div>
     </div>
 
@@ -176,9 +172,11 @@ onMounted(() => {
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-base font-semibold text-gray-800">📝 配置编辑器</h3>
         <div class="flex gap-2">
-          <button @click="fetchData" class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">刷新</button>
-          <button @click="exportConfig(configData, configEditor)" class="px-3 py-1.5 text-xs text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors">📥 导出</button>
-          <button @click="saveConfig" :disabled="savingConfig" class="px-3 py-1.5 text-xs text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">{{ savingConfig ? '保存中...' : '保存配置' }}</button>
+          <AppButton size="sm" @click="fetchData">刷新</AppButton>
+          <AppButton size="sm" @click="exportConfig(configData, configEditor)">📥 导出</AppButton>
+          <AppButton size="sm" variant="primary" :loading="savingConfig" @click="saveConfig">
+            {{ savingConfig ? '保存中...' : '保存配置' }}
+          </AppButton>
         </div>
       </div>
       <AppEditor v-model="configEditor" language="json" placeholder="JSON 配置..."
@@ -220,10 +218,9 @@ onMounted(() => {
             <div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-sm">🧩</div>
             <p class="text-sm font-medium text-gray-800">{{ pl.id }}</p>
           </div>
-          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-            :class="pl.enabled !== false ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'">
+          <AppBadge :type="pl.enabled !== false ? 'success' : 'default'" size="sm" dot>
             {{ pl.enabled !== false ? '已启用' : '已禁用' }}
-          </span>
+          </AppBadge>
         </div>
       </div>
     </div>

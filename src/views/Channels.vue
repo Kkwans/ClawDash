@@ -4,6 +4,9 @@ import { gwRequest } from '../stores/gateway.js'
 import { getRawConfig } from "../api/config-utils.js"
 import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'
+import AppButton from '../components/AppButton.vue'
+import AppModal from '../components/AppModal.vue'
+import AppBadge from '../components/AppBadge.vue'
 import { useEnterAnim } from '../composables/useEnterAnim.js'
 
 const channelsData = ref(null)
@@ -231,154 +234,125 @@ onMounted(fetchData)
     <AppConfirm ref="confirmRef" />
 
     <!-- 添加渠道弹窗 -->
-    <Teleport to="body">
-      <Transition name="fade">
-        <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showAddModal = false" @keydown.escape="showAddModal = false" tabindex="-1">
-          <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-slide-up">
-            <div class="px-5 py-4 border-b border-gray-100">
-              <h3 class="text-sm font-semibold text-gray-900">添加渠道</h3>
-            </div>
-            <div class="px-5 py-4 space-y-4">
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-2">渠道类型</label>
-                <div class="grid grid-cols-3 gap-2">
-                  <button v-for="ct in channelTypes" :key="ct.id"
-                    class="flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all cursor-pointer"
-                    :class="addForm.channel === ct.id ? 'border-gray-900 bg-gray-50 shadow-sm' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'"
-                    @click="addForm.channel = ct.id">
-                    <span class="text-xl">{{ ct.icon }}</span>
-                    <span class="text-xs font-medium text-gray-700">{{ ct.name }}</span>
-                  </button>
-                </div>
-              </div>
-              <template v-if="selectedType">
-                <div v-for="f in selectedType.fields" :key="f.key">
-                  <label class="block text-xs font-medium text-gray-500 mb-1.5">
-                    {{ f.label }} <span v-if="f.required" class="text-red-500">*</span>
-                  </label>
-                  <div class="relative">
-                    <input v-model="addForm.config[f.key]"
-                      :type="f.type === 'password' && !showPwd['add_'+f.key] ? 'password' : 'text'"
-                      :placeholder="f.placeholder"
-                      :autocomplete="f.type === 'password' ? 'new-password' : 'off'"
-                      :aria-label="f.label"
-                      class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all pr-9">
-                    <button v-if="f.type === 'password'"
-                      @click="togglePwd('add_'+f.key)"
-                      class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">
-                      {{ showPwd['add_'+f.key] ? '🙈' : '👁️' }}
-                    </button>
-                  </div>
-                </div>
-              </template>
-            </div>
-            <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
-              <button @click="showAddModal = false" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">取消</button>
-              <button @click="addChannel" :disabled="saving || !addForm.channel"
-                class="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                {{ saving ? '添加中...' : '添加渠道' }}
+    <AppModal v-model:visible="showAddModal" title="添加渠道" width="440px">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-2">渠道类型</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button v-for="ct in channelTypes" :key="ct.id"
+              class="flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all cursor-pointer"
+              :class="addForm.channel === ct.id ? 'border-gray-900 bg-gray-50 shadow-sm' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'"
+              @click="addForm.channel = ct.id">
+              <span class="text-xl">{{ ct.icon }}</span>
+              <span class="text-xs font-medium text-gray-700">{{ ct.name }}</span>
+            </button>
+          </div>
+        </div>
+        <template v-if="selectedType">
+          <div v-for="f in selectedType.fields" :key="f.key">
+            <label class="block text-xs font-medium text-gray-500 mb-1.5">
+              {{ f.label }} <span v-if="f.required" class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <input v-model="addForm.config[f.key]"
+                :type="f.type === 'password' && !showPwd['add_'+f.key] ? 'password' : 'text'"
+                :placeholder="f.placeholder"
+                :autocomplete="f.type === 'password' ? 'new-password' : 'off'"
+                :aria-label="f.label"
+                class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all pr-9">
+              <button v-if="f.type === 'password'"
+                @click="togglePwd('add_'+f.key)"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">
+                {{ showPwd['add_'+f.key] ? '🙈' : '👁️' }}
               </button>
             </div>
           </div>
-        </div>
-      </Transition>
-    </Teleport>
+        </template>
+      </div>
+      <template #footer>
+        <AppButton @click="showAddModal = false">取消</AppButton>
+        <AppButton variant="primary" :loading="saving" :disabled="!addForm.channel" @click="addChannel">
+          {{ saving ? '添加中...' : '添加渠道' }}
+        </AppButton>
+      </template>
+    </AppModal>
 
     <!-- 安装插件弹窗 -->
-    <Teleport to="body">
-      <Transition name="fade">
-        <div v-if="showInstallModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showInstallModal = false" @keydown.escape="showInstallModal = false" tabindex="-1">
-          <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-slide-up">
-            <div class="px-5 py-4 border-b border-gray-100">
-              <h3 class="text-sm font-semibold text-gray-900">安装插件</h3>
-            </div>
-            <div class="px-5 py-4 space-y-4">
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-2">推荐插件</label>
-                <div class="space-y-1">
-                  <div v-for="p in presetPlugins" :key="p.id"
-                    class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group"
-                    @click="installFromPreset(p)">
-                    <span class="text-lg">{{ p.icon }}</span>
-                    <div class="flex-1 min-w-0">
-                      <div class="text-sm font-medium text-gray-900">{{ p.name }}</div>
-                      <div class="text-xs text-gray-500">{{ p.desc }}</div>
-                    </div>
-                    <span class="text-xs font-medium text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">安装</span>
-                  </div>
-                </div>
+    <AppModal v-model:visible="showInstallModal" title="安装插件" width="480px">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-2">推荐插件</label>
+          <div class="space-y-1">
+            <div v-for="p in presetPlugins" :key="p.id"
+              class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group"
+              @click="installFromPreset(p)">
+              <span class="text-lg">{{ p.icon }}</span>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium text-gray-900">{{ p.name }}</div>
+                <div class="text-xs text-gray-500">{{ p.desc }}</div>
               </div>
-              <div class="border-t border-gray-100 pt-4">
-                <label class="block text-xs font-medium text-gray-500 mb-2">手动输入插件 ID</label>
-                <div class="flex gap-2">
-                  <input v-model="installForm.pluginId"
-                    autocomplete="off"
-                    aria-label="插件 ID"
-                    class="flex-1 px-3 py-2 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all"
-                    placeholder="@scope/plugin-name">
-                  <button @click="installPlugin"
-                    class="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all">安装</button>
-                </div>
-              </div>
-            </div>
-            <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
-              <button @click="showInstallModal = false" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">关闭</button>
+              <span class="text-xs font-medium text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">安装</span>
             </div>
           </div>
         </div>
-      </Transition>
-    </Teleport>
+        <div class="border-t border-gray-100 pt-4">
+          <label class="block text-xs font-medium text-gray-500 mb-2">手动输入插件 ID</label>
+          <div class="flex gap-2">
+            <input v-model="installForm.pluginId"
+              autocomplete="off"
+              aria-label="插件 ID"
+              class="flex-1 px-3 py-2 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all"
+              placeholder="@scope/plugin-name">
+            <AppButton variant="primary" @click="installPlugin">安装</AppButton>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <AppButton @click="showInstallModal = false">关闭</AppButton>
+      </template>
+    </AppModal>
 
     <!-- 渠道详情弹窗 -->
-    <Teleport to="body">
-      <Transition name="fade">
-        <div v-if="showDetail" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showDetail = null" @keydown.escape="showDetail = null" tabindex="-1">
-          <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-slide-up">
-            <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-              <span class="text-xl">{{ getIcon(showDetail.id) }}</span>
-              <div class="flex-1">
-                <h3 class="text-sm font-semibold text-gray-900">{{ getName(showDetail.id) }}</h3>
-                <p class="text-xs text-gray-400 font-mono">{{ showDetail.id }}</p>
-              </div>
-              <button @click="showDetail = null" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
-            </div>
-            <div class="px-5 py-4 space-y-3 max-h-80 overflow-y-auto">
-              <div class="flex items-center justify-between p-2.5 rounded-lg"
-                :class="showDetail.enabled ? 'bg-green-50' : 'bg-gray-50'">
-                <span class="text-xs text-gray-500">状态</span>
-                <span class="text-xs font-medium" :class="showDetail.enabled ? 'text-green-700' : 'text-gray-500'">
-                  {{ showDetail.enabled ? '已启用' : '已禁用' }}
-                </span>
-              </div>
-              <template v-for="(val, key) in showDetail.config" :key="key">
-                <div v-if="key !== 'enabled'">
-                  <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ key }}</label>
-                  <div class="relative">
-                    <input v-model="showDetail.config[key]"
-                      :type="(key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')) && !showPwd['d_'+key] ? 'password' : 'text'"
-                      :autocomplete="(key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')) ? 'new-password' : 'off'"
-                      :aria-label="key"
-                      class="w-full px-3 py-2 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all pr-9">
-                    <button v-if="key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')"
-                      @click="togglePwd('d_'+key)"
-                      class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">
-                      {{ showPwd['d_'+key] ? '🙈' : '👁️' }}
-                    </button>
-                  </div>
-                </div>
-              </template>
-            </div>
-            <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
-              <button @click="showDetail = null" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">取消</button>
-              <button @click="saveDetail" :disabled="saving"
-                class="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-all">
-                {{ saving ? '保存中...' : '保存配置' }}
-              </button>
-            </div>
-          </div>
+    <AppModal :visible="!!showDetail" :title="showDetail ? getName(showDetail.id) : ''" width="440px" @close="showDetail = null" @update:visible="val => { if (!val) showDetail = null }">
+      <template v-if="showDetail">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-xl">{{ getIcon(showDetail.id) }}</span>
+          <span class="text-xs text-gray-400 font-mono">{{ showDetail.id }}</span>
         </div>
-      </Transition>
-    </Teleport>
+        <div class="space-y-3 max-h-80 overflow-y-auto">
+          <div class="flex items-center justify-between p-2.5 rounded-lg"
+            :class="showDetail.enabled ? 'bg-green-50' : 'bg-gray-50'">
+            <span class="text-xs text-gray-500">状态</span>
+            <AppBadge :type="showDetail.enabled ? 'success' : 'default'" size="sm">
+              {{ showDetail.enabled ? '已启用' : '已禁用' }}
+            </AppBadge>
+          </div>
+          <template v-for="(val, key) in showDetail.config" :key="key">
+            <div v-if="key !== 'enabled'">
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">{{ key }}</label>
+              <div class="relative">
+                <input v-model="showDetail.config[key]"
+                  :type="(key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')) && !showPwd['d_'+key] ? 'password' : 'text'"
+                  :autocomplete="(key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')) ? 'new-password' : 'off'"
+                  :aria-label="key"
+                  class="w-full px-3 py-2 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all pr-9">
+                <button v-if="key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')"
+                  @click="togglePwd('d_'+key)"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">
+                  {{ showPwd['d_'+key] ? '🙈' : '👁️' }}
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+      <template #footer>
+        <AppButton @click="showDetail = null">取消</AppButton>
+        <AppButton variant="primary" :loading="saving" @click="saveDetail">
+          {{ saving ? '保存中...' : '保存配置' }}
+        </AppButton>
+      </template>
+    </AppModal>
 
     <!-- 页面头部 -->
     <div class="flex items-center justify-between enter-anim" :class="{ 'is-entered': entered }" style="--delay: 0ms">
@@ -387,9 +361,9 @@ onMounted(fetchData)
         <p class="text-sm text-gray-500 mt-0.5">管理消息渠道和插件</p>
       </div>
       <div class="flex gap-2">
-        <button @click="fetchData" class="px-3 py-1.5 text-xs text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">刷新</button>
-        <button @click="showAddModal = true" class="px-3 py-1.5 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all">+ 添加渠道</button>
-        <button @click="showInstallModal = true" class="px-3 py-1.5 text-xs text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">🧩 安装插件</button>
+        <AppButton size="sm" @click="fetchData">刷新</AppButton>
+        <AppButton size="sm" variant="primary" @click="showAddModal = true">+ 添加渠道</AppButton>
+        <AppButton size="sm" @click="showInstallModal = true">🧩 安装插件</AppButton>
       </div>
     </div>
 
@@ -436,21 +410,19 @@ onMounted(fetchData)
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <span class="text-sm font-semibold text-gray-900">{{ getName(ch.id) }}</span>
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                :class="ch.enabled !== false ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'">
+              <AppBadge :type="ch.enabled !== false ? 'success' : 'default'" size="sm" dot>
                 {{ ch.enabled !== false ? '已启用' : '已禁用' }}
-              </span>
+              </AppBadge>
             </div>
             <p class="text-xs text-gray-400 font-mono mt-0.5">{{ ch.id }}</p>
           </div>
         </div>
         <div class="flex items-center gap-1.5">
-          <button @click="openDetail(ch)" class="px-2.5 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-all">配置</button>
-          <button @click="toggleChannel(ch)" class="px-2.5 py-1.5 text-xs font-medium rounded-md transition-all"
-            :class="ch.enabled !== false ? 'text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100' : 'text-green-700 bg-green-50 border border-green-200 hover:bg-green-100'">
+          <AppButton size="sm" @click="openDetail(ch)">配置</AppButton>
+          <AppButton size="sm" :variant="ch.enabled !== false ? 'default' : 'default'" @click="toggleChannel(ch)">
             {{ ch.enabled !== false ? '禁用' : '启用' }}
-          </button>
-          <button @click="removeChannel(ch)" class="px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-all">删除</button>
+          </AppButton>
+          <AppButton size="sm" variant="danger" @click="removeChannel(ch)">删除</AppButton>
         </div>
       </div>
     </div>
@@ -470,19 +442,17 @@ onMounted(fetchData)
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <span class="text-sm font-semibold text-gray-900">{{ pl.id }}</span>
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                :class="pl.enabled ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'">
+              <AppBadge :type="pl.enabled ? 'success' : 'default'" size="sm" dot>
                 {{ pl.enabled ? '已启用' : '已禁用' }}
-              </span>
+              </AppBadge>
             </div>
           </div>
         </div>
         <div class="flex items-center gap-1.5">
-          <button @click="togglePlugin(pl)" class="px-2.5 py-1.5 text-xs font-medium rounded-md transition-all"
-            :class="pl.enabled ? 'text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100' : 'text-green-700 bg-green-50 border border-green-200 hover:bg-green-100'">
+          <AppButton size="sm" @click="togglePlugin(pl)">
             {{ pl.enabled ? '禁用' : '启用' }}
-          </button>
-          <button @click="uninstallPlugin(pl)" class="px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-all">卸载</button>
+          </AppButton>
+          <AppButton size="sm" variant="danger" @click="uninstallPlugin(pl)">卸载</AppButton>
         </div>
       </div>
     </div>
