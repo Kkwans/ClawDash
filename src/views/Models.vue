@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, nextTick } from 'vue'
+import { ref, watch, onMounted, nextTick, computed } from 'vue'
 import { gwRequest, authenticated, connecting } from '../stores/gateway.js'
 import { getParsedConfig, updateGatewayConfig } from '../api/config-utils.js'
 import { useScrollLock } from '../composables/useScrollLock.js'
@@ -22,10 +22,11 @@ const saving = ref(false)
 const expandedProviders = ref(new Set())
 const showAddModal = ref(false)
 const newProvider = ref({ id: '', api: 'openai-completions', baseUrl: '', apiKey: '', models: [] })
+const showPwd = ref({})
+const providerFilter = ref('')
 
-function showToast(msg, type = 'info') {
-  toastRef.value?.show(msg, type)
-}
+function togglePwd(k) { showPwd.value[k] = !showPwd.value[k] }
+function showToast(msg, type = 'info') { toastRef.value?.show(msg, type) }
 
 const thinkingOptions = [
   { value: 'off', label: '关闭', desc: '不使用思考能力' },
@@ -132,15 +133,33 @@ async function addProvider() {
     }
   })
   showAddModal.value = false
+  expandedProviders.value.add(newProvider.value.id)
   newProvider.value = { id: '', api: 'openai-completions', baseUrl: '', apiKey: '', models: [] }
+  showPwd.value = {}
+}
+
+// Provider 搜索过滤
+const filteredProviders = computed(() => {
+  if (!providerFilter.value) return providers.value
+  const q = providerFilter.value.toLowerCase()
+  return providers.value.filter(p => p.id.toLowerCase().includes(q))
+})
+
+// 每个 Provider 下的模型过滤（通过 expandModelFilters 单独管理）
+const expandModelFilters = ref({})
+function modelFilter(pId) { return expandModelFilters.value[pId] || '' }
+function setModelFilter(pId, val) { expandModelFilters.value = { ...expandModelFilters.value, [pId]: val } }
+
+function getFilteredModels(p) {
+  const q = modelFilter(p.id).toLowerCase()
+  if (!q) return p.models || []
+  return (p.models || []).filter(m =>
+    (m.name || m.id).toLowerCase().includes(q) || m.id.toLowerCase().includes(q)
+  )
 }
 
 const showDeleteConfirm = ref(null)
-
-function confirmDeleteProvider(id) {
-  showDeleteConfirm.value = id
-}
-
+function confirmDeleteProvider(id) { showDeleteConfirm.value = id }
 async function doDeleteProvider() {
   const id = showDeleteConfirm.value
   showDeleteConfirm.value = null
@@ -169,7 +188,7 @@ useScrollLock(showDeleteConfirm)
       <p class="text-sm text-gray-500">确定删除提供商 <span class="font-mono font-medium text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded">{{ showDeleteConfirm }}</span>？此操作不可撤销。</p>
       <template #footer>
         <AppButton @click="showDeleteConfirm = null">取消</AppButton>
-        <AppButton variant="danger" @click="doDeleteProvider">删除</AppButton>
+        <AppButton variant="danger" :loading="saving" @click="doDeleteProvider">删除</AppButton>
       </template>
     </AppModal>
 
@@ -204,9 +223,17 @@ useScrollLock(showDeleteConfirm)
           </div>
           <div>
             <label for="new-provider-key" class="block text-xs font-medium text-gray-600 mb-1.5">API Key</label>
-            <input id="new-provider-key" v-model="newProvider.apiKey" type="password" autocomplete="new-password" readonly @focus="$event.target.removeAttribute('readonly')"
-              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
-              placeholder="sk-...">
+            <div class="relative">
+              <input id="new-provider-key" v-model="newProvider.apiKey"
+                :type="!showPwd['new_apiKey'] ? 'password' : 'text'"
+                autocomplete="new-password" readonly @focus="$event.target.removeAttribute('readonly')"
+                class="w-full px-3 py-2.5 pr-9 border border-gray-200 rounded-xl text-sm font-mono bg-gray-50/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all placeholder:text-gray-300"
+                placeholder="sk-...">
+              <button type="button" @click="togglePwd('new_apiKey')"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">
+                {{ showPwd['new_apiKey'] ? '🙈' : '👁️' }}
+              </button>
+            </div>
           </div>
         </div>
       </form>
@@ -298,10 +325,31 @@ useScrollLock(showDeleteConfirm)
       <!-- 提供商列表 -->
       <div v-else class="space-y-3 enter-anim"
         :class="{ 'is-entered': entered }" style="--delay: 160ms">
-        <div class="flex items-center justify-between">
-          <p class="text-xs text-gray-400 font-medium">共 {{ providers.length }} 个提供商</p>
+        <!-- 搜索框 -->
+        <div v-if="providers.length > 0" class="relative">
+          <input v-model="providerFilter"
+            type="search" placeholder="搜索提供商..."
+            class="w-full pl-8 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all">
+          <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
         </div>
-        <div v-for="p in providers" :key="p.id" class="card-accent card-hover bg-white rounded-2xl border border-gray-200/60 overflow-hidden shadow-sm">
+
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-400 font-medium">共 {{ providers.length }} 个提供商 · 已筛选 {{ filteredProviders.length }} 个</p>
+        </div>
+
+        <!-- 空状态（无任何 Provider） -->
+        <div v-if="filteredProviders.length === 0 && providers.length === 0" class="text-center py-16 bg-white rounded-2xl border border-gray-200">
+          <div class="w-16 h-16 mx-auto rounded-2xl bg-gray-50 flex items-center justify-center text-3xl mb-4 ring-1 ring-gray-200/50">📦</div>
+          <p class="text-sm font-medium text-gray-500">暂无模型提供商</p>
+          <p class="text-xs text-gray-400 mt-1">点击上方「添加提供商」开始配置</p>
+        </div>
+        <!-- 无搜索结果 -->
+        <div v-else-if="filteredProviders.length === 0 && providers.length > 0" class="text-center py-10 bg-white rounded-2xl border border-gray-200">
+          <p class="text-sm text-gray-400">未找到匹配「{{ providerFilter }}」的提供商</p>
+        </div>
+
+        <!-- Provider 卡片列表 -->
+        <div v-for="p in filteredProviders" :key="p.id" class="card-accent card-hover bg-white rounded-2xl border border-gray-200/60 overflow-hidden shadow-sm">
           <!-- 提供商头部 -->
           <div @click="toggleProvider(p.id)" class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50/60 transition-colors">
             <div class="flex items-center gap-3">
@@ -335,9 +383,16 @@ useScrollLock(showDeleteConfirm)
                     <span class="text-xs text-gray-600 truncate">{{ p.baseUrl || '默认' }}</span>
                   </div>
                 </div>
+                <!-- 模型搜索 -->
+                <div v-if="p.models?.length > 0" class="relative">
+                  <input :value="modelFilter(p.id)" @input="setModelFilter(p.id, $event.target.value)"
+                    type="search" placeholder="搜索模型..."
+                    class="w-full pl-7 pr-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-900/20 focus:border-gray-300 transition-all">
+                  <span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
+                </div>
                 <!-- 模型列表 -->
-                <div v-if="p.models?.length" class="space-y-2">
-                  <div v-for="m in p.models" :key="m.id"
+                <div v-if="getFilteredModels(p).length" class="space-y-2">
+                  <div v-for="m in getFilteredModels(p)" :key="m.id"
                     class="list-item flex items-center justify-between p-3.5 rounded-xl bg-gray-50/70 hover:bg-indigo-50/40 transition-all">
                     <div class="min-w-0">
                       <div class="flex items-center gap-2">
@@ -350,26 +405,23 @@ useScrollLock(showDeleteConfirm)
                       <AppButton size="sm"
                         :variant="defaultModel===p.id+'/'+m.id ? 'primary' : 'default'"
                         @click.stop="setDefaultModel(p.id+'/'+m.id)" :disabled="saving">
-                        {{ defaultModel===p.id+'/'+m.id ? '✓ 主模型' : '设为主' }}
+                        {{ defaultModel===p.id+'/'+m.id ? '✓ 主模型' : '设为主模型' }}
                       </AppButton>
                       <AppButton size="sm"
                         :variant="fallbackModel===p.id+'/'+m.id ? 'primary' : 'default'"
                         @click.stop="setFallbackModel(p.id+'/'+m.id)" :disabled="saving">
-                        {{ fallbackModel===p.id+'/'+m.id ? '✓ 备用' : '设备用' }}
+                        {{ fallbackModel===p.id+'/'+m.id ? '✓ 备用' : '设为备用' }}
                       </AppButton>
                     </div>
                   </div>
                 </div>
+                <p v-else-if="p.models?.length && !getFilteredModels(p).length" class="text-xs text-gray-400 text-center py-3">
+                  未找到匹配「{{ modelFilter(p.id) }}」的模型
+                </p>
                 <p v-else class="text-sm text-gray-400 text-center py-4">暂无模型</p>
               </div>
             </div>
           </Transition>
-        </div>
-        <!-- 空状态 -->
-        <div v-if="providers.length === 0" class="text-center py-16">
-          <div class="w-16 h-16 mx-auto rounded-2xl bg-gray-50 flex items-center justify-center text-3xl mb-4 ring-1 ring-gray-200/50">📦</div>
-          <p class="text-sm font-medium text-gray-500">暂无模型提供商</p>
-          <p class="text-xs text-gray-400 mt-1">点击上方「添加提供商」开始配置</p>
         </div>
       </div>
     </template>
