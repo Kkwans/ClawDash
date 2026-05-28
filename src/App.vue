@@ -240,7 +240,7 @@ onUnmounted(() => {
               <p class="text-xs text-gray-400">OpenClaw 控制台</p>
             </div>
           </div>
-          <button v-if="isMobile" @click="sidebarOpen = false" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+          <button v-if="isMobile" @click="sidebarOpen = false" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" aria-label="关闭侧边栏">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
@@ -308,7 +308,7 @@ onUnmounted(() => {
     <main class="flex-1 overflow-y-auto">
       <header class="bg-white border-b border-gray-200 px-4 md:px-6 h-14 flex items-center justify-between sticky top-0 z-10">
         <div class="flex items-center gap-3">
-          <button v-if="isMobile" @click="toggleSidebar" class="text-gray-600 hover:text-gray-800">
+          <button v-if="isMobile" @click="toggleSidebar" class="text-gray-600 hover:text-gray-800" aria-label="切换侧边栏">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
@@ -318,7 +318,8 @@ onUnmounted(() => {
           </h2>
           <button @click="toggleFavorite(currentTab)" class="p-1 rounded-lg transition-colors"
             :class="isFavorite(currentTab) ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-gray-500'"
-            :title="isFavorite(currentTab) ? '取消收藏' : '收藏此页面'">
+            :title="isFavorite(currentTab) ? '取消收藏' : '收藏此页面'"
+            :aria-label="isFavorite(currentTab) ? '取消收藏' : '收藏此页面'">
             <svg class="w-4 h-4" :fill="isFavorite(currentTab) ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
             </svg>

@@ -48,7 +48,7 @@ const results = computed(() => {
 
   return items.filter(item => {
     const searchText = [item.label, item.category, ...(item.keywords || [])].join(' ').toLowerCase()
-    return q.split('').every(char => searchText.includes(char))
+    return searchText.includes(q)
   }).slice(0, 12)
 })
 

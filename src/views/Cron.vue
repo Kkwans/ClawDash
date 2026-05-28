@@ -285,9 +285,10 @@ onMounted(fetchJobs)
 
     <!-- 新建弹窗 -->
     <Teleport to="body">
+      <Transition name="modal">
       <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" tabindex="-1" @keydown.escape="showCreateModal = false">
         <div class="absolute inset-0 bg-black/40" @click="showCreateModal = false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col modal-content">
           <div class="flex items-center justify-between p-5 border-b border-gray-200">
             <h3 class="text-base font-semibold text-gray-800">新建定时任务</h3>
             <button @click="showCreateModal = false" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
@@ -359,13 +360,15 @@ onMounted(fetchJobs)
           </div>
         </div>
       </div>
+      </Transition>
     </Teleport>
 
     <!-- 编辑弹窗 -->
     <Teleport to="body">
+      <Transition name="modal">
       <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" tabindex="-1" @keydown.escape="showEditModal = false">
         <div class="absolute inset-0 bg-black/40" @click="showEditModal = false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col modal-content">
           <div class="flex items-center justify-between p-5 border-b border-gray-200">
             <h3 class="text-base font-semibold text-gray-800">编辑定时任务</h3>
             <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
@@ -404,13 +407,15 @@ onMounted(fetchJobs)
           </div>
         </div>
       </div>
+      </Transition>
     </Teleport>
 
     <!-- 执行历史弹窗 -->
     <Teleport to="body">
+      <Transition name="modal">
       <div v-if="showHistoryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" tabindex="-1" @keydown.escape="showHistoryModal = false">
         <div class="absolute inset-0 bg-black/40" @click="showHistoryModal = false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col modal-content">
           <div class="flex items-center justify-between p-5 border-b border-gray-200">
             <h3 class="text-base font-semibold text-gray-800">执行历史 — {{ historyJob?.name || historyJob?.id }}</h3>
             <button @click="showHistoryModal = false" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
@@ -438,6 +443,7 @@ onMounted(fetchJobs)
           </div>
         </div>
       </div>
+      </Transition>
     </Teleport>
   </div>
 </template>
