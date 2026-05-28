@@ -4,6 +4,7 @@ import { gwRequest } from '../stores/gateway.js'
 import { getRawConfig } from "../api/config-utils.js"
 import AppToast from '../components/AppToast.vue'
 import AppConfirm from '../components/AppConfirm.vue'
+import { useEnterAnim } from '../composables/useEnterAnim.js'
 
 const channelsData = ref(null)
 const configData = ref(null)
@@ -18,10 +19,7 @@ const installForm = ref({ pluginId: '' })
 const addForm = ref({ channel: '', config: {} })
 const saving = ref(false)
 const showPwd = ref({})
-
-// 入场动画状态
-const entered = ref(false)
-onMounted(() => { nextTick(() => { entered.value = true }) })
+const { entered } = useEnterAnim()
 
 function togglePwd(k) { showPwd.value[k] = !showPwd.value[k] }
 function showConfirm(m) { return confirmRef.value?.confirm(m) || false }

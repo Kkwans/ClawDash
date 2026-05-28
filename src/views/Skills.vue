@@ -7,12 +7,10 @@ import AppEmpty from '../components/AppEmpty.vue'
 import AppLoading from '../components/AppLoading.vue'
 import AppConfirm from '../components/AppConfirm.vue'
 import { createLogger } from '../utils/logger.js'
+import { useEnterAnim } from '../composables/useEnterAnim.js'
 
 const log = createLogger('Skills')
-
-// 入场动画状态
-const entered = ref(false)
-onMounted(() => { nextTick(() => { entered.value = true }) })
+const { entered } = useEnterAnim()
 
 const searchResults = ref([])
 const installedSkills = ref([])

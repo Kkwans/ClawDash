@@ -4,10 +4,10 @@ import { gwRequest, authenticated, connecting } from '../stores/gateway.js'
 import { getParsedConfig, updateGatewayConfig } from '../api/config-utils.js'
 import { useScrollLock } from '../composables/useScrollLock.js'
 import AppToast from '../components/AppToast.vue'
+import { useEnterAnim } from '../composables/useEnterAnim.js'
 
-// 入场动画状态
-const entered = ref(false)
-onMounted(() => { nextTick(() => { entered.value = true }) })
+const toastRef = ref(null)
+const { entered } = useEnterAnim()
 
 const providers = ref([])
 const loading = ref(true)
@@ -17,7 +17,6 @@ const thinkingLevel = ref('off')
 const reasoningLevel = ref('off')
 const saving = ref(false)
 const expandedProviders = ref(new Set())
-const toastRef = ref(null)
 const showAddModal = ref(false)
 const newProvider = ref({ id: '', api: 'openai-completions', baseUrl: '', apiKey: '', models: [] })
 

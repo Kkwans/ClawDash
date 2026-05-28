@@ -6,6 +6,7 @@ import AppConfirm from '../components/AppConfirm.vue'
 import AppEditor from '../components/AppEditor.vue'
 import { createLogger } from '../utils/logger.js'
 import { exportConfig } from '../utils/export.js'
+import { useEnterAnim } from '../composables/useEnterAnim.js'
 
 const log = createLogger('Settings')
 
@@ -21,10 +22,7 @@ const configEditor = ref('')
 const configHash = ref('')
 const configError = ref('')
 const savingConfig = ref(false)
-
-// 入场动画状态
-const entered = ref(false)
-onMounted(() => { nextTick(() => { entered.value = true }) })
+const { entered } = useEnterAnim()
 
 function showConfirm(msg) {
   return confirmRef.value?.confirm(msg) || false

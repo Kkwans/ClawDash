@@ -6,12 +6,10 @@ import AppConfirm from '../components/AppConfirm.vue'
 import AppEmpty from '../components/AppEmpty.vue'
 import AppLoading from '../components/AppLoading.vue'
 import { createLogger } from '../utils/logger.js'
+import { useEnterAnim } from '../composables/useEnterAnim.js'
 
 const log = createLogger('Cron')
-
-// 入场动画状态
-const entered = ref(false)
-onMounted(() => { nextTick(() => { entered.value = true }) })
+const { entered } = useEnterAnim()
 
 const jobs = ref([])
 const loading = ref(true)
