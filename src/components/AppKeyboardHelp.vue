@@ -34,11 +34,11 @@ defineExpose({ open, close, toggle })
     <Transition name="fade">
       <div v-if="visible" class="fixed inset-0 z-[150] flex items-center justify-center p-4" tabindex="-1" @keydown.escape="close">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="close"></div>
-        <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-          <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+        <div class="relative bg-[var(--bg-panel)] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
             <div class="flex items-center gap-2">
               <span class="text-lg">⌨️</span>
-              <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">键盘快捷键</h3>
+              <h3 class="text-base font-semibold text-[var(--text-primary)]">键盘快捷键</h3>
             </div>
             <AppButton size="sm" variant="ghost" class="!text-xl" @click="close" aria-label="关闭">
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -48,14 +48,14 @@ defineExpose({ open, close, toggle })
           </div>
           <div class="px-5 py-4 max-h-[60vh] overflow-y-auto space-y-5">
             <div v-for="section in shortcuts" :key="section.group">
-              <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2.5">{{ section.group }}</p>
+              <p class="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-2.5">{{ section.group }}</p>
               <div class="space-y-1.5">
                 <div v-for="s in section.items" :key="s.desc"
                   class="flex items-center justify-between py-1.5">
-                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ s.desc }}</span>
+                  <span class="text-sm text-[var(--text-secondary)]">{{ s.desc }}</span>
                   <div class="flex items-center gap-1">
                     <kbd v-for="(k, i) in s.keys" :key="i"
-                      class="px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-md border border-gray-200 dark:border-gray-600 min-w-[28px] text-center">
+                      class="px-2 py-1 text-xs font-mono bg-[var(--bg-muted)] text-[var(--text-secondary)] rounded-md border border-[var(--border)] min-w-[28px] text-center">
                       {{ k }}
                     </kbd>
                   </div>
@@ -63,8 +63,8 @@ defineExpose({ open, close, toggle })
               </div>
             </div>
           </div>
-          <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-            <p class="text-xs text-gray-400 dark:text-gray-500 text-center">按 <kbd class="px-1.5 py-0.5 text-xs font-mono bg-gray-200 dark:bg-gray-600 rounded">ESC</kbd> 关闭</p>
+          <div class="px-5 py-3 border-t border-[var(--border)] bg-[var(--bg-subtle)]">
+            <p class="text-xs text-[var(--text-tertiary)] text-center">按 <kbd class="px-1.5 py-0.5 text-xs font-mono bg-[var(--bg-muted)] rounded">ESC</kbd> 关闭</p>
           </div>
         </div>
       </div>

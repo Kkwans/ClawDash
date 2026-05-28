@@ -297,7 +297,8 @@ onUnmounted(() => {
 
     <!-- 错误提示 -->
     <Transition name="slide-up">
-      <div v-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-400 flex items-center gap-2">
+      <div v-if="error" class="rounded-xl p-4 text-sm flex items-center gap-2"
+        :style="{ backgroundColor: 'var(--danger-light)', borderColor: 'var(--danger-text)', color: 'var(--danger-text)' }">
         <span>⚠️</span> {{ error }}
         <AppButton variant="ghost" size="xs" @click="error = ''; loadAllData()" class="ml-auto">重试</AppButton>
       </div>
