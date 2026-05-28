@@ -39,7 +39,6 @@ const asyncOptions = { loadingComponent, errorComponent, delay: 200, timeout: 10
 const Dashboard = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Dashboard.vue') })
 const Models = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Models.vue') })
 const Channels = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Channels.vue') })
-const Sessions = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Sessions.vue') })
 const Settings = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Settings.vue') })
 const Skills = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Skills.vue') })
 const Cron = defineAsyncComponent({ ...asyncOptions, loader: () => import('./views/Cron.vue') })
@@ -110,7 +109,6 @@ const tabs = [
   { id: 'channels', name: '渠道管理', icon: '📡' },
   { id: 'skills', name: 'Skill 管理', icon: '📦' },
   { id: 'cron', name: '定时任务', icon: '⏰' },
-  { id: 'logs', name: '日志查看', icon: '📋' },
   { id: 'settings', name: '系统设置', icon: '⚙️' },
 ]
 
@@ -146,15 +144,14 @@ useKeyboard({
   'ctrl+3': () => switchTab('channels'),
   'ctrl+4': () => switchTab('skills'),
   'ctrl+5': () => switchTab('cron'),
-  'ctrl+6': () => switchTab('logs'),
-  'ctrl+7': () => switchTab('settings'),
+  'ctrl+6': () => switchTab('settings'),
   'ctrl+b': () => toggleSidebar(),
   'ctrl+,': () => switchTab('settings'),
   '?': () => keyboardHelpRef.value?.toggle(),
 })
 
 const currentComponent = computed(() => {
-  const map = { dashboard: Dashboard, models: Models, channels: Channels, skills: Skills, cron: Cron, logs: Sessions, settings: Settings }
+  const map = { dashboard: Dashboard, models: Models, channels: Channels, skills: Skills, cron: Cron, settings: Settings }
   return map[currentTab.value] || Dashboard
 })
 
