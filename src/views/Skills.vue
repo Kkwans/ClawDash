@@ -195,21 +195,17 @@ onMounted(fetchData)
     <!-- Tab 切换 -->
     <div class="enter-anim" :class="{ 'is-entered': entered }" style="--delay: 80ms">
       <div class="flex items-center gap-1 bg-gray-100/80 rounded-xl p-1 w-fit">
-        <button @click="activeTab = 'installed'"
-          class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
-          :class="activeTab === 'installed' ? 'bg-white text-gray-800 shadow-sm ring-1 ring-gray-200/60' : 'text-gray-500 hover:text-gray-700'">
+        <AppButton :variant="activeTab === 'installed' ? 'primary' : 'default'" size="sm" @click="activeTab = 'installed'">
           🧩 已安装插件
           <span v-if="installedSkills.length + pluginEntries.length > 0"
             class="ml-1 px-1.5 py-0.5 text-xs rounded-full"
-            :class="activeTab === 'installed' ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-200 text-gray-500'">
+            :class="activeTab === 'installed' ? 'bg-white/20' : 'bg-gray-200 text-gray-500'">
             {{ installedSkills.length + pluginEntries.length }}
           </span>
-        </button>
-        <button @click="activeTab = 'search'"
-          class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
-          :class="activeTab === 'search' ? 'bg-white text-gray-800 shadow-sm ring-1 ring-gray-200/60' : 'text-gray-500 hover:text-gray-700'">
+        </AppButton>
+        <AppButton :variant="activeTab === 'search' ? 'primary' : 'default'" size="sm" @click="activeTab = 'search'">
           🔍 搜索 ClawHub
-        </button>
+        </AppButton>
       </div>
     </div>
 
