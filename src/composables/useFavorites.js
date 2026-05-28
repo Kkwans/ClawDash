@@ -9,7 +9,7 @@ function loadFavorites() {
     const stored = localStorage.getItem(STORAGE_KEY)
     return stored ? JSON.parse(stored) : ['dashboard']
   } catch {
-    return ['dashboard', 'chat']
+    return ['dashboard']
   }
 }
 
