@@ -206,15 +206,15 @@ onMounted(fetchJobs)
 
     <!-- 统计 -->
     <div class="grid grid-cols-3 gap-3 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 80ms">
-      <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+      <div class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-4 text-center transition-all">
         <p class="text-2xl font-bold text-blue-600">{{ jobs.length }}</p>
         <p class="text-xs text-gray-500 mt-1">任务总数</p>
       </div>
-      <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+      <div class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-4 text-center transition-all">
         <p class="text-2xl font-bold text-emerald-600">{{ enabledCount }}</p>
         <p class="text-xs text-gray-500 mt-1">已启用</p>
       </div>
-      <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+      <div class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-4 text-center transition-all">
         <p class="text-2xl font-bold text-gray-400">{{ jobs.length - enabledCount }}</p>
         <p class="text-xs text-gray-500 mt-1">已禁用</p>
       </div>
@@ -240,7 +240,7 @@ onMounted(fetchJobs)
       <div v-if="jobs.length > 0" class="relative">
         <input v-model="jobFilter" type="search" placeholder="搜索任务..."
           class="w-full pl-8 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all">
-        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
       </div>
 
       <!-- 空状态 -->
@@ -261,7 +261,7 @@ onMounted(fetchJobs)
 
       <!-- 任务卡片列表 -->
       <div v-for="job in filteredJobs" :key="job.id"
-        class="bg-white rounded-xl border border-gray-200 p-4 transition-all hover:border-gray-300 hover:shadow-sm">
+        class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-4 transition-all">
         <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
@@ -278,7 +278,7 @@ onMounted(fetchJobs)
           <div class="flex items-center gap-1.5 flex-shrink-0">
             <AppButton size="sm" @click="showHistory(job)">📋</AppButton>
             <AppButton size="sm" @click="startEdit(job)">✏️</AppButton>
-            <AppButton size="sm" variant="primary" @click="runJob(job)">▶ 执行</AppButton>
+            <AppButton size="sm" variant="default" @click="runJob(job)">▶ 执行</AppButton>
             <AppButton size="sm" @click="toggleJob(job)">
               {{ job.enabled !== false ? '禁用' : '启用' }}
             </AppButton>
