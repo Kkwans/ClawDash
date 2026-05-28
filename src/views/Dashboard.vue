@@ -181,13 +181,33 @@ let refreshTimer
 watch(() => props.refreshKey, () => {
   if (authenticated.value) loadAllData()
 })
+
+function startPolling() {
+  clearInterval(refreshTimer)
+  refreshTimer = setInterval(() => {
+    if (authenticated.value && !document.hidden) loadAllData(true)
+  }, 30000)
+}
+
+function onVisibilityChange() {
+  if (document.hidden) {
+    clearInterval(refreshTimer)
+  } else {
+    // 回到标签页时立即刷新一次，然后恢复轮询
+    if (authenticated.value) loadAllData(true)
+    startPolling()
+  }
+}
+
 onMounted(() => {
   if (authenticated.value) loadAllData()
-  refreshTimer = setInterval(() => {
-    if (authenticated.value) loadAllData(true)
-  }, 30000)
+  startPolling()
+  document.addEventListener('visibilitychange', onVisibilityChange)
 })
-onUnmounted(() => clearInterval(refreshTimer))
+onUnmounted(() => {
+  clearInterval(refreshTimer)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+})
 </script>
 
 <style scoped>

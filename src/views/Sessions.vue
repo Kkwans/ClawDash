@@ -165,12 +165,28 @@ const uniqueEvents = computed(() => {
 })
 
 let timer
+function startPolling() {
+  clearInterval(timer)
+  timer = setInterval(() => {
+    if (!document.hidden) fetchHealth()
+  }, 30000)
+}
+function onVisibilityChange() {
+  if (document.hidden) {
+    clearInterval(timer)
+  } else {
+    fetchHealth()
+    startPolling()
+  }
+}
 onMounted(() => {
   fetchHealth()
-  timer = setInterval(fetchHealth, 30000)
+  startPolling()
+  document.addEventListener('visibilitychange', onVisibilityChange)
 })
 onUnmounted(() => {
   clearInterval(timer)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 </script>
 
