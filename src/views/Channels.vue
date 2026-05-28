@@ -395,7 +395,7 @@ onMounted(fetchData)
         <input v-model="channelFilter"
           type="search" placeholder="搜索渠道..."
           class="w-full pl-8 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all">
-        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
       </div>
       <!-- 空状态 -->
       <div v-if="filteredChannels.length === 0 && channelEntries.length === 0" class="text-center py-16 bg-white rounded-xl border border-gray-200">
@@ -409,7 +409,7 @@ onMounted(fetchData)
       </div>
       <!-- 渠道卡片 -->
       <div v-for="ch in filteredChannels" :key="ch.id"
-        class="bg-white rounded-xl border border-gray-200 p-4 hover:border-gray-300 hover:shadow-sm transition-all flex items-center justify-between">
+        class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-4 transition-all flex items-center justify-between">
         <div class="flex items-center gap-3 min-w-0">
           <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg"
             :class="ch.enabled !== false ? 'bg-blue-50' : 'bg-gray-100'">
@@ -442,7 +442,7 @@ onMounted(fetchData)
         <input v-model="pluginFilter"
           type="search" placeholder="搜索插件..."
           class="w-full pl-8 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all">
-        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
       </div>
       <!-- 空状态 -->
       <div v-if="filteredPlugins.length === 0 && pluginEntries.length === 0" class="text-center py-16 bg-white rounded-xl border border-gray-200">
@@ -456,7 +456,7 @@ onMounted(fetchData)
       </div>
       <!-- 插件卡片 -->
       <div v-for="pl in filteredPlugins" :key="pl.id"
-        class="bg-white rounded-xl border border-gray-200 p-4 hover:border-gray-300 hover:shadow-sm transition-all flex items-center justify-between">
+        class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-4 transition-all flex items-center justify-between">
         <div class="flex items-center gap-3 min-w-0">
           <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg"
             :class="pl.enabled ? 'bg-green-50' : 'bg-gray-100'">🧩</div>

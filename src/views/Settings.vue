@@ -128,7 +128,7 @@ onMounted(() => {
     </div>
 
     <!-- Gateway 控制 -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 80ms">
+    <div class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 80ms">
       <h3 class="text-base font-semibold text-gray-800 mb-4">🎛️ Gateway 控制</h3>
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
         <div class="flex-1">
@@ -154,7 +154,7 @@ onMounted(() => {
     </div>
 
     <!-- Token 配置 -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 160ms">
+    <div class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 160ms">
       <h3 class="text-base font-semibold text-gray-800 mb-2">🔑 Gateway Token</h3>
       <p class="text-sm text-gray-500 mb-4">输入 Gateway Token 以访问 API 功能。Token 保存在本地浏览器中。</p>
       <form autocomplete="off" @submit.prevent="saveToken">
@@ -165,7 +165,7 @@ onMounted(() => {
           <input v-model="tokenInput" type="password" autocomplete="new-password" placeholder="输入 Gateway Token"
             aria-label="Gateway Token" readonly @focus="$event.target.removeAttribute('readonly')"
             class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <AppButton :variant="saved ? 'primary' : 'primary'" @click="saveToken">
+          <AppButton :variant="saved ? 'success' : 'primary'" @click="saveToken">
             {{ saved ? '✓ 已保存' : '保存' }}
           </AppButton>
         </div>
@@ -173,7 +173,7 @@ onMounted(() => {
     </div>
 
     <!-- 配置编辑器 -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 240ms">
+    <div class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 240ms">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-base font-semibold text-gray-800">📝 配置编辑器</h3>
         <div class="flex gap-2">
@@ -190,7 +190,7 @@ onMounted(() => {
     </div>
 
     <!-- 当前配置 -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 320ms">
+    <div class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 320ms">
       <h3 class="text-base font-semibold text-gray-800 mb-4">⚙️ 当前配置</h3>
       <div v-if="loading" class="text-center py-4 text-gray-400">加载中...</div>
       <div v-else class="space-y-1">
@@ -214,11 +214,11 @@ onMounted(() => {
     </div>
 
     <!-- 已安装插件 -->
-    <div v-if="pluginEntries.length > 0" class="bg-white rounded-xl border border-gray-200 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 400ms">
+    <div v-if="pluginEntries.length > 0" class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 400ms">
       <h3 class="text-base font-semibold text-gray-800 mb-4">🧩 已安装插件</h3>
       <div class="space-y-2">
         <div v-for="pl in pluginEntries" :key="pl.id"
-          class="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
+          class="card-accent card-hover flex items-center justify-between p-3 rounded-lg border border-gray-100 transition-all">
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-sm">🧩</div>
             <p class="text-sm font-medium text-gray-800">{{ pl.id }}</p>
@@ -231,7 +231,7 @@ onMounted(() => {
     </div>
 
     <!-- 关于 -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 480ms">
+    <div class="card-accent card-hover bg-white rounded-xl border border-gray-200/60 p-6 enter-anim" :class="{ 'is-entered': entered }" style="--delay: 480ms">
       <h3 class="text-base font-semibold text-gray-800 mb-4">ℹ️ 关于</h3>
       <div class="space-y-2 text-sm text-gray-500">
         <p>ClawDash v0.8.0 — OpenClaw WebSocket 控制台</p>
