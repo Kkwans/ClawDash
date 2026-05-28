@@ -524,6 +524,12 @@ onUnmounted(() => {
       <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
         这是 OpenClaw 的 Web 控制台。请先配置 Gateway Token 以开始使用。
       </p>
+      <div class="flex items-center justify-center gap-3 mt-6">
+        <a href="/builtin/" target="_blank"
+          class="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+          ⚡ 内置 UI
+        </a>
+      </div>
     </div>
   </div>
 </template>
