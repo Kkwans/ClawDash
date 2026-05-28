@@ -465,11 +465,11 @@ onUnmounted(() => {
 
     <!-- 未连接 -->
     <div v-if="!authenticated && !connecting" class="text-center py-12">
-      <div class="w-16 h-16 mx-auto bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center text-3xl mb-4 ring-1 ring-gray-200/50 dark:ring-gray-700">
+      <div class="w-16 h-16 mx-auto bg-gray-50 rounded-2xl flex items-center justify-center text-3xl mb-4 ring-1 ring-gray-200/50">
         🔌
       </div>
-      <p class="text-sm font-medium text-gray-600 dark:text-gray-400">请配置 Gateway Token</p>
-      <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">在系统设置中配置 Token 后即可管理 Gateway</p>
+      <p class="text-sm font-medium text-gray-600">请配置 Gateway Token</p>
+      <p class="text-xs text-gray-400 mt-1">在系统设置中配置 Token 后即可管理 Gateway</p>
     </div>
 
     <!-- 快速操作 -->

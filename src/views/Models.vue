@@ -331,13 +331,13 @@ useScrollLock(showDeleteConfirm)
         </div>
 
         <!-- 空状态（无任何 Provider） -->
-        <div v-if="filteredProviders.length === 0 && providers.length === 0" class="text-center py-16 bg-white rounded-2xl border border-gray-200">
+        <div v-if="filteredProviders.length === 0 && providers.length === 0" class="card-accent card-hover text-center py-16 bg-white rounded-2xl border border-gray-200/60">
           <div class="w-16 h-16 mx-auto rounded-2xl bg-gray-50 flex items-center justify-center text-3xl mb-4 ring-1 ring-gray-200/50">📦</div>
           <p class="text-sm font-medium text-gray-500">暂无模型提供商</p>
           <p class="text-xs text-gray-400 mt-1">点击上方「添加提供商」开始配置</p>
         </div>
         <!-- 无搜索结果 -->
-        <div v-else-if="filteredProviders.length === 0 && providers.length > 0" class="text-center py-10 bg-white rounded-2xl border border-gray-200">
+        <div v-else-if="filteredProviders.length === 0 && providers.length > 0" class="card-accent card-hover text-center py-10 bg-white rounded-2xl border border-gray-200/60">
           <p class="text-sm text-gray-400">未找到匹配「{{ providerFilter }}」的提供商</p>
         </div>
 
