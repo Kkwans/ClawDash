@@ -42,7 +42,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa);
+  background: linear-gradient(90deg, oklch(0.55 0.18 260), oklch(0.65 0.18 280), oklch(0.75 0.12 280));
   opacity: 0;
   transition: opacity 0.3s ease;
 }

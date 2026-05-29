@@ -11,7 +11,7 @@ const props = defineProps({
   max: { type: Number, default: 100 },
   label: { type: String, default: '' },
   unit: { type: String, default: '%' },
-  color: { type: String, default: '#3b82f6' },
+  color: { type: String, default: 'var(--chart-blue)' },
   size: { type: Number, default: 120 },
 })
 

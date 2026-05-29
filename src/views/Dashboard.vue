@@ -135,11 +135,12 @@ const modelCount = computed(() => modelsInfo.value?.models?.length || 0)
 const eventLoop = computed(() => channelsInfo.value?.eventLoop || null)
 const eventLoopUtil = computed(() => Math.round((eventLoop.value?.utilization || 0) * 100))
 const sessionCount = computed(() => sessions.value.length)
+const isDark = computed(() => document.querySelector('.dark') !== null)
 const eventLoopColor = computed(() => {
   const u = eventLoopUtil.value
-  if (u >= 90) return '#ef4444'
-  if (u >= 70) return '#f59e0b'
-  return '#10b981'
+  if (u >= 90) return isDark.value ? 'oklch(0.6 0.2 25)' : '#ef4444'
+  if (u >= 70) return isDark.value ? 'oklch(0.75 0.15 75)' : '#f59e0b'
+  return isDark.value ? 'oklch(0.65 0.18 145)' : '#10b981'
 })
 
 // 会话分布
@@ -154,7 +155,9 @@ const sessionKinds = computed(() => {
 const sessionChartData = computed(() => {
   const labels = Object.keys(sessionKinds.value)
   const data = Object.values(sessionKinds.value)
-  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#ec4899']
+  const colors = isDark.value
+    ? ['oklch(0.65 0.18 260)', 'oklch(0.65 0.18 145)', 'oklch(0.75 0.15 75)', 'oklch(0.65 0.18 280)', 'oklch(0.6 0.2 25)', 'oklch(0.6 0.18 340)']
+    : ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#ec4899']
   return {
     labels: labels.map(l => l === 'main' ? '主会话' : l === 'isolated' ? '独立会话' : l === 'subagent' ? '子Agent' : l),
     datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderWidth: 0, cutout: '60%' }]
@@ -318,9 +321,9 @@ onUnmounted(() => {
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <div v-for="(card, idx) in [
         { value: eventLoopUtil, max: 100, label: '事件循环', unit: '%', color: eventLoopColor, sub: eventLoop?.degraded ? '降级' : '正常', subClass: eventLoop?.degraded ? 'text-amber-600' : 'text-green-600' },
-        { value: sessionCount, max: 50, label: '活跃会话', unit: '', color: '#3b82f6', sub: '/ 50 上限', subClass: 'text-gray-400' },
-        { value: modelCount, max: 20, label: '模型数', unit: '', color: '#8b5cf6', sub: providerEntries.length + ' 个提供商', subClass: 'text-gray-400' },
-        { value: channelCount, max: 10, label: '渠道', unit: '', color: '#f59e0b', sub: healthData?.ok ? '运行中' : '-', subClass: healthData?.ok ? 'text-green-600' : 'text-gray-400' }
+        { value: sessionCount, max: 50, label: '活跃会话', unit: '', color: isDark ? 'oklch(0.65 0.18 260)' : '#3b82f6', sub: '/ 50 上限', subClass: 'text-gray-400' },
+        { value: modelCount, max: 20, label: '模型数', unit: '', color: isDark ? 'oklch(0.65 0.18 280)' : '#8b5cf6', sub: providerEntries.length + ' 个提供商', subClass: 'text-gray-400' },
+        { value: channelCount, max: 10, label: '渠道', unit: '', color: isDark ? 'oklch(0.75 0.15 75)' : '#f59e0b', sub: healthData?.ok ? '运行中' : '-', subClass: healthData?.ok ? 'text-green-600' : 'text-gray-400' }
       ]" :key="card.label"
         class="ring-card enter-anim rounded-2xl border border-gray-200/60 bg-white p-5 flex flex-col items-center shadow-sm"
         :class="{ 'is-entered': entered }"
