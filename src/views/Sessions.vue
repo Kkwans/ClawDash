@@ -61,20 +61,18 @@ function formatTime(ts) {
 }
 
 const eventColors = {
-  'connected': 'text-green-400',
-  'connect.challenge': 'text-blue-400',
-  'auth-error': 'text-red-400',
-  'session.started': 'text-emerald-400',
-  'session.ended': 'text-gray-400',
-  'tool.start': 'text-yellow-400',
-  'tool.end': 'text-yellow-300',
-  'message': 'text-cyan-400',
-  'error': 'text-red-400',
+  'connected': 'event-connected',
+  'connect.challenge': 'event-info',
+  'auth-error': 'event-danger',
+  'session.started': 'event-connected',
+  'session.ended': 'event-tertiary',
+  'tool.start': 'event-warning',
+  'tool.end': 'event-warning',
+  'message': 'event-info',
+  'error': 'event-danger',
 }
 
-function getEventColor(event) {
-  return eventColors[event] || 'text-gray-300'
-}
+function getEventColor(event) { return eventColors[event] || 'event-tertiary' }
 
 function formatPayload(payload) {
   if (!payload) return ''
@@ -119,7 +117,7 @@ function highlightText(text, query) {
   const safeQuery = escapeHtml(query)
   const escaped = safeQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const regex = new RegExp(`(${escaped})`, 'gi')
-  return safeText.replace(regex, '<mark class="bg-yellow-300/40 text-yellow-200 rounded px-0.5">$1</mark>')
+  return safeText.replace(regex, '<mark class="search-highlight rounded px-0.5">$1</mark>')
 }
 
 function highlightJson(payload, query) {
@@ -138,7 +136,7 @@ function highlightJson(payload, query) {
     if (query) {
       const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
       const regex = new RegExp(`(${escaped})`, 'gi')
-      html = html.replace(regex, '<mark class="bg-yellow-300/40 text-yellow-200 rounded px-0.5">$1</mark>')
+      html = html.replace(regex, '<mark class="search-highlight rounded px-0.5">$1</mark>')
     }
     return html
   } catch (e) {
@@ -225,7 +223,9 @@ onUnmounted(() => {
         <div class="flex items-center gap-2 mb-3">
           <span class="text-sm font-semibold text-gray-700">Gateway 状态</span>
           <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-            :class="healthData.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'">
+            :style="healthData.ok
+              ? 'background-color: var(--success-light); color: var(--success-text)'
+              : 'background-color: var(--danger-light); color: var(--danger-text)'">
             {{ healthData.ok ? '正常' : '异常' }}
           </span>
         </div>
@@ -236,7 +236,7 @@ onUnmounted(() => {
           </div>
           <div>
             <p class="text-gray-400">事件循环</p>
-            <p class="font-medium" :class="healthData.eventLoop?.degraded ? 'text-amber-600' : 'text-green-600'">
+            <p class="font-medium" :style="healthData.eventLoop?.degraded ? 'color: var(--warning-text)' : 'color: var(--success-text)'">
               {{ healthData.eventLoop?.degraded ? '降级' : '正常' }}
             </p>
           </div>
@@ -311,4 +311,26 @@ onUnmounted(() => {
 
 <style scoped>
 /* Sessions 使用 shared-animations.css 中的 .enter-anim / .is-entered */
+
+/* 事件颜色 */
+.event-connected { color: var(--success); }
+.event-info { color: var(--info); }
+.event-danger { color: var(--danger); }
+.event-warning { color: var(--warning); }
+.event-tertiary { color: var(--text-tertiary); }
+
+/* 搜索高亮 */
+.search-highlight {
+  background-color: oklch(0.82 0.12 85 / 0.4);
+  color: oklch(0.25 0.05 85);
+}
+:deep(.search-highlight) {
+  background-color: oklch(0.82 0.12 85 / 0.4);
+  color: oklch(0.25 0.05 85);
+}
+.dark .search-highlight,
+.dark :deep(.search-highlight) {
+  background-color: oklch(0.35 0.08 75 / 0.5);
+  color: oklch(0.85 0.08 75);
+}
 </style>
