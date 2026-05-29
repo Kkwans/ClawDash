@@ -74,7 +74,6 @@ watch(() => props.modelValue, (val) => { validateJson(val) }, { immediate: true 
   position: relative;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid var(--border);
 }
 .editor-textarea {
   width: 100%;
@@ -84,7 +83,6 @@ watch(() => props.modelValue, (val) => { validateJson(val) }, { immediate: true 
   line-height: 1.6;
   color: var(--text-primary);
   background: var(--editor-bg);
-  border: 1px solid var(--border);
   resize: vertical;
   outline: none;
   tab-size: 2;
