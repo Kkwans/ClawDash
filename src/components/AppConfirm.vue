@@ -68,7 +68,7 @@ defineExpose({ confirm })
   display: flex;
   align-items: center;
   justify-content: center;
-  background: oklch(0 0 0 / 0.4);
+  background: var(--overlay-bg);
   backdrop-filter: blur(4px);
   padding: var(--space-4);
 }
@@ -105,7 +105,7 @@ defineExpose({ confirm })
 .confirm-icon {
   width: 22px;
   height: 22px;
-  color: var(--warning, #d97706);
+  color: var(--warning);
 }
 
 .confirm-title {

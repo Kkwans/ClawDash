@@ -321,16 +321,11 @@ onUnmounted(() => {
 
 /* 搜索高亮 */
 .search-highlight {
-  background-color: oklch(0.82 0.12 85 / 0.4);
-  color: oklch(0.25 0.05 85);
+  background-color: var(--highlight-bg);
+  color: var(--highlight-text);
 }
 :deep(.search-highlight) {
-  background-color: oklch(0.82 0.12 85 / 0.4);
-  color: oklch(0.25 0.05 85);
-}
-.dark .search-highlight,
-.dark :deep(.search-highlight) {
-  background-color: oklch(0.35 0.08 75 / 0.5);
-  color: oklch(0.85 0.08 75);
+  background-color: var(--highlight-bg);
+  color: var(--highlight-text);
 }
 </style>

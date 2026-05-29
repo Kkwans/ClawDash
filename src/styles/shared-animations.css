@@ -25,9 +25,9 @@
   transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
 }
 .card-hover:hover {
-  box-shadow: 0 8px 25px -5px oklch(0 0 0 / 0.08), 0 4px 10px -6px oklch(0 0 0 / 0.04);
+  box-shadow: 0 8px 25px -5px var(--shadow-lg), 0 4px 10px -6px var(--shadow-md);
   transform: translateY(-2px);
-  border-color: oklch(0.55 0.18 260 / 0.2);
+  border-color: color-mix(in oklch, var(--brand) 20%, transparent);
 }
 
 /* 渐变顶部边框装饰 */
@@ -42,7 +42,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, oklch(0.55 0.18 260), oklch(0.65 0.18 280), oklch(0.75 0.12 280));
+  background: linear-gradient(90deg, var(--brand), var(--brand-light), var(--brand-lighter));
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -77,7 +77,7 @@
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 .ring-card:hover {
-  box-shadow: 0 4px 15px -3px oklch(0 0 0 / 0.06);
+  box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
 
@@ -109,4 +109,9 @@
 }
 .animate-slide-up {
   animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 暗色模式品牌渐变 */
+.dark .card-accent::before {
+  background: linear-gradient(90deg, var(--brand), var(--brand-dark), var(--brand-light));
 }

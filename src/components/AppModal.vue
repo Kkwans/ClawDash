@@ -97,7 +97,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: oklch(0 0 0 / 0.4);
+  background: var(--overlay-bg);
   backdrop-filter: blur(4px);
   padding: var(--space-4);
 }

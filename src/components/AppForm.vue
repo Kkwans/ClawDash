@@ -134,7 +134,7 @@ watch(() => props.error, (val) => {
 .form-success {
   margin: 0;
   font-size: var(--text-xs);
-  color: var(--success-text, #16a34a);
+  color: var(--success-text);
   line-height: var(--leading-normal);
   display: flex;
   align-items: center;
