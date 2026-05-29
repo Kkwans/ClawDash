@@ -57,29 +57,29 @@ provide('errorBoundary', { reset: retry })
 .error-boundary__title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-primary, #1a1a1a);
+  color: var(--text-primary);
   margin: 0 0 0.5rem;
 }
 
 .error-boundary__message {
   font-size: 0.875rem;
-  color: var(--text-secondary, #525252);
+  color: var(--text-secondary);
   margin: 0 0 1.5rem;
   max-width: 400px;
 }
 
 .error-boundary__btn {
   padding: 0.5rem 1.5rem;
-  border: 1px solid var(--border, #e5e5e4);
+  border: 1px solid var(--border);
   border-radius: var(--radius, 6px);
-  background: var(--bg-panel, #fff);
-  color: var(--text-primary, #1a1a1a);
+  background: var(--bg-panel);
+  color: var(--text-primary);
   font-size: 0.875rem;
   cursor: pointer;
   transition: background var(--duration, 200ms) var(--ease, ease);
 }
 
 .error-boundary__btn:hover {
-  background: var(--bg-subtle, #f5f5f4);
+  background: var(--bg-subtle);
 }
 </style>

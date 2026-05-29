@@ -213,3 +213,29 @@ kbd {
 .dark .border-green-100\\/60 { border-color: color-mix(in oklch, var(--success-text) 60%, transparent); }
 .dark .border-blue-100\\/50 { border-color: color-mix(in oklch, var(--info-text) 50%, transparent); }
 .dark .border-amber-100\\/50 { border-color: color-mix(in oklch, var(--warning-text) 50%, transparent); }
+
+/* 连接状态指示器暗色模式 */
+.dark .text-yellow-600 { color: var(--warning-text); }
+.dark .text-yellow-700 { color: var(--warning-text); }
+.dark .text-yellow-500 { color: var(--warning-text); }
+.dark .text-yellow-400 { color: var(--warning-text); }
+.dark .bg-yellow-50 { background-color: var(--warning-light); }
+.dark .bg-yellow-500 { background-color: var(--warning); }
+.dark .border-yellow-300 { border-color: var(--warning-text); }
+.dark .border-t-amber-600 { border-top-color: var(--warning); }
+.dark .border-t-yellow-500 { border-top-color: var(--warning); }
+.dark .text-green-600 { color: var(--success-text); }
+.dark .text-green-500 { color: var(--success-text); }
+.dark .text-green-400 { color: var(--success-text); }
+.dark .bg-green-500 { background-color: var(--success); }
+.dark .text-red-600 { color: var(--danger-text); }
+.dark .text-red-500 { color: var(--danger-text); }
+.dark .text-red-400 { color: var(--danger-text); }
+.dark .bg-red-500 { background-color: var(--danger); }
+.dark .bg-red-50 { background-color: var(--danger-light); }
+.dark .bg-red-100 { background-color: var(--danger-light); }
+.dark .hover\:bg-red-100:hover { background-color: var(--danger-light); }
+.dark .hover\:bg-red-900\/40:hover { background-color: var(--danger-light); }
+.dark .hover\:text-amber-800:hover { color: var(--warning-text); }
+.dark .text-amber-600 { color: var(--warning-text); }
+.dark .border-amber-200 { border-color: var(--warning-text); }
