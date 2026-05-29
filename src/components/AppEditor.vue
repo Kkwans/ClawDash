@@ -82,9 +82,9 @@ watch(() => props.modelValue, (val) => { validateJson(val) }, { immediate: true 
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.6;
-  color: oklch(0.9 0 0);
-  background: oklch(0.15 0.005 240);
-  border: none;
+  color: var(--text-primary);
+  background: var(--editor-bg);
+  border: 1px solid var(--border);
   resize: vertical;
   outline: none;
   tab-size: 2;
@@ -92,7 +92,7 @@ watch(() => props.modelValue, (val) => { validateJson(val) }, { immediate: true 
   overflow: auto;
 }
 .editor-textarea::placeholder {
-  color: oklch(0.45 0.005 240);
+  color: var(--text-tertiary);
 }
 .editor-textarea:focus {
   box-shadow: inset 0 0 0 2px var(--brand-lighter);
@@ -103,6 +103,6 @@ watch(() => props.modelValue, (val) => { validateJson(val) }, { immediate: true 
   font-size: var(--text-xs);
   color: var(--danger-text);
   background: var(--danger-light);
-  border-top: 1px solid oklch(0.85 0.04 25);
+  border-top: 1px solid var(--danger-text);
 }
 </style>

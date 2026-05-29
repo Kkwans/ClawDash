@@ -150,6 +150,13 @@ select {
 }
 
 /* 等宽字体 */
+:root {
+  --editor-bg: oklch(0.15 0.005 240);
+}
+.dark {
+  --editor-bg: oklch(0.1 0.005 240);
+}
+
 code,
 pre,
 kbd {

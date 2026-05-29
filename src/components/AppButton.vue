@@ -141,8 +141,8 @@ watch(() => props.status, (val) => {
   color: var(--text-inverse);
 }
 .app-btn--danger:hover:not(:disabled) {
-  background: oklch(0.52 0.2 25);
-  border-color: oklch(0.52 0.2 25);
+  background: var(--danger);
+  border-color: var(--danger);
 }
 
 .app-btn--ghost {
@@ -173,15 +173,15 @@ watch(() => props.status, (val) => {
 
 /* Status states */
 .app-btn--success {
-  border-color: var(--success, #16a34a) !important;
-  background: oklch(0.95 0.05 145) !important;
-  color: var(--success, #16a34a) !important;
+  border-color: var(--success) !important;
+  background: var(--success-light) !important;
+  color: var(--success-text) !important;
 }
 
 .app-btn--error {
   border-color: var(--danger) !important;
-  background: oklch(0.95 0.05 25) !important;
-  color: var(--danger) !important;
+  background: var(--danger-light) !important;
+  color: var(--danger-text) !important;
 }
 
 /* Loading spinner */

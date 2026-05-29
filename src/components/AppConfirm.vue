@@ -98,7 +98,7 @@ defineExpose({ confirm })
   display: flex;
   align-items: center;
   justify-content: center;
-  background: oklch(0.95 0.05 25);
+  background: var(--warning-light);
   flex-shrink: 0;
 }
 
