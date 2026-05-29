@@ -269,3 +269,6 @@ kbd {
 .dark .text-amber-300 { color: var(--warning-text); }
 .dark .text-purple-300 { color: var(--brand); }
 .dark .bg-gray-200 { background-color: var(--bg-hover); }
+.dark .bg-gradient-to-br { --tw-gradient-from: var(--bg-hover); --tw-gradient-to: var(--bg-panel); }
+.dark .text-indigo-600 { color: var(--brand-light); }
+.dark .ring-indigo-100\/50 { --tw-ring-color: color-mix(in oklch, var(--brand) 50%, transparent); }
