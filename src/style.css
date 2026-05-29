@@ -297,3 +297,8 @@ kbd {
 .dark .text-pink-500 { color: var(--brand-light); }
 .dark .text-violet-500 { color: var(--brand-light); }
 .dark .text-fuchsia-500 { color: var(--brand-light); }
+.dark .bg-purple-50\\/30 { background-color: color-mix(in oklch, var(--brand-lighter) 30%, transparent); }
+.dark .text-cyan-500 { color: var(--info-text); }
+.dark .text-sky-500 { color: var(--info-text); }
+.dark .text-teal-500 { color: var(--success-text); }
+.dark .text-lime-500 { color: var(--success-text); }
