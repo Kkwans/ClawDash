@@ -140,9 +140,9 @@ const eventLoopUtil = computed(() => Math.round((eventLoop.value?.utilization ||
 const sessionCount = computed(() => sessions.value.length)
 const eventLoopColor = computed(() => {
   const u = eventLoopUtil.value
-  if (u >= 90) return isDark.value ? 'var(--danger)' : '#ef4444'
-  if (u >= 70) return isDark.value ? 'var(--warning)' : '#f59e0b'
-  return isDark.value ? 'var(--success)' : '#10b981'
+  if (u >= 90) return 'var(--danger)'
+  if (u >= 70) return 'var(--warning)'
+  return 'var(--success)'
 })
 
 // 会话分布
