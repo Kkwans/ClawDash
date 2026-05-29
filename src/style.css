@@ -181,4 +181,4 @@ kbd {
 .dark .border-green-200 { border-color: var(--success-text); }
 .dark .border-amber-200 { border-color: var(--warning-text); }
 .dark .border-red-200 { border-color: var(--danger-text); }
-.dark .hover\\:bg-indigo-50\\/40:hover { background-color: color-mix(in oklch, var(--brand-light) 40%, var(--bg-subtle)); }
+.dark .hover\\:bg-indigo-50\\/40:hover { background-color: color-mix(in oklch, var(--brand-lighter) 40%, var(--bg-subtle)); }
