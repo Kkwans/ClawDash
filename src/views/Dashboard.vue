@@ -157,7 +157,7 @@ const sessionChartData = computed(() => {
   const data = Object.values(sessionKinds.value)
   const colors = isDark.value
     ? ['oklch(0.65 0.18 260)', 'oklch(0.65 0.18 145)', 'oklch(0.75 0.15 75)', 'oklch(0.65 0.18 280)', 'oklch(0.6 0.2 25)', 'oklch(0.6 0.18 340)']
-    : ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#ec4899']
+    : ['var(--chart-blue)', 'var(--chart-green)', 'var(--chart-amber)', 'var(--chart-purple)', 'var(--chart-red)', 'var(--chart-pink)']
   return {
     labels: labels.map(l => l === 'main' ? '主会话' : l === 'isolated' ? '独立会话' : l === 'subagent' ? '子Agent' : l),
     datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderWidth: 0, cutout: '60%' }]

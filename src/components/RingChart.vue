@@ -30,7 +30,7 @@ const colorClass = computed(() => {
 const chartData = computed(() => ({
   datasets: [{
     data: [percent.value, 100 - percent.value],
-    backgroundColor: [props.color, 'rgba(229, 231, 235, 0.5)'],
+    backgroundColor: [props.color, 'oklch(0.85 0 0 / 0.15)'],
     borderWidth: 0,
     cutout: '78%',
     borderRadius: 6,
