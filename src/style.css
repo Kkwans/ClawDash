@@ -78,6 +78,10 @@ select {
   color: var(--text-primary);
 }
 
+/* 暗色模式 placeholder 颜色 */
+.dark .placeholder\\:text-gray-300::placeholder { color: var(--text-tertiary); }
+.dark .placeholder\\:text-gray-400::placeholder { color: var(--text-tertiary); }
+
 /* 焦点样式 */
 :focus-visible {
   outline: 2px solid var(--border-focus);
