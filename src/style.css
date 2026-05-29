@@ -288,3 +288,12 @@ kbd {
 .dark .from-orange-50\/30 { --tw-gradient-from: color-mix(in oklch, var(--warning-light) 30%, transparent); }
 .dark .to-blue-50 { --tw-gradient-to: var(--info-light); }
 .dark .to-indigo-50\/30 { --tw-gradient-to: color-mix(in oklch, var(--info-light) 30%, transparent); }
+.dark .text-amber-500 { color: var(--warning-text); }
+.dark .text-amber-500\\/80 { color: color-mix(in oklch, var(--warning-text) 80%, transparent); }
+.dark .text-amber-700 { color: var(--warning-text); }
+.dark .text-amber-800 { color: var(--warning-text); }
+.dark .text-orange-500 { color: var(--warning-text); }
+.dark .text-rose-500 { color: var(--danger-text); }
+.dark .text-pink-500 { color: var(--brand-light); }
+.dark .text-violet-500 { color: var(--brand-light); }
+.dark .text-fuchsia-500 { color: var(--brand-light); }
