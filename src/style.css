@@ -272,3 +272,19 @@ kbd {
 .dark .bg-gradient-to-br { --tw-gradient-from: var(--bg-hover); --tw-gradient-to: var(--bg-panel); }
 .dark .text-indigo-600 { color: var(--brand-light); }
 .dark .ring-indigo-100\/50 { --tw-ring-color: color-mix(in oklch, var(--brand) 50%, transparent); }
+.dark .ring-gray-200\/50 { --tw-ring-color: color-mix(in oklch, var(--border) 50%, transparent); }
+.dark .ring-gray-200\/60 { --tw-ring-color: color-mix(in oklch, var(--border) 60%, transparent); }
+.dark .ring-indigo-100\/60 { --tw-ring-color: color-mix(in oklch, var(--brand) 60%, transparent); }
+.dark .ring-green-100\/60 { --tw-ring-color: color-mix(in oklch, var(--success-text) 60%, transparent); }
+.dark .ring-blue-100\/50 { --tw-ring-color: color-mix(in oklch, var(--info-text) 50%, transparent); }
+.dark .ring-amber-100\/50 { --tw-ring-color: color-mix(in oklch, var(--warning-text) 50%, transparent); }
+.dark .ring-purple-100\/60 { --tw-ring-color: color-mix(in oklch, var(--brand) 60%, transparent); }
+.dark .from-blue-50 { --tw-gradient-from: var(--info-light); }
+.dark .from-indigo-50 { --tw-gradient-from: var(--info-light); }
+.dark .from-green-50 { --tw-gradient-from: var(--success-light); }
+.dark .from-emerald-50 { --tw-gradient-from: var(--success-light); }
+.dark .from-purple-50 { --tw-gradient-from: var(--brand-light); }
+.dark .from-amber-50\/60 { --tw-gradient-from: color-mix(in oklch, var(--warning-light) 60%, transparent); }
+.dark .from-orange-50\/30 { --tw-gradient-from: color-mix(in oklch, var(--warning-light) 30%, transparent); }
+.dark .to-blue-50 { --tw-gradient-to: var(--info-light); }
+.dark .to-indigo-50\/30 { --tw-gradient-to: color-mix(in oklch, var(--info-light) 30%, transparent); }
