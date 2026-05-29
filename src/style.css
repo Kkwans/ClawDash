@@ -302,3 +302,6 @@ kbd {
 .dark .text-sky-500 { color: var(--info-text); }
 .dark .text-teal-500 { color: var(--success-text); }
 .dark .text-lime-500 { color: var(--success-text); }
+.dark .bg-gray-300 { background-color: var(--text-tertiary); }
+.dark .text-gray-100 { color: var(--bg-subtle); }
+.dark .text-gray-50 { color: var(--bg-panel); }
