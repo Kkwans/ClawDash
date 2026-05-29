@@ -268,3 +268,4 @@ kbd {
 .dark .text-blue-300 { color: var(--info-text); }
 .dark .text-amber-300 { color: var(--warning-text); }
 .dark .text-purple-300 { color: var(--brand); }
+.dark .bg-gray-200 { background-color: var(--bg-hover); }
