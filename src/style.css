@@ -196,6 +196,7 @@ kbd {
 .dark .bg-blue-50 { background-color: var(--info-light); }
 .dark .bg-indigo-50 { background-color: var(--info-light); }
 .dark .bg-purple-50 { background-color: color-mix(in oklch, var(--brand-lighter) 100%, transparent); }
+.dark .hover\:bg-purple-50\/30:hover { background-color: color-mix(in oklch, var(--brand-lighter) 30%, transparent); }
 .dark .bg-emerald-50 { background-color: var(--success-light); }
 .dark .bg-orange-50 { background-color: var(--warning-light); }
 .dark .text-blue-600 { color: var(--info-text); }
