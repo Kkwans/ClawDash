@@ -244,7 +244,7 @@ onMounted(fetchData)
                   :autocomplete="f.type === 'password' ? 'new-password' : 'off'"
                   :aria-label="f.label"
                   readonly @focus="$event.target.removeAttribute('readonly')"
-                  class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all pr-9">
+                  class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all pr-9">
                 <AppButton v-if="f.type === 'password'" size="xs" variant="ghost"
                   @click="togglePwd('add_'+f.key)"
                   class="absolute right-2 top-1/2 -translate-y-1/2">
@@ -291,7 +291,7 @@ onMounted(fetchData)
               <input v-model="installForm.pluginId"
                 autocomplete="off" readonly @focus="$event.target.removeAttribute('readonly')"
                 aria-label="插件 ID"
-                class="flex-1 px-3 py-2 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all"
+                class="flex-1 px-3 py-2 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all"
                 placeholder="@scope/plugin-name">
               <AppButton variant="primary" @click="installPlugin">安装</AppButton>
             </div>
@@ -330,7 +330,7 @@ onMounted(fetchData)
                     :type="(key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')) && !showPwd['d_'+key] ? 'password' : 'text'"
                     :autocomplete="(key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')) ? 'new-password' : 'off'"
                     :aria-label="key" readonly @focus="$event.target.removeAttribute('readonly')"
-                    class="w-full px-3 py-2 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all pr-9">
+                    class="w-full px-3 py-2 text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all pr-9">
                   <AppButton v-if="key.toLowerCase().includes('secret') || key.toLowerCase().includes('token')" size="xs" variant="ghost"
                     @click="togglePwd('d_'+key)"
                     class="absolute right-2 top-1/2 -translate-y-1/2">
@@ -394,7 +394,7 @@ onMounted(fetchData)
       <div v-if="channelEntries.length > 0" class="relative">
         <input v-model="channelFilter"
           type="search" placeholder="搜索渠道..."
-          class="w-full pl-8 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all">
+          class="w-full pl-8 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all">
         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
       </div>
       <!-- 空状态 -->
@@ -441,7 +441,7 @@ onMounted(fetchData)
       <div v-if="pluginEntries.length > 0" class="relative">
         <input v-model="pluginFilter"
           type="search" placeholder="搜索插件..."
-          class="w-full pl-8 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all">
+          class="w-full pl-8 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all">
         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
       </div>
       <!-- 空状态 -->
